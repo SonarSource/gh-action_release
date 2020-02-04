@@ -106,7 +106,7 @@ def promote(project,buildnumber,multi):
   if r.status_code == 200:      
     return f"status:{status}"
   else:
-    return f"status:{status} code:{r.status_code}"
+    return f"status:{status} code:{r.status_code}"   
 
 def upload_to_binaries(binaries_repo,artifactory_repo,gid,aid,qual,ext,version):
   BINARIES_PATH_PREFIX=''
@@ -132,3 +132,10 @@ def upload_to_binaries(binaries_repo,artifactory_repo,gid,aid,qual,ext,version):
   #sign file
   stdin,stdout,stderr=ssh_client.exec_command(f"gpg --batch --passphrase {PASSPHRASE} --armor --detach-sig --default-key infra@sonarsource.com {filename}")
   ssh_client.close()
+
+def find_buildnumber_from_sha1(sha1):  
+  query = f'build.properties.find({{"buildInfo.env.GIT_SHA1": "{sha1}"\}}).include("buildInfo.env.BUILD_NUMBER")'
+  url = f"{artifactory_url}/api/search/aql"
+  headers = {'content-type': 'text/plain', 'X-JFrog-Art-Api': artifactory_apikey} 
+  r = requests.post(url, data=query, headers=headers)      
+  return r.json()['results'][0]['build.property.value']

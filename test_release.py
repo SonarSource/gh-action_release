@@ -1,6 +1,7 @@
 from main import repox_get_property_from_buildinfo, repox_get_module_property_from_buildinfo, get_artifacts_to_publish, get_version
 from main import promote
 from main import publish_all_artifacts, publish_artifact
+from main import find_buildnumber_from_sha1
 
 def test_repox_get_property_from_buildinfo():
   project="sonar-dummy"
@@ -27,7 +28,9 @@ def test_publish_all_artifacts():
 
 def test_get_version():
   project="sonar-java"
-  buildnumber="20691"
+  buildnumber="20657"
   version = get_version(project,buildnumber)
   print(version)
   
+def test_find_buildnumber_from_sha1():
+  assert find_buildnumber_from_sha1("2d8485ac2dede74680634b2a12665e8c9589dfae") == "20657"
