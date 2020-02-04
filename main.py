@@ -11,10 +11,10 @@ x Tag github
 notify burgr
 '''
 
-artifactoryUrl='https://repox.jfrog.io/repox'
-binariesHost='binaries.sonarsource.com'
-binariesUrl=f"https://{binariesHost}"
-artifactoryApiKey=os.environ.get('ARTIFACTORY_API_KEY','no api key in env')  
+artifactory_url='https://repox.jfrog.io/repox'
+binaries_host='binaries.sonarsource.com'
+binaries_url=f"https://{binaries_host}"
+artifactory_apikey=os.environ.get('ARTIFACTORY_API_KEY','no api key in env')  
 
 def main():
     my_input = os.environ["INPUT_MYINPUT"]
@@ -25,109 +25,109 @@ def main():
 if __name__ == "__main__":
     main()
 
-def repoxGetPropertyFromBuildInfo(project, buildNumber, property):  
-  buildInfo = repoxGetBuildInfo(project,buildNumber)
-  return buildInfo['buildInfo']['properties'][property]
+def repox_get_property_from_buildinfo(project, buildnumber, property):  
+  buildinfo = repox_get_build_info(project,buildnumber)
+  return buildinfo['buildInfo']['properties'][property]
 
-def repoxGetModulePropertyFromBuildInfo(project, buildNumber, property):  
-  buildInfo = repoxGetBuildInfo(project,buildNumber)
-  return buildInfo['buildInfo']['modules'][0]['properties'][property]
+def repox_get_module_property_from_buildinfo(project, buildnumber, property):  
+  buildinfo = repox_get_build_info(project,buildnumber)
+  return buildinfo['buildInfo']['modules'][0]['properties'][property]
 
-def getVersion(project, buildNumber):  
-  buildInfo = repoxGetBuildInfo(project,buildNumber)  
-  return buildInfo['buildInfo']['modules'][0]['id'].split(":")[-1]
+def get_version(project, buildnumber):  
+  buildinfo = repox_get_build_info(project,buildnumber)  
+  return buildinfo['buildInfo']['modules'][0]['id'].split(":")[-1]
   
-def repoxGetBuildInfo(project, buildNumber):  
-  url = f"{artifactoryUrl}/api/build/{project}/{buildNumber}"
-  headers = {'content-type': 'application/json', 'X-JFrog-Art-Api': artifactoryApiKey} 
+def repox_get_build_info(project, buildnumber):  
+  url = f"{artifactory_url}/api/build/{project}/{buildnumber}"
+  headers = {'content-type': 'application/json', 'X-JFrog-Art-Api': artifactory_apikey} 
   r = requests.get(url, headers=headers)  
-  buildInfo = r.json()
+  buildinfo = r.json()
   if r.status_code == 200:      
-    return buildInfo
+    return buildinfo
   else:
     raise Exception('unknown build')  
 
-def getArtifactsToPublish(project,buildNumber):
-  artifactsToPublish = repoxGetModulePropertyFromBuildInfo(project, buildNumber,'artifactsToPublish')
-  return artifactsToPublish
+def get_artifacts_to_publish(project,buildnumber):
+  artifacts = repox_get_module_property_from_buildinfo(project, buildnumber,'artifactsToPublish')
+  return artifacts
 
-def publishAllArtifacts(artifactsToPublish,version,repo):  
-  artifacts = artifactsToPublish.split(",")
-  artifactsCount = len(artifacts)   
-  if artifactsCount == 1:
+def publish_all_artifacts(artifacts,version,repo):  
+  artifacts = artifacts.split(",")
+  artifacts_count = len(artifacts)   
+  if artifacts_count == 1:
     print("only 1")
-    return publishArtifact(artifactsToPublish,version,repo)  
-  releaseURL = ""
-  print(f"{artifactsCount} artifacts")
-  for i in range(0, artifactsCount):      
+    return publish_artifact(artifacts,version,repo)  
+  release_url = ""
+  print(f"{artifacts_count} artifacts")
+  for i in range(0, artifacts_count):      
     print(f"artifact {i}")  
-    releaseURL = publishArtifact(artifacts[i - 1],version,repo)  
-  return releaseURL
+    release_url = publish_artifact(artifacts[i - 1],version,repo)  
+  return release_url
 
 
-def publishArtifact(artifactToPublish,version,repo): 
-  artifact = artifactToPublish.split(":")
+def publish_artifact(artifact_to_publish,version,repo): 
+  artifact = artifact_to_publish.split(":")
   gid = artifact[0]
   aid = artifact[1]
   ext = artifact[2]
   qual = ''
-  binariesRepo = "Distribution"  
+  binaries_repo = "Distribution"  
   if repo.startswith('sonarsource-private'):
-    binariesRepo = "CommercialDistribution"
-  artifactoryRepo = repo.replace('builds', 'releases')    
+    binaries_repo = "CommercialDistribution"
+  artifactory_repo = repo.replace('builds', 'releases')    
   print(f"{gid} {aid} {ext}")
-  releaseURL = f"{binariesUrl}/{bintrayRepo}/{aid}/{aid}-{version}.{ext}" 
-  return releaseURL
+  release_url = f"{binaries_url}/{binaries_repo}/{aid}/{aid}-{version}.{ext}" 
+  return release_url
 
-def promote(project,buildNumber,multi):
-  targetRepo="sonarsource-private-builds"
-  targetRepo2="sonarsource-public-builds"
-  status='release'  
+def promote(project,buildnumber,multi):
+  targetrepo="sonarsource-private-builds"
+  targetrepo2="sonarsource-public-builds"
+  status='release'
   
   try:
-    repo = repoxGetPropertyFromBuildInfo(project, buildNumber,'buildInfo.env.ARTIFACTORY_DEPLOY_REPO')
-    targetRepo = repo.replace('builds', 'releases')
+    repo = repox_get_module_property_from_buildinfo(project, buildnumber,'buildinfo.env.ARTIFACTORY_DEPLOY_REPO')
+    targetrepo = repo.replace('builds', 'releases')
   except Exception as e:
-    print(f"Could not get repository for {project} {buildNumber} {str(e)}")
+    print(f"Could not get repository for {project} {buildnumber} {str(e)}")
   
-  print(f"Promoting build {project}#{buildNumber}")
+  print(f"Promoting build {project}#{buildnumber}")
   json_payload={
       "status": f"{status}",
-      "targetRepo": f"{targetRepo}"
+      "targetRepo": f"{targetrepo}"
   }
   if multi == "true":
-    url = f"{artifactoryUrl}/api/plugins/execute/multiRepoPromote?params=buildName={project};buildNumber={buildNumber};src1=sonarsource-private-qa;target1={targetRepo};src2=sonarsource-public-qa;target2={targetRepo2};status={status}"
-    headers = {'X-JFrog-Art-Api': artifactoryApiKey}
+    url = f"{artifactory_url}/api/plugins/execute/multiRepoPromote?params=buildName={project};buildNumber={buildnumber};src1=sonarsource-private-qa;target1={targetrepo};src2=sonarsource-public-qa;target2={targetrepo2};status={status}"
+    headers = {'X-JFrog-Art-Api': artifactory_apikey}
     r = requests.get(url, headers=headers)
   else:
-    url = f"{artifactoryUrl}/api/build/promote/{project}/{buildNumber}"
-    headers = {'content-type': 'application/json', 'X-JFrog-Art-Api': artifactoryApiKey}
+    url = f"{artifactory_url}/api/build/promote/{project}/{buildnumber}"
+    headers = {'content-type': 'application/json', 'X-JFrog-Art-Api': artifactory_apikey}
     r = requests.post(url, data=json.dumps(json_payload), headers=headers)      
   if r.status_code == 200:      
     return f"status:{status}"
   else:
     return f"status:{status} code:{r.status_code}"
 
-def uploadToBinaries(binariesRepo,artifactoryRepo,gid,aid,qual,ext,version):
+def upload_to_binaries(binaries_repo,artifactory_repo,gid,aid,qual,ext,version):
   BINARIES_PATH_PREFIX=''
   PASSPHRASE=''
   #download artifact
-  groupIdPath=gid.replace(".", "/")
-  artifactory=artifactoryUrl+"/"+artifactoryRepo
+  gid_path=gid.replace(".", "/")
+  artifactory=artifactory_url+"/"+artifactory_repo
   filename=f"{aid}-{version}.{ext}"
   if qual:
     filename=f"{aid}-{version}-{qual}.{ext}"
-  url=f"{artifactory}/{groupIdPath}/{aid}/{version}/{filename}"    
+  url=f"{artifactory}/{gid_path}/{aid}/{version}/{filename}"    
   urllib.request.urlretrieve(url, filename)
   #upload artifact
   ssh_client =paramiko.SSHClient()
   ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-  ssh_client.connect(hostname=binariesHost,username='ssuopsa',password='password')
+  ssh_client.connect(hostname=binaries_host,username='ssuopsa',password='password')
   #create directory
-  stdin,stdout,stderr=ssh_client.exec_command(f"mkdir -p {BINARIES_PATH_PREFIX}/{binariesRepo}/{aid}/")
+  stdin,stdout,stderr=ssh_client.exec_command(f"mkdir -p {BINARIES_PATH_PREFIX}/{binaries_repo}/{aid}/")
   ftp_client=ssh_client.open_sftp()
   #upload file
-  ftp_client.put(filename,f"{BINARIES_PATH_PREFIX}/{binariesRepo}/{aid}/")
+  ftp_client.put(filename,f"{BINARIES_PATH_PREFIX}/{binaries_repo}/{aid}/")
   ftp_client.close()
   #sign file
   stdin,stdout,stderr=ssh_client.exec_command(f"gpg --batch --passphrase {PASSPHRASE} --armor --detach-sig --default-key infra@sonarsource.com {filename}")

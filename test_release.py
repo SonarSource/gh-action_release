@@ -1,33 +1,33 @@
-from main import repoxGetPropertyFromBuildInfo,getArtifactsToPublish,getVersion
+from main import repox_get_property_from_buildinfo, repox_get_module_property_from_buildinfo, get_artifacts_to_publish, get_version
 from main import promote
-from main import publishAllArtifacts,publishArtifact
+from main import publish_all_artifacts, publish_artifact
 
-def test_repoxGetPropertyFromBuildInfo():
+def test_repox_get_property_from_buildinfo():
   project="sonar-dummy"
-  buildNumber="396"
-  repo = repoxGetPropertyFromBuildInfo(project, buildNumber, 'buildInfo.env.ARTIFACTORY_DEPLOY_REPO')
+  buildnumber="396"
+  repo = repox_get_property_from_buildinfo(project, buildnumber, 'buildInfo.env.ARTIFACTORY_DEPLOY_REPO')
   assert repo == 'sonarsource-private-qa'
 
 def test_promote():
   project="sonar-dummy"
-  buildNumber="297"
-  status = promote(project, buildNumber, "false")  
+  buildnumber="297"
+  status = promote(project, buildnumber, "false")  
   assert status == 'status:release'
 
-def test_getArtifactsToPublish():
+def test_get_artifacts_to_publish():
   project="sonar-dummy"
-  buildNumber="297"
-  artifacts = getArtifactsToPublish(project,buildNumber)
+  buildnumber="297"
+  artifacts = get_artifacts_to_publish(project,buildnumber)
   assert artifacts == 'com.sonarsource.dummy:sonar-dummy-plugin:jar'
 
-def test_publishAllArtifacts():
+def test_publish_all_artifacts():
   artifacts = 'com.sonarsource.dummy:sonar-dummy-plugin:jar,com.sonarsource.cpp:sonar-cpp-plugin:jar'
   version='10.0.0.297'
-  print(publishAllArtifacts(artifacts,version))
+  print(publish_all_artifacts(artifacts,version,'repo'))
 
-def test_getVersion():
+def test_get_version():
   project="sonar-java"
-  buildNumber="20691"
-  version = getVersion(project,buildNumber)
+  buildnumber="20691"
+  version = get_version(project,buildnumber)
   print(version)
   
