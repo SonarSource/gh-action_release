@@ -134,7 +134,7 @@ def upload_to_binaries(binaries_repo,artifactory_repo,gid,aid,qual,ext,version):
   ssh_client.close()
 
 def find_buildnumber_from_sha1(sha1):  
-  query = f'build.properties.find({{"buildInfo.env.GIT_SHA1": "{sha1}"\}}).include("buildInfo.env.BUILD_NUMBER")'
+  query = f'build.properties.find({{"buildInfo.env.GIT_SHA1": "{sha1}"}}).include("buildInfo.env.BUILD_NUMBER")'
   url = f"{artifactory_url}/api/search/aql"
   headers = {'content-type': 'text/plain', 'X-JFrog-Art-Api': artifactory_apikey} 
   r = requests.post(url, data=query, headers=headers)      
