@@ -9,6 +9,7 @@ verify_ssl = true
 requests = "*"
 paramiko = "*"
 pytest = "*"
+scp = "*"
 
 [requires]
 python_version = "3.6"

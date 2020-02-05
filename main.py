@@ -4,9 +4,11 @@ import requests
 import json
 import urllib.request
 import paramiko
+from scp import SCPClient
+
 '''
 x Promote
-- Push to binaries
+x Push to binaries
 x Tag github
 notify burgr
 '''
@@ -15,6 +17,9 @@ artifactory_url='https://repox.jfrog.io/repox'
 binaries_host='binaries.sonarsource.com'
 binaries_url=f"https://{binaries_host}"
 artifactory_apikey=os.environ.get('ARTIFACTORY_API_KEY','no api key in env')  
+binaries_path_prefix='/tmp'
+passphrase=os.environ.get('GPG_PASSPHRASE','no GPG_PASSPHRASE in env')  
+  
 
 def main():
     my_input = os.environ["INPUT_MYINPUT"]
@@ -56,7 +61,7 @@ def publish_all_artifacts(artifacts,version,repo):
   artifacts_count = len(artifacts)   
   if artifacts_count == 1:
     print("only 1")
-    return publish_artifact(artifacts,version,repo)  
+    return publish_artifact(artifacts[0],version,repo)  
   release_url = ""
   print(f"{artifacts_count} artifacts")
   for i in range(0, artifacts_count):      
@@ -77,6 +82,7 @@ def publish_artifact(artifact_to_publish,version,repo):
   artifactory_repo = repo.replace('builds', 'releases')    
   print(f"{gid} {aid} {ext}")
   release_url = f"{binaries_url}/{binaries_repo}/{aid}/{aid}-{version}.{ext}" 
+  upload_to_binaries(binaries_repo,artifactory_repo,gid,aid,qual,ext,version)
   return release_url
 
 def promote(project,buildnumber,multi):
@@ -108,9 +114,8 @@ def promote(project,buildnumber,multi):
   else:
     return f"status:{status} code:{r.status_code}"   
 
+
 def upload_to_binaries(binaries_repo,artifactory_repo,gid,aid,qual,ext,version):
-  BINARIES_PATH_PREFIX=''
-  PASSPHRASE=''
   #download artifact
   gid_path=gid.replace(".", "/")
   artifactory=artifactory_url+"/"+artifactory_repo
@@ -118,19 +123,28 @@ def upload_to_binaries(binaries_repo,artifactory_repo,gid,aid,qual,ext,version):
   if qual:
     filename=f"{aid}-{version}-{qual}.{ext}"
   url=f"{artifactory}/{gid_path}/{aid}/{version}/{filename}"    
+  print(url)
   urllib.request.urlretrieve(url, filename)
+  print(f'donwloaded {filename}')
   #upload artifact
-  ssh_client =paramiko.SSHClient()
+  ssh_client=paramiko.SSHClient()
   ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-  ssh_client.connect(hostname=binaries_host,username='ssuopsa',password='password')
+  ssh_client.connect(hostname=binaries_host, username='ssuopsa', key_filename='id_rsa_ssuopsa')
   #create directory
-  stdin,stdout,stderr=ssh_client.exec_command(f"mkdir -p {BINARIES_PATH_PREFIX}/{binaries_repo}/{aid}/")
-  ftp_client=ssh_client.open_sftp()
+  directory=f"{binaries_path_prefix}/{binaries_repo}/{aid}/"
+  stdin,stdout,stderr=ssh_client.exec_command(f"mkdir -p {directory}")
+  print(f'created {directory}')
+  scp = SCPClient(ssh_client.get_transport())
+  print('scp connexion created')
   #upload file
-  ftp_client.put(filename,f"{BINARIES_PATH_PREFIX}/{binaries_repo}/{aid}/")
-  ftp_client.close()
+  scp.put(filename, remote_path=directory)
+  print(f'uploaded {filename} to {directory}')
+  scp.close()
   #sign file
-  stdin,stdout,stderr=ssh_client.exec_command(f"gpg --batch --passphrase {PASSPHRASE} --armor --detach-sig --default-key infra@sonarsource.com {filename}")
+  stdin,stdout,stderr=ssh_client.exec_command(f"gpg --batch --passphrase {passphrase} --armor --detach-sig --default-key infra@sonarsource.com {directory}/{filename}")
+  print(f'signed {directory}/{filename}')
+  stdin,stdout,stderr=ssh_client.exec_command(f"ls -al {directory}")
+  print(stdout.readlines())
   ssh_client.close()
 
 def find_buildnumber_from_sha1(sha1):  
