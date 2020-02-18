@@ -16,3 +16,4 @@ if __name__ == "__main__":
 
 def show_output(output):
   print(f"::set-output name=myOutput::{output}")
+  
