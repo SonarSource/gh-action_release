@@ -7,11 +7,11 @@ import json
 def main():
     my_input = os.environ["INPUT_MYINPUT"]
     my_output = f"Testing: {my_input}"
-    test(my_output)
+    show_output(my_output)
 
 
 if __name__ == "__main__":
     main()
 
-def test(output):
+def show_output(output):
   print(f"::set-output name=myOutput::{output}")

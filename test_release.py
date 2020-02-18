@@ -1,4 +1,4 @@
-from main import test
+from main import show_output
 
-def test_test():
-  test()
+def test_show_output():
+  show_output("bla bla")
