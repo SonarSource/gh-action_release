@@ -9,7 +9,7 @@ jobs:
         id: selftest
 
         # Put your action repo here
-        uses: SonarSource/gh-action_LT_release@master
+        uses: SonarSource/gh-action_LT_release@release
 
       - name: Check outputs
         run: |
