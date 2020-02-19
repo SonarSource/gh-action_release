@@ -9,4 +9,4 @@ COPY --from=build-env /app /app
 
 WORKDIR /app
 ENV PYTHONPATH=/app
-CMD ["python","main.py"]
+CMD ["main.py"]
