@@ -1,6 +1,6 @@
-name: "Python Container Action Template"
-description: "Get started with Python Container actions"
-author: "Jacob Tomlinson"
+name: "SonarSource LT release"
+description: "Release SonarSource LT projects"
+author: "Thomas Vérin"
 inputs:
   myInput:
     description: "Input to use"
