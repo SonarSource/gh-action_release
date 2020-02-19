@@ -9,7 +9,8 @@ def show_output(output):
 def main():
     function_url="https://us-central1-language-team.cloudfunctions.net/release"
     sha1=os.environ["GITHUB_SHA"]
-    url = f"{function_url}/{repos}/{sha1}/"
+    repo=os.environ["GITHUB_REPOSITORY"]
+    url = f"{function_url}/{repo}/{sha1}/"
     GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
     headers = {'Authorization': f"token {GITHUB_TOKEN}"}
     #r = requests.get(url, headers=headers)
