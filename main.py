@@ -13,7 +13,7 @@ def main():
     url = f"{function_url}/{repo}/{sha1}/"
     GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
     headers = {'Authorization': f"token {GITHUB_TOKEN}"}
-    #r = requests.get(url, headers=headers)
+    r = requests.get(url, headers=headers)
 
     show_output(url)
 
