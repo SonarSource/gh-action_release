@@ -42,7 +42,7 @@ def do_release(repo, sha1, headers):
 
 def check_releasability(repo, sha1, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
-    url=f"{function_url}/{repo}/{sha1}/"
+    url=f"{function_url}/{repo}/{sha1}"
     print(f"::debug '{url}'")
     return requests.get(url, headers=headers)
 
