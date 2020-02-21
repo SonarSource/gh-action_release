@@ -10,7 +10,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         # Put your action repo here
-        uses: SonarSource/gh-action_LT_release@release
+        uses: SonarSource/gh-action_LT_release@czurn/releasability
 
       - name: Check outputs
         run: |
