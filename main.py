@@ -18,7 +18,6 @@ def get_release_id(repo,tag):
   r=requests.get(url, headers=headers)
   releases=r.json()
   for release in releases:
-      print(f"::debug release: '{release}'")
       if not isinstance(release, str) and release.get('tag_name') == tag:
           return release.get('id')
   print(f"::error No release info found for tag '{tag}'.\nReleases: {releases}")
@@ -44,6 +43,7 @@ def do_release(repo, sha1, headers):
 def check_releasability(repo, sha1, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
     url=f"{function_url}/{repo}/{sha1}/"
+    print(f"::debug '{url}'")
     return requests.get(url, headers=headers)
 
 def print_releasability_details(data):
