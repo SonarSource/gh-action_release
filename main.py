@@ -10,7 +10,7 @@ def set_releasability_output(output):
 def set_release_output(output):
   print(f"::set-output name=release::{output}")
 
-def get_release_id(repo,tag):
+def get_release_info(repo,tag):
   tag=tag.replace('refs/tags/', '', 1)
   url=f"{githup_api_url}/repos/{repo}/releases"
   GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
@@ -19,30 +19,30 @@ def get_release_id(repo,tag):
   releases=r.json()
   for release in releases:
       if not isinstance(release, str) and release.get('tag_name') == tag:
-          return release.get('id')
+          return release
   print(f"::error No release info found for tag '{tag}'.\nReleases: {releases}")
   return None
 
 def revoke_release(repo):
   tag=os.environ["GITHUB_REF"]
-  release_id=get_release_id(repo,tag)
-  if not release_id:
+  release_info=get_release_info(repo,tag)
+  if not release_info or not release_info.get('id'):
       return None
-  url=f"{githup_api_url}/repos/{repo}/releases/{release_id}"
+  url=f"{githup_api_url}/repos/{repo}/releases/{release_info.get('id')}"
   GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
   headers = {'Authorization': f"token {GITHUB_TOKEN}"}
   payload = {'draft': True, 'tag_name': tag}
   r=requests.patch(url, json=payload, headers=headers)
   return r.json()
   
-def do_release(repo, sha1, headers):
+def do_release(repo, sha1, branch, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/release"
-    url=f"{function_url}/{repo}/{sha1}/"
+    url=f"{function_url}/{repo}/{branch}/{sha1}"
     return requests.get(url, headers=headers)
 
-def check_releasability(repo, sha1, headers):
+def check_releasability(repo, sha1, branch, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
-    url=f"{function_url}/{repo}/{sha1}"
+    url=f"{function_url}/{repo}/{branch}/{sha1}"
     print(f"::debug '{url}'")
     return requests.get(url, headers=headers)
 
@@ -72,11 +72,18 @@ def main():
     sha1=os.environ["GITHUB_SHA"]
     repo=os.environ["GITHUB_REPOSITORY"]
     github_token=os.environ["GITHUB_TOKEN"]
+    tag=os.environ["GITHUB_REF"]
     headers={'Authorization': f"token {github_token}"}
+    release_info=get_release_info(repo,tag)
 
-    r=check_releasability(repo, sha1, headers)
+    if not release_info:
+        print(f"::error  No release info found")
+        return
+
+    branch=release_info.get('target_commitish')
+    r=check_releasability(repo, sha1, branch, headers)
     if releasability_passed(r):
-        r=do_release(repo, sha1, headers)
+        r=do_release(repo, sha1, branch, headers)
         if r.status_code == 200:
             set_release_output(f"{repo}:{sha1} RELEASED")
         else:
