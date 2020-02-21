@@ -7,17 +7,23 @@ githup_api_url="https://api.github.com"
 def show_output(output):
   print(f"::set-output name=myOutput::{output}")
 
-def get_release_info(repo):
+def get_release_id(repo):
   tag=os.environ["GITHUB_REF"]
-  url=f"{githup_api_url}/repos/{repo}/releases/tags/{tag}"
+  url=f"{githup_api_url}/repos/{repo}/releases"
   GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
-  headers = {'Authorization': f"token {GITHUB_TOKEN}"}
-  r = requests.get(url, headers=headers)  
-  return r.json()
+  headers={'Authorization': f"token {GITHUB_TOKEN}"}
+  r=requests.get(url, headers=headers)
+  releases=r.json()
+  for release in releases:
+      if release.get('tag_name') == tag:
+          return release.get('id')
+  show_output(f"No release info found for tag '{tag}'");
+  return None
 
 def revoke_release(repo):
-  release_info=get_release_info(repo)
-  release_id=release_info['id']
+  release_id=get_release_id(repo)
+  if not release_id:
+      return None
   url=f"{githup_api_url}/repos/{repo}/releases/{release_id}"
   GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
   headers = {'Authorization': f"token {GITHUB_TOKEN}"}

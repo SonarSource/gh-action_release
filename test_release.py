@@ -1,10 +1,10 @@
 from main import show_output
-from main import get_release_info,revoke_release
+from main import get_release_id,revoke_release
 from unittest.mock import patch
 
 def test_get_release_id():
   with patch.dict('os.environ', {'GITHUB_REF': '10.3'}):
-    release=get_release_info("SonarSource/sonar-dummy")
+    release=get_release_id("SonarSource/sonar-dummy")
     print(release['name'])
     assert "23833527"==str(release['id'])
 
