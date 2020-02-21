@@ -8,6 +8,7 @@ def show_output(output):
   print(f"::set-output name=myOutput::{output}")
 
 def get_release_id(repo,tag):
+  tag=tag.replace('refs/tags/', '', 1)
   url=f"{githup_api_url}/repos/{repo}/releases"
   GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
   headers={'Authorization': f"token {GITHUB_TOKEN}"}

@@ -8,6 +8,11 @@ def test_get_release_id():
     assert "23844035" == str(release_id)
 
 
+def test_get_release_id_ref_tags():
+    release_id = get_release_id("SonarSource/sonar-dummy", "refs/tags/10.3")
+    assert "23844035" == str(release_id)
+
+
 def test_revoke_release():
     with patch.dict('os.environ', {'GITHUB_REF': '10.3'}):
         revoke = revoke_release("SonarSource/sonar-dummy")
