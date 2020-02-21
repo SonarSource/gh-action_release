@@ -4,8 +4,11 @@ import requests
 
 githup_api_url="https://api.github.com"
 
-def show_output(output):
-  print(f"::set-output name=myOutput::{output}")
+def set_releasability_output(output):
+  print(f"::set-output name=releasability::{output}")
+
+def set_release_output(output):
+  print(f"::set-output name=release::{output}")
 
 def get_release_id(repo,tag):
   tag=tag.replace('refs/tags/', '', 1)
@@ -15,10 +18,10 @@ def get_release_id(repo,tag):
   r=requests.get(url, headers=headers)
   releases=r.json()
   for release in releases:
-      show_output(f"release: '{release}'")
+      print(f"::debug release: '{release}'")
       if not isinstance(release, str) and release.get('tag_name') == tag:
-              return release.get('id')
-  show_output(f"No release info found for tag '{tag}'. Releases: {releases}")
+          return release.get('id')
+  print(f"::error No release info found for tag '{tag}'.\nReleases: {releases}")
   return None
 
 def revoke_release(repo):
@@ -44,13 +47,14 @@ def check_releasability(repo, sha1, headers):
     return requests.get(url, headers=headers)
 
 def print_releasability_details(data):
-    show_output(f"RELEASABILITY: {data.get('state')}")
+    message = f"RELEASABILITY: {data.get('state')}\n"
     checks=data.get('checks', [])
     for check in checks:
         msg=check.get('message', '')
         if msg:
             msg=f": {msg}"
-        show_output(f"{check.get('name')} - {check.get('state')}{msg}")
+        message+=f"{check.get('name')} - {check.get('state')}{msg}\n"
+    set_releasability_output(message)
 
 def releasability_passed(response):
     if response.status_code == 200:
@@ -60,7 +64,7 @@ def releasability_passed(response):
     return False
 
 def abort_release(repo):
-    show_output("Aborting release")
+    print(f"::error  Aborting release")
     revoke_release(repo)
     sys.exit(1)
 
@@ -74,11 +78,12 @@ def main():
     if releasability_passed(r):
         r=do_release(repo, sha1, headers)
         if r.status_code == 200:
-            show_output(f"{repo}:{sha1} RELEASED")
+            set_release_output(f"{repo}:{sha1} RELEASED")
         else:
-            show_output("Unexpected exception occurred while calling release cloud function")
+            print(f"::error Unexpected exception occurred while calling release cloud function")
             abort_release(repo)
     else:
+        print(f"::error  RELEASABILITY did not complete correctly")
         abort_release(repo)
     
 
