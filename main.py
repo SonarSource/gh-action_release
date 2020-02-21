@@ -13,8 +13,12 @@ def get_release_id(repo,tag):
   headers={'Authorization': f"token {GITHUB_TOKEN}"}
   r=requests.get(url, headers=headers)
   releases=r.json()
+  if len(releases) == 0:
+      show_output(f"No release found for repo: '{repo}'")
+      return None
+
   for release in releases:
-      show_output(f"release'{release}'")
+      show_output(f"release: '{release}'")
       if release.get('tag_name') == tag:
               return release.get('id')
   show_output(f"No release info found for tag '{tag}'")
