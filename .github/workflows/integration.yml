@@ -14,4 +14,5 @@ jobs:
 
       - name: Check outputs
         run: |
-          echo "${{ steps.selftest.outputs.myOutput }}" 
+          echo "${{ steps.selftest.outputs.releasability }}"
+          echo "${{ steps.selftest.outputs.release }}"

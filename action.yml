@@ -1,13 +1,11 @@
 name: "SonarSource LT release"
 description: "Release SonarSource LT projects"
 author: "Thomas Vérin"
-inputs:
-  myInput:
-    description: "Input to use"
-    default: "world"
 outputs:
-  myOutput:
-    description: "Output from the action"
+  releasability:
+    description: "Output from releasability gcp function checks"
+  release:
+    description: "Output from release gcp function checks"
 runs:
   using: "docker"
   image: "Dockerfile"
