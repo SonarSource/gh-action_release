@@ -10,28 +10,26 @@ def set_releasability_output(output):
 def set_release_output(output):
   print(f"::set-output name=release::{output}")
 
-def get_release_info(repo,tag):
-  tag=tag.replace('refs/tags/', '', 1)
+def get_release_info(repo, version):
   url=f"{githup_api_url}/repos/{repo}/releases"
   GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
   headers={'Authorization': f"token {GITHUB_TOKEN}"}
   r=requests.get(url, headers=headers)
   releases=r.json()
   for release in releases:
-      if not isinstance(release, str) and release.get('tag_name') == tag:
+      if not isinstance(release, str) and release.get('tag_name') == version:
           return release
-  print(f"::error No release info found for tag '{tag}'.\nReleases: {releases}")
+  print(f"::error No release info found for tag '{version}'.\nReleases: {releases}")
   return None
 
-def revoke_release(repo):
-  tag=os.environ["GITHUB_REF"]
-  release_info=get_release_info(repo,tag)
+def revoke_release(repo, version):
+  release_info=get_release_info(repo,version)
   if not release_info or not release_info.get('id'):
       return None
   url=f"{githup_api_url}/repos/{repo}/releases/{release_info.get('id')}"
   GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
   headers = {'Authorization': f"token {GITHUB_TOKEN}"}
-  payload = {'draft': True, 'tag_name': tag}
+  payload = {'draft': True, 'tag_name': version}
   r=requests.patch(url, json=payload, headers=headers)
   return r.json()
   
@@ -63,38 +61,38 @@ def releasability_passed(response):
         return data.get('state') == 'PASSED'
     return False
 
-def abort_release(repo):
+def abort_release(repo, version):
     print(f"::error  Aborting release")
-    revoke_release(repo)
+    revoke_release(repo, version)
     sys.exit(1)
 
 def main():    
     repo=os.environ["GITHUB_REPOSITORY"]
     github_token=os.environ["GITHUB_TOKEN"]
     tag=os.environ["GITHUB_REF"]
+    version=tag.replace('refs/tags/', '', 1)
     #tag shall be like X.X.X.BUILD_NUMBER
-    build_number=tag.split(".")[-1]
+    build_number=version.split(".")[-1]
     headers={'Authorization': f"token {github_token}"}
-    release_info=get_release_info(repo,tag)
+    release_info=get_release_info(repo,version)
 
     if not release_info:
         print(f"::error  No release info found")
         return
 
-    r=check_releasability(repo, tag, headers)
+    r=check_releasability(repo, version, headers)
     if releasability_passed(r):
         r=do_release(repo, build_number, headers)
         if r.status_code == 200:
-            set_release_output(f"{repo}:{sha1} RELEASED")
+            set_release_output(f"{repo}:{version} RELEASED")
         else:
             print(f"::error Unexpected exception occurred while calling release cloud function")
-            abort_release(repo)
+            abort_release(repo, version)
     else:
         print(f"::error  RELEASABILITY did not complete correctly")
-        abort_release(repo)
+        abort_release(repo, version)
     
 
 if __name__ == "__main__":
     main()
 
-  
