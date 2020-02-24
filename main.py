@@ -40,9 +40,9 @@ def do_release(repo, build_number, headers):
     url=f"{function_url}/{repo}/{build_number}"
     return requests.get(url, headers=headers)
 
-def check_releasability(repo, build_number, headers):
+def check_releasability(repo, version, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
-    url=f"{function_url}/{repo}/{build_number}"
+    url=f"{function_url}/{repo}/{version}"
     print(f"::debug '{url}'")
     return requests.get(url, headers=headers)
 
@@ -73,7 +73,7 @@ def main():
     github_token=os.environ["GITHUB_TOKEN"]
     tag=os.environ["GITHUB_REF"]
     #tag shall be like X.X.X.BUILD_NUMBER
-    build_number=tag.path.split(".")[-1]
+    build_number=tag.split(".")[-1]
     headers={'Authorization': f"token {github_token}"}
     release_info=get_release_info(repo,tag)
 
@@ -81,8 +81,7 @@ def main():
         print(f"::error  No release info found")
         return
 
-    branch=release_info.get('target_commitish')
-    r=check_releasability(repo, build_number, headers)
+    r=check_releasability(repo, tag, headers)
     if releasability_passed(r):
         r=do_release(repo, build_number, headers)
         if r.status_code == 200:
