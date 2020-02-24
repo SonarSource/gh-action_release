@@ -86,10 +86,10 @@ def main():
         if r.status_code == 200:
             set_release_output(f"{repo}:{version} RELEASED")
         else:
-            print(f"::error Unexpected exception occurred while calling release cloud function")
+            print(f"::error Unexpected exception occurred while calling release cloud function. Status '{r.status_code}': '{r.text}'")
             abort_release(repo, version)
     else:
-        print(f"::error  RELEASABILITY did not complete correctly")
+        print(f"::error  RELEASABILITY did not complete correctly. Status '{r.status_code}': '{r.text}'")
         abort_release(repo, version)
     
 
