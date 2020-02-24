@@ -35,14 +35,14 @@ def revoke_release(repo):
   r=requests.patch(url, json=payload, headers=headers)
   return r.json()
   
-def do_release(repo, sha1, branch, headers):
+def do_release(repo, build_number, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/release"
-    url=f"{function_url}/{repo}/{branch}/{sha1}"
+    url=f"{function_url}/{repo}/{build_number}"
     return requests.get(url, headers=headers)
 
-def check_releasability(repo, sha1, branch, headers):
+def check_releasability(repo, build_number, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
-    url=f"{function_url}/{repo}/{branch}/{sha1}"
+    url=f"{function_url}/{repo}/{build_number}"
     print(f"::debug '{url}'")
     return requests.get(url, headers=headers)
 
@@ -68,11 +68,12 @@ def abort_release(repo):
     revoke_release(repo)
     sys.exit(1)
 
-def main():
-    sha1=os.environ["GITHUB_SHA"]
+def main():    
     repo=os.environ["GITHUB_REPOSITORY"]
     github_token=os.environ["GITHUB_TOKEN"]
     tag=os.environ["GITHUB_REF"]
+    #tag shall be like X.X.X.BUILD_NUMBER
+    build_number=tag.path.split(".")[-1]
     headers={'Authorization': f"token {github_token}"}
     release_info=get_release_info(repo,tag)
 
@@ -81,9 +82,9 @@ def main():
         return
 
     branch=release_info.get('target_commitish')
-    r=check_releasability(repo, sha1, branch, headers)
+    r=check_releasability(repo, build_number, headers)
     if releasability_passed(r):
-        r=do_release(repo, sha1, branch, headers)
+        r=do_release(repo, build_number, headers)
         if r.status_code == 200:
             set_release_output(f"{repo}:{sha1} RELEASED")
         else:
