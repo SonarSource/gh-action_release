@@ -31,6 +31,9 @@ def revoke_release(repo, version):
   headers = {'Authorization': f"token {GITHUB_TOKEN}"}
   payload = {'draft': True, 'tag_name': version}
   r=requests.patch(url, json=payload, headers=headers)
+  #delete tag
+  url=f"{githup_api_url}/repos/{repo}/git/refs/tags/{version}"
+  requests.delete(url, headers=headers)
   return r.json()
   
 def do_release(repo, build_number, headers):
