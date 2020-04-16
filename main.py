@@ -36,11 +36,13 @@ def revoke_release(repo, version):
 def do_release(repo, build_number, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/release"
     url=f"{function_url}/{repo}/{build_number}"
+    if os.environ["ATTACH_ARTIFACTS_TO_GITHUB_RELEASE"] == "true":
+      url=url+"?attach=true"
     return requests.get(url, headers=headers)
 
 def check_releasability(repo, version, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
-    url=f"{function_url}/{repo}/{version}"
+    url=f"{function_url}/{repo}/{version}"    
     print(f"::debug '{url}'")
     return requests.get(url, headers=headers)
 

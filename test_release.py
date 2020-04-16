@@ -3,13 +3,13 @@ from unittest.mock import patch
 import re
 
 def test_get_release_id():
-    release_info = get_release_info("SonarSource/sonar-dummy", "10.3")
+    release_info = get_release_info("SonarSource/sonar-dummy", "10.0.0.422")
     assert "23844035" == str(release_info.get('id'))
 
 
 def test_revoke_release():
-    with patch.dict('os.environ', {'GITHUB_REF': '10.3'}):
-        revoke = revoke_release("SonarSource/sonar-dummy", "10.3")
+    with patch.dict('os.environ', {'GITHUB_REF': '10.0.0.422'}):
+        revoke = revoke_release("SonarSource/sonar-dummy", "10.0.0.422")
         print(str(revoke))
         assert revoke['draft']
 
