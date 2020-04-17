@@ -3,6 +3,8 @@ import os
 import requests
 
 githup_api_url="https://api.github.com"
+github_token=os.environ.get('GITHUB_TOKEN','no github token in env')
+attach=os.environ.get('ATTACH_ARTIFACTS_TO_GITHUB_RELEASE','false')
 
 def set_releasability_output(output):
   print(f"::set-output name=releasability::{output}")
@@ -11,9 +13,8 @@ def set_release_output(output):
   print(f"::set-output name=release::{output}")
 
 def get_release_info(repo, version):
-  url=f"{githup_api_url}/repos/{repo}/releases"
-  GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
-  headers={'Authorization': f"token {GITHUB_TOKEN}"}
+  url=f"{githup_api_url}/repos/{repo}/releases"  
+  headers={'Authorization': f"token {github_token}"}
   r=requests.get(url, headers=headers)
   releases=r.json()
   for release in releases:
@@ -26,9 +27,8 @@ def revoke_release(repo, version):
   release_info=get_release_info(repo,version)
   if not release_info or not release_info.get('id'):
       return None
-  url=f"{githup_api_url}/repos/{repo}/releases/{release_info.get('id')}"
-  GITHUB_TOKEN=os.environ["GITHUB_TOKEN"]
-  headers = {'Authorization': f"token {GITHUB_TOKEN}"}
+  url=f"{githup_api_url}/repos/{repo}/releases/{release_info.get('id')}"  
+  headers = {'Authorization': f"token {github_token}"}
   payload = {'draft': True, 'tag_name': version}
   r=requests.patch(url, json=payload, headers=headers)
   #delete tag
@@ -38,8 +38,8 @@ def revoke_release(repo, version):
   
 def do_release(repo, build_number, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/release"
-    url=f"{function_url}/{repo}/{build_number}"
-    if os.environ["ATTACH_ARTIFACTS_TO_GITHUB_RELEASE"] == "true":
+    url=f"{function_url}/{repo}/{build_number}"    
+    if attach == "true":
       url=url+"?attach=true"
     return requests.get(url, headers=headers)
 
@@ -73,7 +73,6 @@ def abort_release(repo, version):
 
 def main():    
     repo=os.environ["GITHUB_REPOSITORY"]
-    github_token=os.environ["GITHUB_TOKEN"]
     tag=os.environ["GITHUB_REF"]
     version=tag.replace('refs/tags/', '', 1)
     #tag shall be like X.X.X.BUILD_NUMBER
