@@ -5,12 +5,13 @@ import requests
 githup_api_url="https://api.github.com"
 github_token=os.environ.get('GITHUB_TOKEN','no github token in env')
 attach=os.environ.get('ATTACH_ARTIFACTS_TO_GITHUB_RELEASE','false')
+distribute = os.environ.get('INPUT_DISTRIBUTE')
 
 def set_releasability_output(output):
   print(f"::set-output name=releasability::{output}")
 
-def set_release_output(output):
-  print(f"::set-output name=release::{output}")
+def set_release_output(function, output):
+  print(f"::set-output name={function}::{output}")
 
 def get_release_info(repo, version):
   url=f"{githup_api_url}/repos/{repo}/releases"  
@@ -43,6 +44,11 @@ def do_release(repo, build_number, headers):
       url=url+"?attach=true"
     return requests.get(url, headers=headers)
 
+def do_distribute(repo, build_number, headers):
+    function_url="https://us-central1-language-team.cloudfunctions.net/distribute_release"
+    url=f"{function_url}/{repo}/{build_number}"
+    return requests.get(url, headers=headers)
+
 def check_releasability(repo, version, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
     url=f"{function_url}/{repo}/{version}"    
@@ -71,7 +77,15 @@ def abort_release(repo, version):
     revoke_release(repo, version)
     sys.exit(1)
 
-def main():    
+def validate_gcf_call(response, repo, version, function):
+    if response.status_code == 200:
+        set_release_output(function, f"{repo}:{version} {function} DONE")
+    else:
+        print(
+            f"::error Unexpected exception occurred while calling {function} cloud function. Status '{response.status_code}': '{response.text}'")
+        abort_release(repo, version)
+
+def main():
     repo=os.environ["GITHUB_REPOSITORY"]
     tag=os.environ["GITHUB_REF"]
     version=tag.replace('refs/tags/', '', 1)
@@ -87,15 +101,13 @@ def main():
     r=check_releasability(repo, version, headers)
     if releasability_passed(r):
         r=do_release(repo, build_number, headers)
-        if r.status_code == 200:
-            set_release_output(f"{repo}:{version} RELEASED")
-        else:
-            print(f"::error Unexpected exception occurred while calling release cloud function. Status '{r.status_code}': '{r.text}'")
-            abort_release(repo, version)
+        validate_gcf_call(r, repo, version, "release ...")
+        if distribute == 'true':
+            r=do_distribute(repo, build_number, headers)
+            validate_gcf_call(r, repo, version, "distribute_release")
     else:
         print(f"::error  RELEASABILITY did not complete correctly. Status '{r.status_code}': '{r.text}'")
         abort_release(repo, version)
-    
 
 if __name__ == "__main__":
     main()
