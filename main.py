@@ -4,8 +4,9 @@ import requests
 
 githup_api_url="https://api.github.com"
 github_token=os.environ.get('GITHUB_TOKEN','no github token in env')
-attach=os.environ.get('ATTACH_ARTIFACTS_TO_GITHUB_RELEASE','false')
+attach=os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
 distribute = os.environ.get('INPUT_DISTRIBUTE')
+run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
 
 def set_releasability_output(output):
   print(f"::set-output name=releasability::{output}")
@@ -40,8 +41,12 @@ def revoke_release(repo, version):
 def do_release(repo, build_number, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/release"
     url=f"{function_url}/{repo}/{build_number}"    
+    separator='?'
     if attach == "true":
-      url=url+"?attach=true"
+      url=url+f"{separator}attach=true"
+      separator='%'
+    if run_rules_cov == 'true':
+      url=url+f"{separator}run_rules_cov=true"
     return requests.get(url, headers=headers)
 
 def do_distribute(repo, build_number, headers):
@@ -104,7 +109,7 @@ def main():
         validate_gcf_call(r, repo, version, "release ...")
         if distribute == 'true':
             r=do_distribute(repo, build_number, headers)
-            validate_gcf_call(r, repo, version, "distribute_release")
+            validate_gcf_call(r, repo, version, "distribute_release")        
     else:
         print(f"::error  RELEASABILITY did not complete correctly. Status '{r.status_code}': '{r.text}'")
         abort_release(repo, version)
