@@ -1,11 +1,18 @@
 name: "SonarSource LT release"
 description: "Release SonarSource LT projects"
 author: "Thomas Vérin"
+inputs:
+  distribute:
+    description: "Flag to enable distribute_release gcp function"
+    default: 'false'
+    required: false
 outputs:
   releasability:
     description: "Output from releasability gcp function checks"
   release:
     description: "Output from release gcp function checks"
+  distribute_release:
+    description: "Output from distribute_release gcp function checks"
 runs:
   using: "docker"
   image: "Dockerfile"
