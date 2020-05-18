@@ -2,8 +2,16 @@ name: "SonarSource LT release"
 description: "Release SonarSource LT projects"
 author: "Thomas Vérin"
 inputs:
+  attach_artifacts_to_github_release:
+    description: "Flag to enable attachment of artifacts to the github release"
+    default: 'false'
+    required: false
   distribute:
     description: "Flag to enable distribute_release gcp function"
+    default: 'false'
+    required: false
+  run_rules_cov:
+    description: "Flag to enable running the rules-cov program for languages plugin"
     default: 'false'
     required: false
 outputs:
