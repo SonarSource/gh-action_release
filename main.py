@@ -41,13 +41,12 @@ def revoke_release(repo, version):
 def do_release(repo, build_number, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/release"
     url=f"{function_url}/{repo}/{build_number}"    
-    separator='?'
+    params={}
     if attach == "true":
-      url=url+f"{separator}attach=true"
-      separator='%'
+      params['attach']='true'
     if run_rules_cov == 'true':
-      url=url+f"{separator}run_rules_cov=true"
-    return requests.get(url, headers=headers)
+      params['run_rules_cov']='true'
+    return requests.get(url, params=params, headers=headers)
 
 def do_distribute(repo, build_number, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/distribute_release"
