@@ -100,7 +100,7 @@ def main():
 
     if not release_info:
         print(f"::error  No release info found")
-        return
+        sys.exit(1)
 
     r=check_releasability(repo, version, headers)
     if releasability_passed(r):
