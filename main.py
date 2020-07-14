@@ -1,9 +1,11 @@
+import json
 import sys
 import os
 import requests
 
 githup_api_url="https://api.github.com"
 github_token=os.environ.get('GITHUB_TOKEN','no github token in env')
+github_event_path=os.environ.get('GITHUB_EVENT_PATH')
 attach=os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
 distribute = os.environ.get('INPUT_DISTRIBUTE')
 run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
@@ -55,9 +57,13 @@ def do_distribute(repo, build_number, headers):
 
 def check_releasability(repo, version, headers):
     function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
-    url=f"{function_url}/{repo}/{version}"    
-    print(f"::debug '{url}'")
-    return requests.get(url, headers=headers)
+    url=f"{function_url}/{repo}/{version}"
+    params = {}
+    branch = current_branch()
+    if branch is not 'master':
+        params['branch'] = branch
+    print(f"::debug '{url}' with params '{params}'")
+    return requests.get(url, params=params, headers=headers)
 
 def print_releasability_details(data):
     message = f"RELEASABILITY: {data.get('state')}\n"
@@ -88,6 +94,19 @@ def validate_gcf_call(response, repo, version, function):
         print(
             f"::error Unexpected exception occurred while calling {function} cloud function. Status '{response.status_code}': '{response.text}'")
         abort_release(repo, version)
+
+
+def current_branch():
+    with open(github_event_path) as file:
+        data = json.load(file)
+        if 'release' not in data:
+            print(f"::error Could not get release object of github event")
+            return None
+        if 'target_commitish' not in data['release']:
+            print(f"::error Could not get the branch name of github event")
+            return None
+        return data['release']['target_commitish']
+
 
 def main():
     repo=os.environ["GITHUB_REPOSITORY"]
