@@ -1,99 +1,36 @@
 import json
 import sys
 import os
-import requests
+import traceback
 
-githup_api_url="https://api.github.com"
-github_token=os.environ.get('GITHUB_TOKEN','no github token in env')
-github_event_path=os.environ.get('GITHUB_EVENT_PATH')
-attach=os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
+import steps.distribute as distributeStep
+from steps import release, relesability
+from steps.distribute import ReleaseRequest
+from utils.artifactory import Artifactory
+from utils.github import revoke_release, get_release_info
+
+githup_api_url = "https://api.github.com"
+github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
+github_event_path = os.environ.get('GITHUB_EVENT_PATH')
+attach = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
 distribute = os.environ.get('INPUT_DISTRIBUTE')
 run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
 
+artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
+
+
 def set_releasability_output(output):
-  print(f"::set-output name=releasability::{output}")
+    print(f"::set-output name=releasability::{output}")
+
 
 def set_release_output(function, output):
-  print(f"::set-output name={function}::{output}")
+    print(f"::set-output name={function}::{output}")
 
-def get_release_info(repo, version):
-  url=f"{githup_api_url}/repos/{repo}/releases"  
-  headers={'Authorization': f"token {github_token}"}
-  r=requests.get(url, headers=headers)
-  releases=r.json()
-  for release in releases:
-      if not isinstance(release, str) and release.get('tag_name') == version:
-          return release
-  print(f"::error No release info found for tag '{version}'.\nReleases: {releases}")
-  return None
-
-def revoke_release(repo, version):
-  release_info=get_release_info(repo,version)
-  if not release_info or not release_info.get('id'):
-      return None
-  url=f"{githup_api_url}/repos/{repo}/releases/{release_info.get('id')}"  
-  headers = {'Authorization': f"token {github_token}"}
-  payload = {'draft': True, 'tag_name': version}
-  r=requests.patch(url, json=payload, headers=headers)
-  #delete tag
-  url=f"{githup_api_url}/repos/{repo}/git/refs/tags/{version}"
-  requests.delete(url, headers=headers)
-  return r.json()
-  
-def do_release(repo, build_number, headers):
-    function_url="https://us-central1-language-team.cloudfunctions.net/release"
-    url=f"{function_url}/{repo}/{build_number}"    
-    params={}
-    if attach == "true":
-      params['attach']='true'
-    if run_rules_cov == 'true':
-      params['run_rules_cov']='true'
-    return requests.get(url, params=params, headers=headers)
-
-def do_distribute(repo, build_number, headers):
-    function_url="https://us-central1-language-team.cloudfunctions.net/distribute_release"
-    url=f"{function_url}/{repo}/{build_number}"
-    return requests.get(url, headers=headers)
-
-def check_releasability(repo, version, headers):
-    function_url="https://us-central1-language-team.cloudfunctions.net/releasability_check"
-    url=f"{function_url}/{repo}/{version}"
-    params = {}
-    branch = current_branch()
-    if branch is not 'master':
-        params['branch'] = branch
-    print(f"::debug '{url}' with params '{params}'")
-    return requests.get(url, params=params, headers=headers)
-
-def print_releasability_details(data):
-    message = f"RELEASABILITY: {data.get('state')}\n"
-    checks=data.get('checks', [])
-    for check in checks:
-        msg=check.get('message', '')
-        if msg:
-            msg=f": {msg}"
-        message+=f"{check.get('name')} - {check.get('state')}{msg}\n"
-    set_releasability_output(message)
-
-def releasability_passed(response):
-    if response.status_code == 200:
-        data=response.json()
-        print_releasability_details(data)
-        return data.get('state') == 'PASSED'
-    return False
 
 def abort_release(repo, version):
     print(f"::error  Aborting release")
     revoke_release(repo, version)
     sys.exit(1)
-
-def validate_gcf_call(response, repo, version, function):
-    if response.status_code == 200:
-        set_release_output(function, f"{repo}:{version} {function} DONE")
-    else:
-        print(
-            f"::error Unexpected exception occurred while calling {function} cloud function. Status '{response.status_code}': '{response.text}'")
-        abort_release(repo, version)
 
 
 def current_branch():
@@ -109,29 +46,40 @@ def current_branch():
 
 
 def main():
-    repo=os.environ["GITHUB_REPOSITORY"]
-    tag=os.environ["GITHUB_REF"]
-    version=tag.replace('refs/tags/', '', 1)
-    #tag shall be like X.X.X.BUILD_NUMBER
-    build_number=version.split(".")[-1]
-    headers={'Authorization': f"token {github_token}"}
-    release_info=get_release_info(repo,version)
+    repo = os.environ["GITHUB_REPOSITORY"]
+    organisation, project = repo.split("/")
+    tag = os.environ["GITHUB_REF"]
+    version = tag.replace('refs/tags/', '', 1)
+    # tag shall be like X.X.X.BUILD_NUMBER
+    build_number = version.split(".")[-1]
+    headers = {'Authorization': f"token {github_token}"}
+    release_info = get_release_info(repo, version)
 
     if not release_info:
         print(f"::error  No release info found")
         return
 
-    r=check_releasability(repo, version, headers)
-    if releasability_passed(r):
-        r=do_release(repo, build_number, headers)
-        validate_gcf_call(r, repo, version, "release ...")
+    try:
+        relesability.releasability_checks(project, version, current_branch())
+    except Exception as e:
+        print(f"::error relesability did not complete correctly. " + str(e))
+        print(traceback.format_exc())
+        sys.exit(1)
+
+    artifactory = Artifactory(artifactory_apikey)
+    rr = ReleaseRequest(organisation, project, build_number)
+
+    try:
+        release.release(artifactory, rr, attach, run_rules_cov)
+        set_release_output("release", f"{repo}:{version} release DONE")
         if distribute == 'true':
-            r=do_distribute(repo, build_number, headers)
-            validate_gcf_call(r, repo, version, "distribute_release")        
-    else:
-        print(f"::error  RELEASABILITY did not complete correctly. Status '{r.status_code}': '{r.text}'")
+            distributeStep.distribute_release(artifactory, rr)
+            set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
+    except Exception as e:
+        print(f"::error release did not complete correctly." + str(e))
         abort_release(repo, version)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
-
