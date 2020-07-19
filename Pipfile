@@ -5,10 +5,18 @@ verify_ssl = true
 
 [dev-packages]
 pylint = "*"
+pytest = "*"
+responses = "*"
 
 [packages]
 requests = "*"
-pytest = "*"
+urllib3 = "*"
+polling = "*"
+flask = "*"
+paramiko = "*"
+scp = "*"
+atomicwrites = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.7"
