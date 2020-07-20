@@ -1,4 +1,3 @@
-import json
 import os
 import sys
 
@@ -10,7 +9,6 @@ from utils.github import revoke_release, get_release_info
 
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
-github_event_path = os.environ.get('GITHUB_EVENT_PATH')
 attach = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
 distribute = os.environ.get('INPUT_DISTRIBUTE')
 run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
@@ -32,18 +30,6 @@ def abort_release(repo, version):
   sys.exit(1)
 
 
-def current_branch():
-  with open(github_event_path) as file:
-    data = json.load(file)
-    if 'release' not in data:
-      print(f"::error Could not get release object of github event")
-      return None
-    if 'target_commitish' not in data['release']:
-      print(f"::error Could not get the branch name of github event")
-      return None
-    return data['release']['target_commitish']
-
-
 def main():
   repo = os.environ["GITHUB_REPOSITORY"]
   organisation, project = repo.split("/")
@@ -51,7 +37,6 @@ def main():
   version = tag.replace('refs/tags/', '', 1)
   # tag shall be like X.X.X.BUILD_NUMBER
   build_number = version.split(".")[-1]
-  headers = {'Authorization': f"token {github_token}"}
   release_info = get_release_info(repo, version)
 
   if not release_info:

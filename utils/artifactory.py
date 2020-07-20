@@ -128,10 +128,10 @@ class BuildInfo:
   def get_artifacts_to_publish(self):
     artifacts = None
     try:
-      artifacts = self.json.get_module_property('artifactsToPublish')
+      artifacts = self.get_module_property('artifactsToPublish')
     except:
       try:
-        artifacts = self.json.get_property('buildInfo.env.ARTIFACTS_TO_PUBLISH')
+        artifacts = self.get_property('buildInfo.env.ARTIFACTS_TO_PUBLISH')
       except:
         print("no artifacts to publish")
     return artifacts
