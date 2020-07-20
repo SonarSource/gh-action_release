@@ -61,10 +61,10 @@ class Artifactory:
       params = {
         'buildName': release_request.project,
         'buildNumber': release_request.buildnumber,
-        'src1': 'sonarsource - private - builds',
-        'target1': 'sonarsource - private - releases',
-        'src2': 'sonarsource - public - builds',
-        'target2': 'sonarsource - public - releases',
+        'src1': 'sonarsource-private-builds',
+        'target1': 'sonarsource-private-releases',
+        'src2': 'sonarsource-public-builds',
+        'target2': 'sonarsource-public-releases',
         'status': status
       }
       url = f"{artifactory_url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
