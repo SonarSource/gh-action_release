@@ -61,11 +61,3 @@ def publish_artifact(artifactory, artifact_to_publish, version, repo):
     filename = f"{aid}-{version}-{qual}.{ext}"
   tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version)
   return upload(tempfile, filename, aid, version)
-
-
-def check_public(buildinfo):
-  artifacts = buildinfo.get_artifacts_to_publish()
-  if artifacts:
-    return "org.sonarsource" in artifacts
-  else:
-    return False
