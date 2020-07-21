@@ -41,12 +41,17 @@ class Artifactory:
     except requests.exceptions.HTTPError as err:
       print(f"Failed to distribute {project}#{buildnumber} {err}")
 
-  def promote(self, release_request, buildinfo):
+  def promote(self, release_request, buildinfo, revoke=False):
     status = 'released'
 
     repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO')
-    sourcerepo = repo.replace('qa', 'builds')
-    targetrepo = repo.replace('qa', 'releases')
+    if revoke:
+      sourcerepo = repo.replace('qa', 'releases')
+      targetrepo = repo.replace('qa', 'builds')
+      status="it-passed"
+    else:
+      sourcerepo = repo.replace('qa', 'builds')
+      targetrepo = repo.replace('qa', 'releases')
 
     print(f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to {targetrepo}")
 
@@ -55,12 +60,25 @@ class Artifactory:
       params = {
         'buildName': release_request.project,
         'buildNumber': release_request.buildnumber,
-        'src1': 'sonarsource-private-builds',
-        'target1': 'sonarsource-private-releases',
-        'src2': 'sonarsource-public-builds',
-        'target2': 'sonarsource-public-releases',
         'status': status
       }
+      moreparams=None
+      if revoke:
+        moreparams = {
+          'src1': 'sonarsource-private-builds',
+          'target1': 'sonarsource-private-releases',
+          'src2': 'sonarsource-public-builds',
+          'target2': 'sonarsource-public-releases',
+        }
+      else:
+        moreparams = {
+          'src1': 'sonarsource-private-releases',
+          'target1': 'sonarsource-private-builds',
+          'src2': 'sonarsource-public-releases',
+          'target2': 'sonarsource-public-builds',
+        }
+      params.update(moreparams)
+      
       url = f"{self.url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
         "{!s}={!r}".format(key, val) for (key, val) in params.items())
       r = requests.get(url, headers=self.headers)

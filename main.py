@@ -5,6 +5,7 @@ import steps.distribute as distributeStep
 from steps import release
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
+from utils.bintray import Bintray
 from utils.github import revoke_release, get_release_info
 
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
@@ -13,6 +14,12 @@ distribute = os.environ.get('INPUT_DISTRIBUTE')
 run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
 
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
+
+bintray_api_url='https://api.bintray.com'
+bintray_user=os.environ.get('BINTRAY_USER','no bintray api user in env')  
+bintray_apikey=os.environ.get('BINTRAY_TOKEN','no bintray api key in env')  
+central_user=os.environ.get('CENTRAL_USER','no central user in env')  
+central_password=os.environ.get('CENTRAL_PASSWORD','no central password in env')  
 
 
 def set_releasability_output(output):
@@ -50,13 +57,14 @@ def main():
   #     sys.exit(1)
 
   artifactory = Artifactory(artifactory_apikey)
+  bintray = Bintray(bintray_api_url,bintray_user,bintray_apikey,central_user,central_password)
   rr = ReleaseRequest(organisation, project, build_number)
 
   try:
     release.release(artifactory, rr, attach, run_rules_cov)
     set_release_output("release", f"{repo}:{version} release DONE")
     if distribute == 'true':
-      distributeStep.distribute_release(artifactory, rr)
+      distributeStep.distribute_release(artifactory, bintray, rr, version)
       set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
   except Exception as e:
     print(f"::error release did not complete correctly." + str(e))
