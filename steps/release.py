@@ -23,6 +23,14 @@ def release(artifactory: Artifactory, release_request: ReleaseRequest, attach_to
     print(f"Error during the release for {release_request.project} {release_request.buildnumber} {str(e)}")
     raise e
 
+def revoke(artifactory: Artifactory, release_request: ReleaseRequest):
+  buildinfo = artifactory.receive_build_info(release_request)
+  try:
+    artifactory.promote(release_request, buildinfo, True)
+  except Exception as e:
+    print(f"Error could not unpromote {release_request.project} {release_request.buildnumber} {str(e)}")
+    raise e
+
 
 def publish_all_artifacts(artifactory, release_request, buildinfo):
   print(f"publishing artifacts for {release_request.project}#{release_request.buildnumber}")
