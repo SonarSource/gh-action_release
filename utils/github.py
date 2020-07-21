@@ -1,53 +1,53 @@
-import os
 import json
 import requests
 
-githup_api_url = "https://api.github.com"
-github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
-github_event_path = os.environ.get('GITHUB_EVENT_PATH')
-attach_to_github_release = None
-run_rules_cov = None
+class GitHub:
+
+  github_api_url: str
+  github_token: str
+  github_event: {}
+
+  def __init__(self, github_api_url, github_token, github_event_path):
+    with open(github_event_path) as file:
+      self.github_event = json.load(file)
+    self.github_token = github_token
+    self.github_api_url = github_api_url
 
 
-def get_release_info(repo: str, version):
-  with open(github_event_path) as file:
-    data = json.load(file)
-    if data["release"].get('tag_name') == version:
-      return data["release"]
-    else:
+  def release_info(self, version = None) -> {}:
+      if version is None:
+        return self.github_event["release"]
+      elif self.github_event["release"].get('tag_name') == version:
+        return self.github_event["release"]
+      else:
+        return None
+
+  def repository_full_name(self) -> str:
+    return self.github_event["repository"]["full_name"]
+
+  def repository_info(self):
+    return self.github_event["repository"]
+
+  def current_branch(self):
+    return self.release_info()['target_commitish']
+
+  def attach_asset_to_release(self, file_path, filename):
+    files = {'upload_file': open(file_path, 'rb')}
+    upload_url = self.release_info().get('upload_url').replace('{?name,label}', f"?name={filename}")
+    print(upload_url)
+    headers = {'Authorization': f"token {self.github_token}"}
+    r = requests.post(upload_url, files=files, headers=headers)
+    return r
+
+  def revoke_release(self):
+    if not self.release_info().get('id'):
       return None
-
-
-def attach_asset_to_github_release(release_info, file_path, filename):
-  files = {'upload_file': open(file_path, 'rb')}
-  upload_url = release_info.get('upload_url').replace('{?name,label}', f"?name={filename}")
-  print(upload_url)
-  headers = {'Authorization': f"token {github_token}"}
-  r = requests.post(upload_url, files=files, headers=headers)
-  return r
-
-
-def revoke_release(repo, version):
-  release_info = get_release_info(repo, version)
-  if not release_info or not release_info.get('id'):
-    return None
-  url = f"{githup_api_url}/repos/{repo}/releases/{release_info.get('id')}"
-  headers = {'Authorization': f"token {github_token}"}
-  payload = {'draft': True, 'tag_name': version}
-  r = requests.patch(url, json=payload, headers=headers)
-  # delete tag
-  url = f"{githup_api_url}/repos/{repo}/git/refs/tags/{version}"
-  requests.delete(url, headers=headers)
-  return r.json()
-
-
-def current_branch():
-  with open(github_event_path) as file:
-    data = json.load(file)
-    if 'release' not in data:
-      print(f"::error Could not get release object of github event")
-      return None
-    if 'target_commitish' not in data['release']:
-      print(f"::error Could not get the branch name of github event")
-      return None
-    return data['release']['target_commitish']
+    version = self.release_info()["tag_name"]
+    url = self.repository_info().get("releases_url").replace("{/id}", self.release_info().get('id'))
+    headers = {'Authorization': f"token {self.github_token}"}
+    payload = {'draft': True, 'tag_name': version}
+    r = requests.patch(url, json=payload, headers=headers)
+    # delete tag
+    url = f"{self.github_api_url}/repos/{self.repository_full_name()}/git/refs/tags/{version}"
+    requests.delete(url, headers=headers)
+    return r.json()
