@@ -23,9 +23,7 @@ class Binaries:
     self.binaries_ssh_key = binaries_ssh_key
 
   def upload(self, tempfile, filename, gid, aid, version):
-    binaries_repo = OSS_REPO
-    if gid.startswith('com.'):
-      binaries_repo = COMMERCIAL_REPO
+    binaries_repo = get_binaries_repo(gid)
 
     if aid == "sonar-application":
       filename = f"sonarqube-{version}.zip"
@@ -65,6 +63,28 @@ class Binaries:
     ssh_client.close()
     return release_url
 
+  def delete(self, tempfile, filename, gid, aid, version):
+    binaries_repo = get_binaries_repo(gid)
+
+    if aid == "sonar-application":
+      filename = f"sonarqube-{version}.zip"
+      aid = "sonarqube"
+
+    # delete artifact
+    ssh_client = paramiko.SSHClient()
+    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh_client.connect(hostname=binaries_host, username=ssh_user, key_filename=ssh_key)
+    
+    directory = f"{binaries_path_prefix}/{binaries_repo}/{aid}"
+    self.exec_ssh_command(ssh_client, f"rm {directory}/{filename}*")
+    print(f'deleted {directory}/{filename}*')
+    ssh_client.close()
+
+  def get_binaries_repo(self, gid):
+    if gid.startswith('com.'):
+      return COMMERCIAL_REPO
+    else:
+      return OSS_REPO
 
   def exec_ssh_command(self, ssh_client, command):
     stdin, stdout, stderr = ssh_client.exec_command(command)
