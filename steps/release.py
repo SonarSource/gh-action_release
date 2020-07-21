@@ -60,4 +60,4 @@ def publish_artifact(artifactory, artifact_to_publish, version, repo):
   if qual:
     filename = f"{aid}-{version}-{qual}.{ext}"
   tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version)
-  return upload(tempfile, filename, aid, version)
+  return upload(tempfile, filename, gid, aid, version)
