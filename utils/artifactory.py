@@ -1,25 +1,21 @@
-# repox
 import json
 import urllib
-
 import requests
-
-artifactory_url = 'https://repox.jfrog.io/repox'
-AUTHENTICATED = "authenticated"
-COMMERCIAL_REPO = "CommercialDistribution"
-bintray_target_repo = "SonarQube-bintray"
 
 
 class Artifactory:
+
+  url = 'https://repox.jfrog.io/repox'
   api_key = None
   headers = {'content-type': 'application/json'}
+  bintray_target_repo = "SonarQube-bintray"
 
   def __init__(self, api_key: str):
     self.api_key = api_key
     self.headers['X-JFrog-Art-Api'] = api_key
 
   def receive_build_info(self, release_request):
-    url = f"{artifactory_url}/api/build/{release_request.project}/{release_request.buildnumber}"
+    url = f"{self.url}/api/build/{release_request.project}/{release_request.buildnumber}"
     r = requests.get(url, headers=self.headers)
     buildinfo = r.json()
     if r.status_code == 200:
@@ -32,17 +28,16 @@ class Artifactory:
   def distribute_build(self, project, buildnumber):
     print(f"Distributing {project}#{buildnumber} to bintray")
     payload = {
-      "targetRepo": bintray_target_repo,
+      "targetRepo": self.bintray_target_repo,
       "sourceRepos": ["sonarsource-public-releases"],
       "async": "true"  # maybe?
     }
-    url = f"{artifactory_url}/api/build/distribute/{project}/{buildnumber}"
+    url = f"{self.url}/api/build/distribute/{project}/{buildnumber}"
     try:
       r = requests.post(url, json=payload, headers=self.headers)
       r.raise_for_status()
       if r.status_code == 200:
-        print(
-          f"{project}#{buildnumber} pushed to bintray ready to sync to central")
+        print(f"{project}#{buildnumber} pushed to bintray ready to sync to central")
     except requests.exceptions.HTTPError as err:
       print(f"Failed to distribute {project}#{buildnumber} {err}")
 
@@ -53,8 +48,7 @@ class Artifactory:
     sourcerepo = repo.replace('qa', 'builds')
     targetrepo = repo.replace('qa', 'releases')
 
-    print(
-      f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to {targetrepo}")
+    print(f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to {targetrepo}")
 
     if buildinfo.is_multi():
       print(f"Promoting multi repositories")
@@ -67,11 +61,11 @@ class Artifactory:
         'target2': 'sonarsource-public-releases',
         'status': status
       }
-      url = f"{artifactory_url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
+      url = f"{self.url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
         "{!s}={!r}".format(key, val) for (key, val) in params.items())
       r = requests.get(url, headers=self.headers)
     else:
-      url = f"{artifactory_url}/api/build/promote/{release_request.project}/{release_request.buildnumber}"
+      url = f"{self.url}/api/build/promote/{release_request.project}/{release_request.buildnumber}"
       json_payload = {
         "status": f"{status}",
         "sourceRepo": f"{sourcerepo}",
@@ -82,12 +76,10 @@ class Artifactory:
       raise Exception(f"Promotion failed with code: {r.status_code}. Response was: {r.text}")
 
   def download(self, artifactory_repo, gid, aid, qual, ext, version):
-    # download artifact
     gid_path = gid.replace(".", "/")
     if gid.startswith('com.'):
       artifactory_repo = artifactory_repo.replace('public', 'private')
-      binaries_repo = COMMERCIAL_REPO
-    artifactory = artifactory_url + "/" + artifactory_repo
+    artifactory = self.url + "/" + artifactory_repo
 
     filename = f"{aid}-{version}.{ext}"
     if qual:

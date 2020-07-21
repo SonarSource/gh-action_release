@@ -7,7 +7,6 @@ from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.github import revoke_release, get_release_info
 
-githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 attach = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
 distribute = os.environ.get('INPUT_DISTRIBUTE')

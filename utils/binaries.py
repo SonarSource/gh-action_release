@@ -4,6 +4,7 @@ import paramiko
 from scp import SCPClient
 
 OSS_REPO = "Distribution"
+COMMERCIAL_REPO = "CommercialDistribution"
 
 binaries_path_prefix = os.environ.get('PATH_PREFIX', '/tmp')
 passphrase = os.environ.get('GPG_PASSPHRASE', 'no GPG_PASSPHRASE in env')
@@ -14,8 +15,14 @@ ssh_user = 'ssuopsa'
 ssh_key = 'id_rsa_ssuopsa'
 
 
-def upload(tempfile, filename, aid, version):
+def upload(tempfile, filename, gid, aid, version):
   binaries_repo = OSS_REPO
+  if gid.startswith('com.'):
+    binaries_repo = COMMERCIAL_REPO
+
+  if aid == "sonar-application":
+    filename = f"sonarqube-{version}.zip"
+    aid = "sonarqube"
 
   # upload artifact
   ssh_client = paramiko.SSHClient()
