@@ -1,7 +1,9 @@
-FROM python:3-slim AS build-env
+FROM python:3.7-slim AS build-env
 ADD . /app
 WORKDIR /app
 RUN pip install --upgrade pip
+RUN pip install pipenv
+RUN pipenv lock --requirements > requirements.txt
 RUN pip install --target=/app -r requirements.txt
 
 FROM gcr.io/distroless/python3-debian10
