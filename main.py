@@ -6,10 +6,13 @@ from steps import release
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.bintray import Bintray
-from utils.github import revoke_release, get_release_info
+from utils.github import GitHub
 
+githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
-attach = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
+github_event_path = os.environ.get('GITHUB_EVENT_PATH')
+github_attach = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
+
 distribute = os.environ.get('INPUT_DISTRIBUTE')
 run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
 
@@ -30,9 +33,9 @@ def set_release_output(function, output):
   print(f"::set-output name={function}::{output}")
 
 
-def abort_release(repo, version):
+def abort_release(github: GitHub):
   print(f"::error  Aborting release")
-  revoke_release(repo, version)
+  github.revoke_release()
   sys.exit(1)
 
 
@@ -43,8 +46,10 @@ def main():
   version = tag.replace('refs/tags/', '', 1)
   # tag shall be like X.X.X.BUILD_NUMBER
   build_number = version.split(".")[-1]
-  release_info = get_release_info(repo, version)
 
+  github = GitHub(githup_api_url, github_token, github_event_path)
+
+  release_info = github.release_info(version)
   if not release_info:
     print(f"::error  No release info found")
     return
@@ -61,14 +66,14 @@ def main():
   rr = ReleaseRequest(organisation, project, build_number)
 
   try:
-    release.release(artifactory, rr, attach, run_rules_cov)
+    release.release(artifactory, rr, github_attach, run_rules_cov)
     set_release_output("release", f"{repo}:{version} release DONE")
     if distribute == 'true':
       distributeStep.distribute_release(artifactory, bintray, rr, version)
       set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
   except Exception as e:
     print(f"::error release did not complete correctly." + str(e))
-    abort_release(repo, version)
+    abort_release(github)
     sys.exit(1)
 
 
