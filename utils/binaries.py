@@ -48,7 +48,7 @@ class Binaries:
       directory = f"{binaries_path_prefix}/{binaries_repo}/{aid}"
       release_url = f"{self.binaries_url}/{binaries_repo}/{aid}/{filename}"
     # create directory
-    self.exec_ssh_command(self.ssh_client, f"mkdir -p {directory}")
+    self.exec_ssh_command(f"mkdir -p {directory}")
     print(f'created {directory}')
     scp = SCPClient(self.ssh_client.get_transport())
     print('scp connexion created')
@@ -59,11 +59,10 @@ class Binaries:
     # SonarLint Eclipse is also unzipped on binaries for compatibility with P2 client
     if aid == "org.sonarlint.eclipse.site":
       sle_unzip_dir = f"{directory}/{version}"
-      self.exec_ssh_command(self.ssh_client, f"mkdir -p {sle_unzip_dir}")
-      self.exec_ssh_command(self.ssh_client, f"cd {sle_unzip_dir} && unzip ../org.sonarlint.eclipse.site-{version}.zip")
+      self.exec_ssh_command(f"mkdir -p {sle_unzip_dir}")
+      self.exec_ssh_command(f"cd {sle_unzip_dir} && unzip ../org.sonarlint.eclipse.site-{version}.zip")
     # sign file
-    self.exec_ssh_command(self.ssh_client,
-                     f"gpg --batch --passphrase {passphrase} --armor --detach-sig --default-key infra@sonarsource.com {directory}/{filename}")
+    self.exec_ssh_command(f"gpg --batch --passphrase {passphrase} --armor --detach-sig --default-key infra@sonarsource.com {directory}/{filename}")
     print(f'signed {directory}/{filename}')
     self.ssh_client.close()
     return release_url
@@ -79,7 +78,7 @@ class Binaries:
     self.ssh_client.connect(hostname=self.binaries_host, username=self.binaries_ssh_user, pkey=self.private_ssh_key)
     
     directory = f"{binaries_path_prefix}/{binaries_repo}/{aid}"
-    self.exec_ssh_command(self.ssh_client, f"rm {directory}/{filename}*")
+    self.exec_ssh_command(f"rm {directory}/{filename}*")
     print(f'deleted {directory}/{filename}*')
     self.ssh_client.close()
 
@@ -89,8 +88,8 @@ class Binaries:
     else:
       return OSS_REPO
 
-  def exec_ssh_command(self, ssh_client, command):
-    stdin, stdout, stderr = ssh_client.exec_command(command)
+  def exec_ssh_command(self, command):
+    stdin, stdout, stderr = self.ssh_client.exec_command(command)
     stdout_contents = '\n'.join(stdout.readlines())
     print(f"stdout: {stdout_contents}")
     stderr_contents = '\n'.join(stderr.readlines())
