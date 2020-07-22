@@ -1,8 +1,9 @@
 import os
 import sys
 
-import steps.distribute as distributeStep
-from steps import release
+from steps.distribute import distribute_release
+from steps.release import release
+from steps.relesability import releasability_checks
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.binaries import Binaries
@@ -58,12 +59,11 @@ def main():
     print(f"::error  No release info found")
     return
 
-  # try:
-  #     relesability.releasability_checks(project, version, current_branch())
-  # except Exception as e:
-  #     print(f"::error relesability did not complete correctly. " + str(e))
-  #     print(traceback.format_exc())
-  #     sys.exit(1)
+  try:
+    releasability_checks(project, version, github.current_branch())
+  except Exception as e:
+    print(f"::error relesability did not complete correctly. " + str(e))
+    sys.exit(1)
 
   artifactory = Artifactory(artifactory_apikey)
   bintray = Bintray(bintray_api_url,bintray_user,bintray_apikey,central_user,central_password)
@@ -71,10 +71,10 @@ def main():
   rr = ReleaseRequest(organisation, project, build_number)
 
   try:
-    release.release(artifactory, binaries, rr, github_attach, run_rules_cov)
+    release(artifactory, binaries, rr, github_attach, run_rules_cov)
     set_release_output("release", f"{repo}:{version} release DONE")
     if distribute == 'true':
-      distributeStep.distribute_release(artifactory, bintray, rr, version)
+      distribute_release(artifactory, bintray, rr, version)
       set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
   except Exception as e:
     print(f"::error release did not complete correctly." + str(e))
