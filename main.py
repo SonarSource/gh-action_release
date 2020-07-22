@@ -5,6 +5,7 @@ import steps.distribute as distributeStep
 from steps import release
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
+from utils.binaries import Binaries
 from utils.bintray import Bintray
 from utils.github import GitHub
 
@@ -24,6 +25,9 @@ bintray_apikey=os.environ.get('BINTRAY_TOKEN','no bintray api key in env')
 central_user=os.environ.get('CENTRAL_USER','no central user in env')  
 central_password=os.environ.get('CENTRAL_PASSWORD','no central password in env')  
 
+binaries_host = 'binaries.sonarsource.com'
+binaries_ssh_user=os.environ.get('RELEASE_SSH_USER','no ssh user in env')
+binaries_ssh_key=os.environ.get('RELEASE_SSH_KEY','no ssh key in env')
 
 def set_releasability_output(output):
   print(f"::set-output name=releasability::{output}")
@@ -63,10 +67,11 @@ def main():
 
   artifactory = Artifactory(artifactory_apikey)
   bintray = Bintray(bintray_api_url,bintray_user,bintray_apikey,central_user,central_password)
+  binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
   rr = ReleaseRequest(organisation, project, build_number)
 
   try:
-    release.release(artifactory, rr, github_attach, run_rules_cov)
+    release.release(artifactory, binaries, rr, github_attach, run_rules_cov)
     set_release_output("release", f"{repo}:{version} release DONE")
     if distribute == 'true':
       distributeStep.distribute_release(artifactory, bintray, rr, version)
