@@ -43,7 +43,7 @@ class GitHub:
     if not self.release_info().get('id'):
       return None
     version = self.release_info()["tag_name"]
-    url = self.repository_info().get("releases_url").replace("{/id}", self.release_info().get('id'))
+    url = self.repository_info().get("releases_url").replace("{/id}", str(self.release_info().get('id')))
     headers = {'Authorization': f"token {self.github_token}"}
     payload = {'draft': True, 'tag_name': version}
     r = requests.patch(url, json=payload, headers=headers)
