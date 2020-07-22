@@ -15,26 +15,31 @@ class Binaries:
   binaries_url: str
   binaries_ssh_user: str
   binaries_ssh_key: str
+  ssh_client=None
+  private_ssh_key = None
+    
 
   def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str):
     self.binaries_host = binaries_host
     self.binaries_url = f"https://{binaries_host}"
     self.binaries_ssh_user = binaries_ssh_user
     self.binaries_ssh_key = binaries_ssh_key
+    self.ssh_client = paramiko.SSHClient()
+    self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    self.private_ssh_key = paramiko.RSAKey.from_private_key(StringIO(self.binaries_ssh_key))
+    
+    
 
   def upload(self, tempfile, filename, gid, aid, version):
-    binaries_repo = get_binaries_repo(gid)
+    binaries_repo = self.get_binaries_repo(gid)
 
     if aid == "sonar-application":
       filename = f"sonarqube-{version}.zip"
       aid = "sonarqube"
 
-    private_ssh_key = paramiko.RSAKey.from_private_key(StringIO(self.binaries_ssh_key))
-
+    self.ssh_client.connect(hostname=self.binaries_host, username=self.binaries_ssh_user, pkey=self.private_ssh_key)
+    
     # upload artifact
-    ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh_client.connect(hostname=self.binaries_host, username=self.binaries_ssh_user, pkey=private_ssh_key)
     # SonarLint Eclipse is uploaded to a special directory
     if aid == "org.sonarlint.eclipse.site":
       directory = f"{binaries_path_prefix}/SonarLint-for-Eclipse/releases"
@@ -43,9 +48,9 @@ class Binaries:
       directory = f"{binaries_path_prefix}/{binaries_repo}/{aid}"
       release_url = f"{self.binaries_url}/{binaries_repo}/{aid}/{filename}"
     # create directory
-    self.exec_ssh_command(ssh_client, f"mkdir -p {directory}")
+    self.exec_ssh_command(self.ssh_client, f"mkdir -p {directory}")
     print(f'created {directory}')
-    scp = SCPClient(ssh_client.get_transport())
+    scp = SCPClient(self.ssh_client.get_transport())
     print('scp connexion created')
     # upload file to binaries
     scp.put(tempfile, remote_path=directory)
@@ -54,31 +59,29 @@ class Binaries:
     # SonarLint Eclipse is also unzipped on binaries for compatibility with P2 client
     if aid == "org.sonarlint.eclipse.site":
       sle_unzip_dir = f"{directory}/{version}"
-      self.exec_ssh_command(ssh_client, f"mkdir -p {sle_unzip_dir}")
-      self.exec_ssh_command(ssh_client, f"cd {sle_unzip_dir} && unzip ../org.sonarlint.eclipse.site-{version}.zip")
+      self.exec_ssh_command(self.ssh_client, f"mkdir -p {sle_unzip_dir}")
+      self.exec_ssh_command(self.ssh_client, f"cd {sle_unzip_dir} && unzip ../org.sonarlint.eclipse.site-{version}.zip")
     # sign file
-    self.exec_ssh_command(ssh_client,
+    self.exec_ssh_command(self.ssh_client,
                      f"gpg --batch --passphrase {passphrase} --armor --detach-sig --default-key infra@sonarsource.com {directory}/{filename}")
     print(f'signed {directory}/{filename}')
-    ssh_client.close()
+    self.ssh_client.close()
     return release_url
 
   def delete(self, tempfile, filename, gid, aid, version):
-    binaries_repo = get_binaries_repo(gid)
+    binaries_repo = self.get_binaries_repo(gid)
 
     if aid == "sonar-application":
       filename = f"sonarqube-{version}.zip"
       aid = "sonarqube"
 
     # delete artifact
-    ssh_client = paramiko.SSHClient()
-    ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh_client.connect(hostname=binaries_host, username=ssh_user, key_filename=ssh_key)
+    self.ssh_client.connect(hostname=self.binaries_host, username=self.binaries_ssh_user, pkey=self.private_ssh_key)
     
     directory = f"{binaries_path_prefix}/{binaries_repo}/{aid}"
-    self.exec_ssh_command(ssh_client, f"rm {directory}/{filename}*")
+    self.exec_ssh_command(self.ssh_client, f"rm {directory}/{filename}*")
     print(f'deleted {directory}/{filename}*')
-    ssh_client.close()
+    self.ssh_client.close()
 
   def get_binaries_repo(self, gid):
     if gid.startswith('com.'):
