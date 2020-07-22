@@ -38,9 +38,10 @@ def set_release_output(function, output):
   print(f"::set-output name={function}::{output}")
 
 
-def abort_release(github: GitHub):
+def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, release, rr: ReleaseRequest ):
   print(f"::error  Aborting release")
   github.revoke_release()
+  release.revoke_release(artifactory,binaries, rr)
   sys.exit(1)
 
 
@@ -77,8 +78,8 @@ def main():
       distribute_release(artifactory, bintray, rr, version)
       set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
   except Exception as e:
-    print(f"::error release did not complete correctly." + str(e))
-    abort_release(github)
+    print(f"::error release did not complete correctly." + str(e))    
+    abort_release(github, artifactory, binaries, release,rr)
     sys.exit(1)
 
 
