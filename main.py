@@ -78,7 +78,7 @@ def main():
       distribute_release(artifactory, bintray, rr, version)
       set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
   except Exception as e:
-    print(f"::error release did not complete correctly." + str(e))    
+    print(f"::error release did not complete correctly." + str(e))
     abort_release(github, artifactory, binaries, rr)
     sys.exit(1)
 
