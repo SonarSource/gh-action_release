@@ -18,6 +18,7 @@ jobs:
         uses: VaultVulp/action-pipenv@v2.0.1
         with:
           command: install -d
-      - name: Run Unittest
-        run: |
-          pipenv run python -m unittest
+      - name: Test
+        uses: VaultVulp/action-pipenv@v2.0.1
+        with:
+          command: run python -m unittest
