@@ -20,4 +20,4 @@ jobs:
           command: install -d
       - name: Run Unittest
         run: |
-          python -m unittest
+          pipenv run python -m unittest
