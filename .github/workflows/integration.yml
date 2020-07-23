@@ -28,7 +28,7 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
           RELEASE_SSH_USER: ${{ secrets.RELEASE_SSH_USER }}
-          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_USER }}
+          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}
         # Put your action repo here
         uses: SonarSource/gh-action_LT_release@tom/802
 
