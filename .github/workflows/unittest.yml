@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.7]
-    runs-on: ubuntu-latest
+    run-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
