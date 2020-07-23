@@ -18,6 +18,8 @@ github_attach = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
 distribute = os.environ.get('INPUT_DISTRIBUTE')
 run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
 
+distribute = os.environ.get('INPUT_TEST',False)
+
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
 
 bintray_api_url='https://api.bintray.com'
@@ -42,6 +44,7 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
   print(f"::error  Aborting release")
   github.revoke_release()
   release.revoke_release(artifactory,binaries, rr)
+  set_release_output("release", f"{rr.project}:{rr.build_number} revoked")
   sys.exit(1)
 
 
@@ -79,9 +82,34 @@ def main():
       set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
   except Exception as e:
     print(f"::error release did not complete correctly." + str(e))    
-    abort_release(github, artifactory, binaries, release,rr)
+    abort_release(github, artifactory, binaries, release, rr)
+    sys.exit(1)
+
+def test():
+  repo = "sonar-dummy"
+  organisation = "SonarSource"
+  project = "sonar-dummy"
+  version = "10.0.0.529"
+  # tag shall be like X.X.X.BUILD_NUMBER
+  build_number = version.split(".")[-1]
+
+  github = GitHub(githup_api_url, github_token, github_event_path)
+
+  artifactory = Artifactory(artifactory_apikey)
+  #bintray = Bintray(bintray_api_url,bintray_user,bintray_apikey,central_user,central_password)
+  binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
+  rr = ReleaseRequest(organisation, project, build_number)
+
+  try:
+    abort_release(github, artifactory, binaries, release, rr)    
+  except Exception as e:
+    print(f"::error release did not complete correctly." + str(e))
     sys.exit(1)
 
 
+
 if __name__ == "__main__":
-  main()
+  if test:
+    test()
+  else:
+    main()
