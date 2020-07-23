@@ -67,7 +67,7 @@ class Binaries:
     self.ssh_client.close()
     return release_url
 
-  def delete(self, tempfile, filename, gid, aid, version):
+  def delete(self, filename, gid, aid, version):
     binaries_repo = self.get_binaries_repo(gid)
 
     if aid == "sonar-application":
