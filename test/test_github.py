@@ -8,7 +8,7 @@ from utils.github import GitHub
 class TestGitHub(unittest.TestCase):
 
   def setUp(self) -> None:
-    self.github = GitHub("http://localhost", "ABCE", "payload.json")
+    self.github = GitHub("http://localhost", "ABCE", "test/payload.json")
 
   def test_branch(self):
     self.assertEqual(self.github.current_branch(), "branch-1.0")
