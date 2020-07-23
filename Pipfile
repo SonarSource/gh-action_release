@@ -17,6 +17,7 @@ paramiko = "*"
 scp = "*"
 atomicwrites = "*"
 pyyaml = "*"
+pytest = "*"
 
 [requires]
 python_version = "3.7"
