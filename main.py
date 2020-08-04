@@ -41,24 +41,8 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
   print(f"::error  Aborting release")
   #github.revoke_release()
   revoke_release(artifactory,binaries, rr)
-  set_release_output("release", f"{rr.project}:{rr.build_number} revoked")
+  set_release_output("release", f"{rr.project}:{rr.buildnumber} revoked")
   sys.exit(1)
-
-  artifactory = Artifactory(artifactory_apikey)
-  bintray = Bintray(bintray_api_url,bintray_user,bintray_apikey,central_user,central_password)
-  binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
-  rr = ReleaseRequest(organisation, project, build_number)
-
-  try:
-    release(artifactory, binaries, rr, github_attach, run_rules_cov)
-    set_release_output("release", f"{repo}:{version} release DONE")
-    if distribute == 'true':
-      distribute_release(artifactory, bintray, rr, version)
-      set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
-  except Exception as e:
-    print(f"::error release did not complete correctly." + str(e))
-    abort_release(github)
-    sys.exit(1)
 
 def main():
   repo = os.environ["GITHUB_REPOSITORY"]
