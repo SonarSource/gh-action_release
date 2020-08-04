@@ -41,9 +41,8 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
   print(f"::error  Aborting release")
   #github.revoke_release()
   revoke_release(artifactory,binaries, rr)
-  set_release_output("release", f"{rr.project}:{rr.build_number} revoked")
+  set_release_output("release", f"{rr.project}:{rr.buildnumber} revoked")
   sys.exit(1)
-
 
 def main():
   repo = os.environ["GITHUB_REPOSITORY"]
