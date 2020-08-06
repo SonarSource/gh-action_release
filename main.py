@@ -13,10 +13,10 @@ from utils.github import GitHub
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 github_event_path = os.environ.get('GITHUB_EVENT_PATH')
-github_attach = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
+github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
 
-distribute = os.environ.get('INPUT_DISTRIBUTE')
-run_rules_cov = os.environ.get('INPUT_RUN_RULES_COV')
+distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
+run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
 
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
 
@@ -73,7 +73,7 @@ def main():
   try:
     release(artifactory, binaries, rr, github_attach, run_rules_cov)
     set_release_output("release", f"{repo}:{version} release DONE")
-    if distribute == 'true':
+    if distribute:
       distribute_release(artifactory, bintray, rr, version)
       set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
   except Exception as e:

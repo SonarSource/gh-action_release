@@ -5,7 +5,7 @@ from utils.cirrus import rules_cov
 
 revoke = True
 
-def release(artifactory: Artifactory, binaries, release_request: ReleaseRequest, attach_to_github_release, run_rules_cov):
+def release(artifactory: Artifactory, binaries, release_request: ReleaseRequest, attach_to_github_release: bool, run_rules_cov: bool):
   if attach_to_github_release:
     print("Attaching artifacts to github release")
   else:
