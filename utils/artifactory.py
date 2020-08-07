@@ -113,9 +113,10 @@ class Artifactory:
       aid = "sonarqube"
     tempfile = f"/tmp/{filename}"
     urllib.request.urlretrieve(url, tempfile)
+    print(f'downloaded {tempfile}')
     for checksum in (checksums or []):
       urllib.request.urlretrieve(f"{url}.{checksum}", f"{tempfile}.{checksum}")
-    print(f'downloaded {tempfile}')
+      print(f'downloaded {tempfile}.{checksum}')
     return tempfile
 
 
