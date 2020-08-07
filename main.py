@@ -17,6 +17,7 @@ github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE')
 
 distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
 run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
+upload_checksums: bool = os.environ.get('INPUT_UPLOAD_CHECKSUMS').lower() == "true"
 
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
 
@@ -68,6 +69,8 @@ def main():
   artifactory = Artifactory(artifactory_apikey)
   bintray = Bintray(bintray_api_url,bintray_user,bintray_apikey,central_user,central_password)
   binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
+  if upload_checksums:
+    binaries.enable_checksum_upload()
   rr = ReleaseRequest(organisation, project, build_number)
 
   try:

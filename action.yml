@@ -14,6 +14,10 @@ inputs:
     description: "Flag to enable running the rules-cov program for languages plugin"
     default: 'false'
     required: false
+  upload_checksums:
+    description: "Flag to enable the upload of checksums to binaries"
+    default: 'false'
+    required: false
   test:
     description: "Flag to enable tests"
     default: 'false'
