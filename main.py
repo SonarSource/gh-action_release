@@ -3,17 +3,21 @@ import sys
 
 from steps.distribute import distribute_release
 from steps.release import release, revoke_release
-from steps.relesability import releasability_checks
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.binaries import Binaries
 from utils.bintray import Bintray
+from utils.burgr import Burgr
 from utils.github import GitHub
 
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 github_event_path = os.environ.get('GITHUB_EVENT_PATH')
 github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
+
+burgrx_url = 'https://burgrx.sonarsource.com'
+burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
+burgrx_password = os.environ.get('BURGRX_PASSWORD', 'no burgrx password in env')
 
 distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
 run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
@@ -59,9 +63,12 @@ def main():
   if not release_info:
     print(f"::error  No release info found")
     return
+  
+  rr = ReleaseRequest(organisation, project, build_number)
+  burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, rr)
 
   try:
-    releasability_checks(project, version, github.current_branch())
+    burgr.releasability_checks(version, github.current_branch())
   except Exception as e:
     print(f"::error relesability did not complete correctly. " + str(e))
     sys.exit(1)
@@ -71,7 +78,6 @@ def main():
   binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
   if upload_checksums:
     binaries.enable_checksum_upload()
-  rr = ReleaseRequest(organisation, project, build_number)
 
   try:
     release(artifactory, binaries, rr, github_attach, run_rules_cov)

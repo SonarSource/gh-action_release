@@ -1,11 +1,17 @@
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
-from utils.burgr import notify_burgr
+from utils.binaries import Binaries
+from utils.burgr import Burgr
 from utils.cirrus import rules_cov
 
 revoke = True
 
-def release(artifactory: Artifactory, binaries, release_request: ReleaseRequest, attach_to_github_release: bool, run_rules_cov: bool):
+def release(artifactory: Artifactory,
+            binaries: Binaries,
+            release_request: ReleaseRequest,
+            burgr: Burgr,
+            attach_to_github_release: bool,
+            run_rules_cov: bool):
   if attach_to_github_release:
     print("Attaching artifacts to github release")
   else:
@@ -15,11 +21,11 @@ def release(artifactory: Artifactory, binaries, release_request: ReleaseRequest,
   try:
     artifactory.promote(release_request, buildinfo)
     publish_all_artifacts(artifactory, binaries, release_request, buildinfo)
-    notify_burgr(release_request, buildinfo, 'passed')
+    burgr.notify(buildinfo, 'passed')
     if run_rules_cov:
       rules_cov(release_request, buildinfo)
   except Exception as e:
-    notify_burgr(release_request, buildinfo, 'failed')
+    burgr.notify(buildinfo, 'failed')
     print(f"Error during the release for {release_request.project} {release_request.buildnumber} {str(e)}")
     raise e
 

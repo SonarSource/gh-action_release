@@ -40,3 +40,19 @@ class BuildInfo:
         if current != ref:
           return True
     return False
+
+  def is_public(self):
+    artifacts = self.get_artifacts_to_publish()
+    if artifacts:
+      return "org.sonarsource" in artifacts
+    else:
+      return False
+
+  def get_package(self):
+    allartifacts = self.get_artifacts_to_publish()
+    artifacts = allartifacts.split(",")
+    artifacts_count = len(artifacts)
+    if artifacts_count > 0:
+      artifact = artifacts[0].split(":")
+      return artifact[0]
+    return None
