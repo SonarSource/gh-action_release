@@ -17,6 +17,7 @@ class Binaries:
   binaries_ssh_key: str
   ssh_client=None
   private_ssh_key = None
+  upload_checksums = []
     
 
   def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str):
@@ -28,7 +29,10 @@ class Binaries:
     self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     self.private_ssh_key = paramiko.RSAKey.from_private_key(StringIO(self.binaries_ssh_key))
     
-    
+  def enable_checksum_upload(self, checksums = None):
+    if checksums is None:
+      checksums = ["md5", "sha1", "sha256"]
+    self.upload_checksums = checksums
 
   def upload(self, tempfile, filename, gid, aid, version):
     binaries_repo = self.get_binaries_repo(gid)
@@ -55,6 +59,9 @@ class Binaries:
     # upload file to binaries
     scp.put(tempfile, remote_path=directory)
     print(f'uploaded {tempfile} to {directory}')
+    for checksum in self.upload_checksums:
+      scp.put(f'{tempfile}.{checksum}', remote_path=directory)
+      print(f'uploaded {tempfile}.{checksum} to {directory}')
     scp.close()
     # SonarLint Eclipse is also unzipped on binaries for compatibility with P2 client
     if aid == "org.sonarlint.eclipse.site":

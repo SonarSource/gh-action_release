@@ -80,5 +80,5 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
   if revoke:
     binaries.delete(filename, gid, aid, version)
   else: 
-    tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version)
+    tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
     return binaries.upload(tempfile, filename, gid, aid, version)
