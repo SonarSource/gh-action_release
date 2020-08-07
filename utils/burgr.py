@@ -103,7 +103,7 @@ class Burgr:
 
     url = f"{self.url}/api/commitPipelinesStages"
     url_params = {
-      "project": urllib.parse.quote(f"SonarSource/{self.release_request.project}", safe=''),
+      "project": urllib.parse.quote(f"{self.release_request.org}/{self.release_request.project}", safe=''),
       "branch": branch,
       "nbOfCommits": nb_of_commits,
       "startAtCommit": 0
@@ -126,7 +126,7 @@ class Burgr:
       raise e
 
   def get_latest_releasability_stage(self, response: Response, version: str, check_releasable: bool = True) -> bool:
-    print("Polling releasability status...")
+    print(f"Polling releasability status... {response.url}")
 
     if response.status_code != 200:
       raise Exception(f"Error occurred while trying to retrieve current releasability status: {response}")
