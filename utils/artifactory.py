@@ -93,7 +93,7 @@ class Artifactory:
     if not r.ok:
       raise Exception(f"Promotion failed with code: {r.status_code}. Response was: {r.text}")
 
-  def download(self, artifactory_repo, gid, aid, qual, ext, version):
+  def download(self, artifactory_repo, gid, aid, qual, ext, version, checksums = None):
     gid_path = gid.replace(".", "/")
     if gid.startswith('com.'):
       artifactory_repo = artifactory_repo.replace('public', 'private')
@@ -113,6 +113,8 @@ class Artifactory:
       aid = "sonarqube"
     tempfile = f"/tmp/{filename}"
     urllib.request.urlretrieve(url, tempfile)
+    for checksum in (checksums or []):
+      urllib.request.urlretrieve(f"{url}.{checksum}", f"{tempfile}.{checksum}")
     print(f'downloaded {tempfile}')
     return tempfile
 
