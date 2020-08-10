@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-import urllib
 import polling
 import requests
 from polling import TimeoutException
@@ -103,7 +102,7 @@ class Burgr:
 
     url = f"{self.url}/api/commitPipelinesStages"
     url_params = {
-      "project": urllib.parse.quote(f"{self.release_request.org}/{self.release_request.project}", safe=''),
+      "project": f"{self.release_request.org}/{self.release_request.project}",
       "branch": branch,
       "nbOfCommits": nb_of_commits,
       "startAtCommit": 0
