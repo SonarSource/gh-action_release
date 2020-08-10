@@ -80,7 +80,7 @@ def main():
     binaries.enable_checksum_upload()
 
   try:
-    release(artifactory, binaries, rr, github_attach, run_rules_cov)
+    release(artifactory, binaries, rr, burgr, github_attach, run_rules_cov)
     set_release_output("release", f"{repo}:{version} release DONE")
     if distribute:
       distribute_release(artifactory, bintray, rr, version)
