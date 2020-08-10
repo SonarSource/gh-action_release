@@ -128,7 +128,8 @@ class Burgr:
     print(f"Polling releasability status... {response.url}")
 
     if response.status_code != 200:
-      raise Exception(f"Error occurred while trying to retrieve current releasability status: {response}")
+      raise Exception(f"Error occurred while trying to retrieve current releasability status: "
+                      f"({response.status_code}) {response.text}")
 
     commits_info = response.json()
     if len(commits_info) == 0:
