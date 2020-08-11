@@ -14,7 +14,6 @@ burgrx_password = os.environ.get('BURGRX_PASSWORD', 'no burgrx password in env')
 
 distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
 run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
-upload_checksums: bool = os.environ.get('INPUT_UPLOAD_CHECKSUMS').lower() == "true"
 
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
 distribute_target = os.environ.get('INPUT_DISTRIBUTE_TARGET')

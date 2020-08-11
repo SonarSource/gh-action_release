@@ -17,7 +17,7 @@ class Binaries:
   binaries_ssh_key: str
   ssh_client=None
   private_ssh_key = None
-  upload_checksums = []
+  upload_checksums = ["md5", "sha1", "sha256"]
     
 
   def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str):
@@ -28,11 +28,6 @@ class Binaries:
     self.ssh_client = paramiko.SSHClient()
     self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     self.private_ssh_key = paramiko.RSAKey.from_private_key(StringIO(self.binaries_ssh_key))
-    
-  def enable_checksum_upload(self, checksums = None):
-    if checksums is None:
-      checksums = ["md5", "sha1", "sha256"]
-    self.upload_checksums = checksums
 
   def upload(self, tempfile, filename, gid, aid, version):
     binaries_repo = self.get_binaries_repo(gid)
