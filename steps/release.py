@@ -10,12 +10,7 @@ def release(artifactory: Artifactory,
             binaries: Binaries,
             release_request: ReleaseRequest,
             burgr: Burgr,
-            attach_to_github_release: bool,
             run_rules_cov: bool):
-  if attach_to_github_release:
-    print("Attaching artifacts to github release")
-  else:
-    print("No attachement to github release")
 
   buildinfo = artifactory.receive_build_info(release_request)
   try:

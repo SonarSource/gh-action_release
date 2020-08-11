@@ -13,7 +13,7 @@ from utils.github import GitHub
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 github_event_path = os.environ.get('GITHUB_EVENT_PATH')
-github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
+#github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
 
 burgrx_url = 'https://burgrx.sonarsource.com'
 burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
@@ -80,7 +80,7 @@ def main():
     binaries.enable_checksum_upload()
 
   try:
-    release(artifactory, binaries, rr, burgr, github_attach, run_rules_cov)
+    release(artifactory, binaries, rr, burgr, run_rules_cov)
     set_release_output("release", f"{repo}:{version} release DONE")
     if distribute:
       distribute_release(artifactory, bintray, rr, version)
