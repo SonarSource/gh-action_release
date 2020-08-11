@@ -12,9 +12,11 @@ class Artifactory:
   headers = {'content-type': 'application/json'}
   bintray_target_repo = "SonarQube-bintray"
 
-  def __init__(self, api_key: str):
+  def __init__(self, api_key: str, custom_bintray_target_repo = None):
     self.api_key = api_key
     self.headers['X-JFrog-Art-Api'] = api_key
+    if custom_bintray_target_repo is not None:
+      self.bintray_target_repo = custom_bintray_target_repo
 
   def receive_build_info(self, release_request):
     url = f"{self.url}/api/build/{release_request.project}/{release_request.buildnumber}"
@@ -27,7 +29,7 @@ class Artifactory:
       print(r.content)
       raise Exception('unknown build')
 
-  def distribute_build(self, project, buildnumber):
+  def distribute_to_bintray(self, project, buildnumber):
     print(f"Distributing {project}#{buildnumber} to bintray")
     payload = {
       "targetRepo": self.bintray_target_repo,
