@@ -1,28 +1,7 @@
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
-from utils.binaries import Binaries
-from utils.burgr import Burgr
-from utils.cirrus import rules_cov
 
 revoke = True
-
-def release(artifactory: Artifactory,
-            binaries: Binaries,
-            release_request: ReleaseRequest,
-            burgr: Burgr,
-            run_rules_cov: bool):
-
-  buildinfo = artifactory.receive_build_info(release_request)
-  try:
-    artifactory.promote(release_request, buildinfo)
-    publish_all_artifacts(artifactory, binaries, release_request, buildinfo)
-    burgr.notify(buildinfo, 'passed')
-    if run_rules_cov:
-      rules_cov(release_request, buildinfo)
-  except Exception as e:
-    burgr.notify(buildinfo, 'failed')
-    print(f"Error during the release for {release_request.project} {release_request.buildnumber} {str(e)}")
-    raise e
 
 def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseRequest):
   buildinfo = artifactory.receive_build_info(release_request)
@@ -32,7 +11,7 @@ def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseR
     print(f"Error could not unpromote {release_request.project} {release_request.buildnumber} {str(e)}")
     raise e
   try:
-    publish_all_artifacts(artifactory, binaries, release_request, buildinfo, revoke)
+    publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke)
   except Exception as e:
     print(f"Error could not delete {release_request.project} {release_request.buildnumber} {str(e)}")
     raise e
@@ -43,7 +22,7 @@ def get_action(revoke):
   else:
     return "publishing"
 
-def publish_all_artifacts(artifactory, binaries, release_request, buildinfo, revoke=False):
+def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke=False):
   print(f"{get_action(revoke)} artifacts for {release_request.project}#{release_request.buildnumber}")
   release_url = ""
   repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace('qa', 'builds')

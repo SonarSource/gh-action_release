@@ -3,9 +3,9 @@ import unittest
 
 from utils.artifactory import Artifactory
 from utils.binaries import Binaries
-from utils.burgr import Burgr
 from utils.ReleaseRequest import ReleaseRequest
-from steps.release import release, revoke_release
+from steps.release import revoke_release, publish_all_artifacts_to_binaries
+
 
 class TestRevoke(unittest.TestCase):
 
@@ -23,6 +23,8 @@ class TestRevoke(unittest.TestCase):
   def test_revoke_release(self):
     artifactory = Artifactory(self.artifactory_apikey)
     binaries = Binaries(self.binaries_host, self.binaries_ssh_user, self.binaries_ssh_key)
-    burgr = Burgr(self.burgrx_url,self.burgrx_user,self.burgrx_password,self.sonar_dummy_request)
     revoke_release(artifactory,binaries, self.sonar_dummy_request)
-    release(artifactory,binaries,self.sonar_dummy_request,burgr,False)
+
+    buildinfo = artifactory.receive_build_info(self.sonar_dummy_request)
+    artifactory.promote(self.sonar_dummy_request, buildinfo)
+    publish_all_artifacts_to_binaries(artifactory, binaries, self.sonar_dummy_request, buildinfo)
