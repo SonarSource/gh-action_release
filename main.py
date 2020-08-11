@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import os
 import requests
@@ -60,7 +61,7 @@ def check_releasability(repo, version, headers):
     url=f"{function_url}/{repo}/{version}"
     params = {}
     branch = current_branch()
-    if branch is not 'master':
+    if branch is not None and branch != 'master':
         params['branch'] = branch
     print(f"::debug '{url}' with params '{params}'")
     return requests.get(url, params=params, headers=headers)
@@ -105,7 +106,10 @@ def current_branch():
         if 'target_commitish' not in data['release']:
             print(f"::error Could not get the branch name of github event")
             return None
-        return data['release']['target_commitish']
+        possible_branch_name = data['release']['target_commitish']
+        if re.compile("^([a-f0-9]{40})$").match(possible_branch_name):
+            return None
+        return possible_branch_name
 
 
 def main():
