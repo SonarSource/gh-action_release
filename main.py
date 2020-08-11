@@ -1,4 +1,5 @@
 import json
+import re
 import sys
 import os
 import requests
@@ -105,7 +106,10 @@ def current_branch():
         if 'target_commitish' not in data['release']:
             print(f"::error Could not get the branch name of github event")
             return None
-        return data['release']['target_commitish']
+        possible_branch_name = data['release']['target_commitish']
+        if re.compile("^([a-f0-9]{40})$").match(possible_branch_name):
+            return None
+        return possible_branch_name
 
 
 def main():
