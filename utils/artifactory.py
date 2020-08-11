@@ -4,13 +4,14 @@ import requests
 
 from utils.buildinfo import BuildInfo
 
+default_bintray_target_repo = "SonarQube-bintray"
 
 class Artifactory:
 
   url = 'https://repox.jfrog.io/repox'
   api_key = None
   headers = {'content-type': 'application/json'}
-  bintray_target_repo = "SonarQube-bintray"
+  bintray_target_repo = default_bintray_target_repo
 
   def __init__(self, api_key: str, custom_bintray_target_repo = None):
     self.api_key = api_key
@@ -29,21 +30,26 @@ class Artifactory:
       print(r.content)
       raise Exception('unknown build')
 
-  def distribute_to_bintray(self, project, buildnumber):
-    print(f"Distributing {project}#{buildnumber} to bintray")
+  def distribute_to_bintray(self, release_request, buildinfo):
+    print(f"Distributing {release_request.project}#{release_request.buildnumber} to bintray")
+
+    source_repo = "sonarsource-public-releases"
+    if self.bintray_target_repo != default_bintray_target_repo:
+      source_repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace("qa", "releases")
+
     payload = {
       "targetRepo": self.bintray_target_repo,
-      "sourceRepos": ["sonarsource-public-releases"],
+      "sourceRepos": [source_repo],
       "async": "true"  # maybe?
     }
-    url = f"{self.url}/api/build/distribute/{project}/{buildnumber}"
+    url = f"{self.url}/api/build/distribute/{release_request.project}/{release_request.buildnumber}"
     try:
       r = requests.post(url, json=payload, headers=self.headers)
       r.raise_for_status()
       if r.status_code == 200:
-        print(f"{project}#{buildnumber} pushed to bintray ({self.bintray_target_repo}) ready to sync to central")
+        print(f"{release_request.project}#{release_request.buildnumber} pushed to bintray ({self.bintray_target_repo}) ready to sync to central")
     except requests.exceptions.HTTPError as err:
-      print(f"Failed to distribute {project}#{buildnumber} {err}")
+      print(f"Failed to distribute {release_request.project}#{release_request.buildnumber} {err}")
 
   def promote(self, release_request, buildinfo, revoke=False):
     status = 'released'

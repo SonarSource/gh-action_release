@@ -70,7 +70,7 @@ def main():
       set_release_output("rules_cov", f"{repo}:{version} rules_cov DONE")
 
     if (distribute and buildinfo.is_public()) or distribute_target is not None:
-      artifactory.distribute_to_bintray(rr.project, rr.buildnumber)
+      artifactory.distribute_to_bintray(rr, buildinfo)
       set_release_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
 
     if distribute and buildinfo.is_public():
