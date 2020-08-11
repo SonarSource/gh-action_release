@@ -1,3 +1,4 @@
+import re
 import sys
 
 from steps.release import revoke_release, publish_all_artifacts_to_binaries
@@ -31,6 +32,10 @@ def main():
   organisation, project = repo.split("/")
   version = ref.replace('refs/tags/', '', 1)
   # tag shall be like X.X.X.BUILD_NUMBER
+  if re.compile('\d+\.\d+\.\d+\.\d+').match(version) is None:
+    print(f"::error Found wrong version: {version}")
+    sys.exit(1)
+
   build_number = version.split(".")[-1]
 
   github = GitHub(githup_api_url, github_token, github_event_path)
@@ -38,8 +43,8 @@ def main():
   release_info = github.release_info(version)
   if not release_info:
     print(f"::error  No release info found")
-    return
-  
+    sys.exit(1)
+
   rr = ReleaseRequest(organisation, project, build_number)
   burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, rr)
 
