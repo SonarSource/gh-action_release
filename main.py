@@ -61,7 +61,7 @@ def check_releasability(repo, version, headers):
     url=f"{function_url}/{repo}/{version}"
     params = {}
     branch = current_branch()
-    if branch is not 'master':
+    if branch is not None and branch != 'master':
         params['branch'] = branch
     print(f"::debug '{url}' with params '{params}'")
     return requests.get(url, params=params, headers=headers)
