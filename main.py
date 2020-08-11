@@ -1,39 +1,17 @@
-import os
 import sys
 
-from steps.distribute import distribute_release
-from steps.release import release, revoke_release
+from steps.release import revoke_release, publish_all_artifacts_to_binaries
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.binaries import Binaries
 from utils.bintray import Bintray
 from utils.burgr import Burgr
+from utils.cirrus import rules_cov
 from utils.github import GitHub
+from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
+  artifactory_apikey, distribute_target, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, \
+  binaries_ssh_key, binaries_host, binaries_ssh_user, upload_checksums, run_rules_cov, distribute, repo, ref
 
-githup_api_url = "https://api.github.com"
-github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
-github_event_path = os.environ.get('GITHUB_EVENT_PATH')
-#github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
-
-burgrx_url = 'https://burgrx.sonarsource.com'
-burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
-burgrx_password = os.environ.get('BURGRX_PASSWORD', 'no burgrx password in env')
-
-distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
-run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
-upload_checksums: bool = os.environ.get('INPUT_UPLOAD_CHECKSUMS').lower() == "true"
-
-artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
-
-bintray_api_url='https://api.bintray.com'
-bintray_user=os.environ.get('BINTRAY_USER','no bintray api user in env')  
-bintray_apikey=os.environ.get('BINTRAY_TOKEN','no bintray api key in env')  
-central_user=os.environ.get('CENTRAL_USER','no central user in env')  
-central_password=os.environ.get('CENTRAL_PASSWORD','no central password in env')  
-
-binaries_host = 'binaries.sonarsource.com'
-binaries_ssh_user=os.environ.get('RELEASE_SSH_USER','no ssh user in env')
-binaries_ssh_key=os.environ.get('RELEASE_SSH_KEY','no ssh key in env')
 
 def set_releasability_output(output):
   print(f"::set-output name=releasability::{output}")
@@ -50,10 +28,8 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
   sys.exit(1)
 
 def main():
-  repo = os.environ["GITHUB_REPOSITORY"]
   organisation, project = repo.split("/")
-  tag = os.environ["GITHUB_REF"]
-  version = tag.replace('refs/tags/', '', 1)
+  version = ref.replace('refs/tags/', '', 1)
   # tag shall be like X.X.X.BUILD_NUMBER
   build_number = version.split(".")[-1]
 
@@ -73,18 +49,34 @@ def main():
     print(f"::error relesability did not complete correctly. " + str(e))
     sys.exit(1)
 
-  artifactory = Artifactory(artifactory_apikey)
-  bintray = Bintray(bintray_api_url,bintray_user,bintray_apikey,central_user,central_password)
+  artifactory = Artifactory(artifactory_apikey, distribute_target)
+  buildinfo = artifactory.receive_build_info(rr)
   binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
-  if upload_checksums:
-    binaries.enable_checksum_upload()
 
   try:
-    release(artifactory, binaries, rr, burgr, run_rules_cov)
-    set_release_output("release", f"{repo}:{version} release DONE")
-    if distribute:
-      distribute_release(artifactory, bintray, rr, version)
-      set_release_output("distribute_release", f"{repo}:{version} distribute_release DONE")
+    artifactory.promote(rr, buildinfo)
+    set_release_output("promote", f"{repo}:{version} promote DONE")
+
+    if upload_checksums:
+      binaries.enable_checksum_upload()
+    publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
+    set_release_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
+
+    if run_rules_cov:
+      rules_cov(rr, buildinfo)
+      set_release_output("rules_cov", f"{repo}:{version} rules_cov DONE")
+
+    if (distribute and buildinfo.is_public()) or distribute_target is not None:
+      artifactory.distribute_to_bintray(rr.project, rr.buildnumber)
+      set_release_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
+
+    if distribute and buildinfo.is_public():
+      bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password)
+      bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
+      set_release_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
+
+    burgr.notify(buildinfo, 'passed')
+
   except Exception as e:
     print(f"::error release did not complete correctly." + str(e))
     abort_release(github, artifactory, binaries, rr)
