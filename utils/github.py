@@ -1,4 +1,6 @@
 import json
+import re
+
 import requests
 
 class GitHub:
@@ -29,7 +31,10 @@ class GitHub:
     return self.github_event["repository"]
 
   def current_branch(self):
-    return self.release_info()['target_commitish']
+    possible_branch_name = self.release_info()['target_commitish']
+    if re.compile("^([a-f0-9]{40})$").match(possible_branch_name):
+      return None
+    return possible_branch_name
 
   def attach_asset_to_release(self, file_path, filename):
     files = {'upload_file': open(file_path, 'rb')}
