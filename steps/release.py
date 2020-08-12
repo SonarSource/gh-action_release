@@ -11,7 +11,8 @@ def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseR
     print(f"Error could not unpromote {release_request.project} {release_request.buildnumber} {str(e)}")
     raise e
   try:
-    publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke)
+    if binaries is not None:
+      publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke)
   except Exception as e:
     print(f"Error could not delete {release_request.project} {release_request.buildnumber} {str(e)}")
     raise e

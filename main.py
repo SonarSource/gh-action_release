@@ -56,13 +56,14 @@ def main():
 
   artifactory = Artifactory(artifactory_apikey, distribute_target)
   buildinfo = artifactory.receive_build_info(rr)
-  binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
+  binaries = None
 
   try:
     artifactory.promote(rr, buildinfo)
     set_release_output("promote", f"{repo}:{version} promote DONE")
 
     if publish_to_binaries:
+      binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
       publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
       set_release_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
