@@ -11,7 +11,7 @@ from utils.cirrus import rules_cov
 from utils.github import GitHub
 from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
   artifactory_apikey, distribute_target, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, \
-  binaries_ssh_key, binaries_host, binaries_ssh_user, run_rules_cov, distribute, repo, ref
+  binaries_ssh_key, binaries_host, binaries_ssh_user, run_rules_cov, distribute, repo, ref, publish_to_binaries
 
 
 def set_releasability_output(output):
@@ -62,8 +62,9 @@ def main():
     artifactory.promote(rr, buildinfo)
     set_release_output("promote", f"{repo}:{version} promote DONE")
 
-    publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
-    set_release_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
+    if publish_to_binaries:
+      publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
+      set_release_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
     if run_rules_cov:
       rules_cov(rr, buildinfo)

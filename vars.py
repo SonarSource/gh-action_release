@@ -12,6 +12,7 @@ burgrx_url = 'https://burgrx.sonarsource.com'
 burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
 burgrx_password = os.environ.get('BURGRX_PASSWORD', 'no burgrx password in env')
 
+publish_to_binaries: bool = os.environ.get('INPUT_PUBLISH_TO_BINARIES').lower() == "true"
 distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
 run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
 
