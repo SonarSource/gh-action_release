@@ -6,6 +6,10 @@ inputs:
     description: "Flag to enable attachment of artifacts to the github release"
     default: 'false'
     required: false
+  publish_to_binaries:
+    description: "Flag to disable the publication to binaries"
+    default: 'true'
+    required: false
   distribute:
     description: "Flag to enable distribute_release gcp function"
     default: 'false'
