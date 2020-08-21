@@ -14,18 +14,14 @@ from vars import githup_api_url, github_token, github_event_path, burgrx_url, bu
   binaries_ssh_key, binaries_host, binaries_ssh_user, run_rules_cov, distribute, repo, ref, publish_to_binaries
 
 
-def set_releasability_output(output):
-  print(f"::set-output name=releasability::{output}")
-
-
-def set_release_output(function, output):
+def set_output(function, output):
   print(f"::set-output name={function}::{output}")
 
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest ):
   print(f"::error  Aborting release")
   #github.revoke_release()
   revoke_release(artifactory,binaries, rr)
-  set_release_output("release", f"{rr.project}:{rr.buildnumber} revoked")
+  set_output("release", f"{rr.project}:{rr.buildnumber} revoked")
   sys.exit(1)
 
 def main():
@@ -53,6 +49,7 @@ def main():
   except Exception as e:
     print(f"::error relesability did not complete correctly. " + str(e))
     sys.exit(1)
+  set_output("releasability", f"{repo}:{version} relesability DONE")
 
   artifactory = Artifactory(artifactory_apikey, distribute_target)
   buildinfo = artifactory.receive_build_info(rr)
@@ -60,25 +57,25 @@ def main():
 
   try:
     artifactory.promote(rr, buildinfo)
-    set_release_output("promote", f"{repo}:{version} promote DONE")
+    set_output("promote", f"{repo}:{version} promote DONE")
 
     if publish_to_binaries:
       binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
       publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
-      set_release_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
+      set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
     if run_rules_cov:
       rules_cov(rr, buildinfo)
-      set_release_output("rules_cov", f"{repo}:{version} rules_cov DONE")
+      set_output("rules_cov", f"{repo}:{version} rules_cov DONE")
 
     if (distribute and buildinfo.is_public()) or distribute_target is not None:
       artifactory.distribute_to_bintray(rr, buildinfo)
-      set_release_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
+      set_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
 
     if distribute and buildinfo.is_public():
       bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password)
       bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
-      set_release_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
+      set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
 
     burgr.notify(buildinfo, 'passed')
 
