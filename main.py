@@ -28,7 +28,7 @@ def main():
   organisation, project = repo.split("/")
   version = ref.replace('refs/tags/', '', 1)
   # tag shall be like X.X.X.BUILD_NUMBER
-  if re.compile('\d+\.\d+\.\d+\.\d+').match(version) is None:
+  if re.compile('\d+\.\d+\.\d+(?:-M\d+)?\.\d+').match(version) is None:                
     print(f"::error Found wrong version: {version}")
     sys.exit(1)
 
