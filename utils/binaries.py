@@ -6,25 +6,26 @@ from scp import SCPClient
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
 
-binaries_path_prefix = os.environ.get('PATH_PREFIX', '/tmp')
-passphrase = os.environ.get('GPG_PASSPHRASE', 'no GPG_PASSPHRASE in env')
-
 class Binaries:
 
   binaries_host: str
   binaries_url: str
   binaries_ssh_user: str
   binaries_ssh_key: str
+  binaries_path_prefix: str
+  passphrase: str
   ssh_client=None
   private_ssh_key = None
   upload_checksums = ["md5", "sha1", "sha256"]
     
 
-  def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str):
+  def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str, binaries_path_prefix: str, passphrase: str):
     self.binaries_host = binaries_host
     self.binaries_url = f"https://{binaries_host}"
     self.binaries_ssh_user = binaries_ssh_user
     self.binaries_ssh_key = binaries_ssh_key
+    self.binaries_path_prefix = binaries_path_prefix
+    self.passphrase =  passphrase
     self.ssh_client = paramiko.SSHClient()
     self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     self.private_ssh_key = paramiko.RSAKey.from_private_key(StringIO(self.binaries_ssh_key))

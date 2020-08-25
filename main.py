@@ -11,7 +11,7 @@ from utils.cirrus import rules_cov
 from utils.github import GitHub
 from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
   artifactory_apikey, distribute_target, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, \
-  binaries_ssh_key, binaries_host, binaries_ssh_user, run_rules_cov, distribute, repo, ref, publish_to_binaries
+  binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, passphrase, run_rules_cov, distribute, repo, ref, publish_to_binaries
 
 
 def set_output(function, output):
@@ -60,7 +60,7 @@ def main():
     set_output("promote", f"{repo}:{version} promote DONE")
 
     if publish_to_binaries:
-      binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key)
+      binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key, binaries_path_prefix, passphrase)
       publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
       set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
