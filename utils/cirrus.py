@@ -34,7 +34,7 @@ def rules_cov(release_request, buildinfo):
   rulescov_repos = "rules-cov"
   repository_id = get_cirrus_repository_id(rulescov_repos)
   version = buildinfo.get_version()
-  f = open("config.yml", "r")
+  f = open("/app/config.yml", "r")
   config = f.read()
   data = yaml.safe_load(config)
   data['run_task']['env'].update(dict(SLUG=f"{owner}/{release_request.project}", VERSION=version))
