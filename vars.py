@@ -17,7 +17,7 @@ distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
 run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
 
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
-distribute_target = os.environ.get('INPUT_DISTRIBUTE_TARGET')
+distribute_target = os.environ.get('INPUT_DISTRIBUTE_TARGET') or None
 
 bintray_api_url='https://api.bintray.com'
 bintray_user=os.environ.get('BINTRAY_USER','no bintray api user in env')
