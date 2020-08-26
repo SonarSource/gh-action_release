@@ -42,10 +42,10 @@ class Binaries:
     # upload artifact
     # SonarLint Eclipse is uploaded to a special directory
     if aid == "org.sonarlint.eclipse.site":
-      directory = f"{binaries_path_prefix}/SonarLint-for-Eclipse/releases"
+      directory = f"{self.binaries_path_prefix}/SonarLint-for-Eclipse/releases"
       release_url = f"{self.binaries_url}/SonarLint-for-Eclipse/releases/{filename}"
     else:
-      directory = f"{binaries_path_prefix}/{binaries_repo}/{aid}"
+      directory = f"{self.binaries_path_prefix}/{binaries_repo}/{aid}"
       release_url = f"{self.binaries_url}/{binaries_repo}/{aid}/{filename}"
     # create directory
     self.exec_ssh_command(f"mkdir -p {directory}")
@@ -80,7 +80,7 @@ class Binaries:
     # delete artifact
     self.ssh_client.connect(hostname=self.binaries_host, username=self.binaries_ssh_user, pkey=self.private_ssh_key)
     
-    directory = f"{binaries_path_prefix}/{binaries_repo}/{aid}"
+    directory = f"{self.binaries_path_prefix}/{binaries_repo}/{aid}"
     self.exec_ssh_command(f"rm {directory}/{filename}*")
     print(f'deleted {directory}/{filename}*')
     self.ssh_client.close()
