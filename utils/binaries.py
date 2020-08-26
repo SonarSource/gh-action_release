@@ -65,7 +65,7 @@ class Binaries:
       self.exec_ssh_command(f"mkdir -p {sle_unzip_dir}")
       self.exec_ssh_command(f"cd {sle_unzip_dir} && unzip ../org.sonarlint.eclipse.site-{version}.zip")
     # sign file
-    self.exec_ssh_command(f"gpg --batch --passphrase {passphrase} --armor --detach-sig --default-key infra@sonarsource.com {directory}/{filename}")
+    self.exec_ssh_command(f"gpg --batch --passphrase {self.passphrase} --armor --detach-sig --default-key infra@sonarsource.com {directory}/{filename}")
     print(f'signed {directory}/{filename}')
     self.ssh_client.close()
     return release_url
