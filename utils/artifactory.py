@@ -4,13 +4,12 @@ import requests
 
 from utils.buildinfo import BuildInfo
 
-default_bintray_target_repo = "SonarQube-bintray"
-
 class Artifactory:
 
   url = 'https://repox.jfrog.io/repox'
   api_key = None
   headers = {'content-type': 'application/json'}
+  default_bintray_target_repo = "SonarQube-bintray"
   bintray_target_repo = default_bintray_target_repo
 
   def __init__(self, api_key: str, custom_bintray_target_repo = None):
@@ -34,7 +33,7 @@ class Artifactory:
     print(f"Distributing {release_request.project}#{release_request.buildnumber} to bintray")
 
     source_repo = "sonarsource-public-releases"
-    if self.bintray_target_repo != default_bintray_target_repo:
+    if self.bintray_target_repo != self.default_bintray_target_repo:
       source_repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace("qa", "releases")
 
     payload = {
@@ -42,7 +41,7 @@ class Artifactory:
       "sourceRepos": [source_repo],
       "async": "false"
     }
-    print(f"payload: {payload}")
+    print(f"payload: §{payload}")
     url = f"{self.url}/api/build/distribute/{release_request.project}/{release_request.buildnumber}"
     try:
       r = requests.post(url, json=payload, headers=self.headers)
