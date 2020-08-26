@@ -27,7 +27,8 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
 def main():
   organisation, project = repo.split("/")
   version = ref.replace('refs/tags/', '', 1)
-  # tag shall be like X.X.X.BUILD_NUMBER
+  
+  # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER
   if re.compile('\d+\.\d+\.\d+(?:-M\d+)?\.\d+').match(version) is None:                
     print(f"::error Found wrong version: {version}")
     sys.exit(1)
@@ -71,8 +72,6 @@ def main():
     if (distribute and buildinfo.is_public()) or distribute_target is not None:
       artifactory.distribute_to_bintray(rr, buildinfo)
       set_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
-
-    if distribute and buildinfo.is_public():
       bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password)
       bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
       set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")

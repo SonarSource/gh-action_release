@@ -41,7 +41,7 @@ class Artifactory:
       "sourceRepos": [source_repo],
       "async": "false"
     }
-    print(f"payload: §{payload}")
+    print(f"payload: {payload}")
     url = f"{self.url}/api/build/distribute/{release_request.project}/{release_request.buildnumber}"
     try:
       r = requests.post(url, json=payload, headers=self.headers)
