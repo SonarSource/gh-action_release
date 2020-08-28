@@ -91,7 +91,7 @@ class Artifactory:
       print(f"Promoting multi repositories: {moreparams}")
       
       url = f"{self.url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
-        "{!s}={!r}".format(key, val) for (key, val) in params.items())
+        "{!s}={!s}".format(key, val) for (key, val) in params.items())
       r = requests.get(url, headers=self.headers)
     else:
       url = f"{self.url}/api/build/promote/{release_request.project}/{release_request.buildnumber}"
