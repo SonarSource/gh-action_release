@@ -66,7 +66,6 @@ class Artifactory:
     print(f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to {targetrepo}")
 
     if buildinfo.is_multi():
-      print(f"Promoting multi repositories")
       params = {
         'buildName': release_request.project,
         'buildNumber': release_request.buildnumber,
@@ -75,19 +74,21 @@ class Artifactory:
       moreparams=None
       if revoke:
         moreparams = {
-          'src1': 'sonarsource-private-builds',
-          'target1': 'sonarsource-private-releases',
-          'src2': 'sonarsource-public-builds',
-          'target2': 'sonarsource-public-releases',
-        }
-      else:
-        moreparams = {
           'src1': 'sonarsource-private-releases',
           'target1': 'sonarsource-private-builds',
           'src2': 'sonarsource-public-releases',
           'target2': 'sonarsource-public-builds',
         }
+      else:
+        moreparams = {
+          'src1': 'sonarsource-private-builds',
+          'target1': 'sonarsource-private-releases',
+          'src2': 'sonarsource-public-builds',
+          'target2': 'sonarsource-public-releases',
+        }
       params.update(moreparams)
+
+      print(f"Promoting multi repositories: {moreparams}")
       
       url = f"{self.url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
         "{!s}={!r}".format(key, val) for (key, val) in params.items())
