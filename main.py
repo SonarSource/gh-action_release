@@ -19,7 +19,7 @@ def set_output(function, output):
 
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest ):
   print(f"::error  Aborting release")
-  #github.revoke_release()
+  github.revoke_release()
   revoke_release(artifactory,binaries, rr)
   set_output("release", f"{rr.project}:{rr.buildnumber} revoked")
   sys.exit(1)
