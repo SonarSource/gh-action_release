@@ -21,7 +21,7 @@ jobs:
       - name: Test
         uses: VaultVulp/action-pipenv@v2.0.1
         with:
-          command: run python -m unittest
+          command: run python -m unittest        
         env:
           ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
@@ -32,6 +32,12 @@ jobs:
           CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
           CIRRUS_TOKEN: ${{ secrets.CIRRUS_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          PATH_PREFIX: ${{ secrets.BINARIES_PATH_PREFIX }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
           RELEASE_SSH_USER: ${{ secrets.RELEASE_SSH_USER }}
-          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}
+          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }} 
+          INPUT_DISTRIBUTE: true
+          INPUT_PUBLISH_TO_BINARIES: true
+          INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE: true
+          INPUT_RUN_RULES_COV: false
+          

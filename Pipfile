@@ -17,6 +17,8 @@ paramiko = "*"
 scp = "*"
 atomicwrites = "*"
 pyyaml = "*"
+slackapi = "*"
+slackclient = "*"
 
 [requires]
 python_version = "3.7"
