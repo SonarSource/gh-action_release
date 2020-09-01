@@ -21,8 +21,8 @@ class TestRevoke(unittest.TestCase):
   def test_revoke_release(self):
     artifactory = Artifactory(artifactory_apikey)
     binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key, binaries_path_prefix, passphrase)
-    revoke_release(artifactory,binaries, self.sonar_dummy_request)
+#    revoke_release(artifactory,binaries, self.sonar_dummy_request)
 
     buildinfo = artifactory.receive_build_info(self.sonar_dummy_request)
-    artifactory.promote(self.sonar_dummy_request, buildinfo)
-    publish_all_artifacts_to_binaries(artifactory, binaries, self.sonar_dummy_request, buildinfo)
+#    artifactory.promote(self.sonar_dummy_request, buildinfo)
+#    publish_all_artifacts_to_binaries(artifactory, binaries, self.sonar_dummy_request, buildinfo)
