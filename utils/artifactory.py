@@ -1,6 +1,7 @@
 import json
 import urllib
 import requests
+import tempfile
 
 from utils.buildinfo import BuildInfo
 
@@ -122,10 +123,10 @@ class Artifactory:
     if aid == "sonar-application":
       filename = f"sonarqube-{version}.zip"
       aid = "sonarqube"
-    tempfile = f"/tmp/{filename}"
-    urllib.request.urlretrieve(url, tempfile)
-    print(f'downloaded {tempfile}')
+    temp_file = f"{tempfile.gettempdir()}/{filename}"
+    urllib.request.urlretrieve(url, temp_file)
+    print(f'downloaded {temp_file}')
     for checksum in (checksums or []):
-      urllib.request.urlretrieve(f"{url}.{checksum}", f"{tempfile}.{checksum}")
-      print(f'downloaded {tempfile}.{checksum}')
-    return tempfile
+      urllib.request.urlretrieve(f"{url}.{checksum}", f"{temp_file}.{checksum}")
+      print(f'downloaded {temp_file}.{checksum}')
+    return temp_file

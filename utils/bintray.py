@@ -2,6 +2,7 @@ import os
 import requests
 from flask import make_response
 import urllib.parse
+from slack.errors import SlackApiError
 
 class Bintray:
   bintray_api_url=None
@@ -9,15 +10,16 @@ class Bintray:
   bintray_apikey=None
   central_user=None
   central_password=None
+  slack_client=None
   headers = {'content-type': 'application/json'}
 
-  def __init__(self, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password):
+  def __init__(self, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client):
     self.bintray_api_url = bintray_api_url
     self.bintray_user = bintray_user
     self.bintray_apikey = bintray_apikey
     self.central_user = central_user
     self.central_password = central_password 
-    
+    self.slack_client = slack_client
 
   def sync_to_central(self, project, package, version):
     print(f"Syncing {project}#{version} to central")
@@ -35,4 +37,12 @@ class Bintray:
       if r.status_code == 200:
         print(f"{project}#{version} synced to central")
     except requests.exceptions.HTTPError as err:
-      print(f"Failed to sync {project}#{version} {err}")
+      alert_slack(f"Failed to sync {project}#{version} {err}","#build")
+
+  def alert_slack(self,msg,channel):
+    try:
+      return self.slack_client.chat_postMessage(
+        channel=channel,
+        text=msg)
+    except SlackApiError as e:
+      print(f"Could not notify slack: {e.response['error']}")
