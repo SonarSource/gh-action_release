@@ -1,7 +1,8 @@
 import os
+from slack import WebClient
 
-repo = os.environ["GITHUB_REPOSITORY"]
-ref = os.environ["GITHUB_REF"]
+repo = os.environ.get('GITHUB_REPOSITORY', 'no github repo in env')
+ref = os.environ.get('GITHUB_REF', 'no github repo in env')
 
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
@@ -12,9 +13,9 @@ burgrx_url = 'https://burgrx.sonarsource.com'
 burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
 burgrx_password = os.environ.get('BURGRX_PASSWORD', 'no burgrx password in env')
 
-publish_to_binaries: bool = os.environ.get('INPUT_PUBLISH_TO_BINARIES').lower() == "true"
-distribute: bool = os.environ.get('INPUT_DISTRIBUTE').lower() == "true"
-run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV').lower() == "true"
+publish_to_binaries: bool = os.environ.get('INPUT_PUBLISH_TO_BINARIES','false').lower() == "true"
+distribute: bool = os.environ.get('INPUT_DISTRIBUTE','false').lower() == "true"
+run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV','false').lower() == "true"
 
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
 distribute_target = os.environ.get('INPUT_DISTRIBUTE_TARGET') or None
@@ -30,3 +31,6 @@ binaries_ssh_user=os.environ.get('RELEASE_SSH_USER','no ssh user in env')
 binaries_ssh_key=os.environ.get('RELEASE_SSH_KEY','no ssh key in env')
 binaries_path_prefix = os.environ.get('PATH_PREFIX', '/tmp')
 passphrase = os.environ.get('GPG_PASSPHRASE', 'no GPG_PASSPHRASE in env')
+
+slack_token=os.environ.get('SLACK_API_TOKEN','no slack token in env')
+slack_client=WebClient(slack_token)

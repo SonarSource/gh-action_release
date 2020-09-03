@@ -11,7 +11,8 @@ from utils.cirrus import rules_cov
 from utils.github import GitHub
 from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
   artifactory_apikey, distribute_target, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, \
-  binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, passphrase, run_rules_cov, distribute, repo, ref, publish_to_binaries
+  binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, passphrase, run_rules_cov, distribute, repo, ref, publish_to_binaries, \
+  slack_client
 
 
 def set_output(function, output):
@@ -72,7 +73,7 @@ def main():
     if (distribute and buildinfo.is_public()) or distribute_target is not None:
       artifactory.distribute_to_bintray(rr, buildinfo)
       set_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
-      bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password)
+      bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client)
       bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
       set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
 
