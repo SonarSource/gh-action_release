@@ -83,6 +83,8 @@ def main():
     if (distribute and buildinfo.is_public()) or distribute_target is not None:
       artifactory.distribute_to_bintray(rr, buildinfo)
       set_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
+
+    if (distribute and buildinfo.is_public()):      
       bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client)
       bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
       set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
