@@ -3,6 +3,7 @@ from slack import WebClient
 
 repo = os.environ.get('GITHUB_REPOSITORY', 'no github repo in env')
 ref = os.environ.get('GITHUB_REF', 'no github repo in env')
+actor = os.environ.get('GITHUB_ACTOR', 'no github actor in env')
 
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
@@ -34,3 +35,4 @@ passphrase = os.environ.get('GPG_PASSPHRASE', 'no GPG_PASSPHRASE in env')
 
 slack_token=os.environ.get('SLACK_API_TOKEN','no slack token in env')
 slack_client=WebClient(slack_token)
+slack_channel=os.environ.get('INPUT_SLACK_CHANNEL') or None
