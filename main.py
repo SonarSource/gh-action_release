@@ -9,14 +9,24 @@ from utils.bintray import Bintray
 from utils.burgr import Burgr
 from utils.cirrus import rules_cov
 from utils.github import GitHub
+from slack.errors import SlackApiError
 from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
   artifactory_apikey, distribute_target, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, \
-  binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, passphrase, run_rules_cov, distribute, repo, ref, publish_to_binaries, \
-  slack_client
+  binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, passphrase, run_rules_cov, distribute, \
+  repo, ref, actor, publish_to_binaries, slack_client,slack_channel
 
 
 def set_output(function, output):
   print(f"::set-output name={function}::{output}")
+
+def notify_slack(msg):
+  if slack_channel is not None:
+    try:
+      return slack_client.chat_postMessage(
+        channel=slack_channel,
+        text=msg)
+    except SlackApiError as e:
+      print(f"Could not notify slack: {e.response['error']}")
 
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest ):
   print(f"::error  Aborting release")
@@ -73,14 +83,19 @@ def main():
     if (distribute and buildinfo.is_public()) or distribute_target is not None:
       artifactory.distribute_to_bintray(rr, buildinfo)
       set_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
+
+    if (distribute and buildinfo.is_public()):      
       bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client)
       bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
       set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
 
     burgr.notify(buildinfo, 'passed')
+    notify_slack(f"Successfully released {repo}:{version} by {actor}")
 
   except Exception as e:
-    print(f"::error release did not complete correctly." + str(e))
+    error=f"::error release did not complete correctly." + str(e)
+    print(error)
+    notify_slack(error)
     abort_release(github, artifactory, binaries, rr)
     sys.exit(1)
 
