@@ -27,10 +27,10 @@ jobs:
       - name: LT release
         id: lt_release
         with:
-          publish_to_binaries: false
-          distribute_target: "SQ-test"
-          run_rules_cov: false
-          slack_channel: test-github-action
+          distribute: true
+          publish_to_binaries: true
+          run_rules_cov: true
+          slack_channel: #test-github-action
         env:
           ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
           BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
