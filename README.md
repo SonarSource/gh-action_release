@@ -65,4 +65,6 @@ jobs:
 | `attach_artifacts_to_github_release` _(optional)_ _(true/false)_| attach artifacts to the github release tag (this currently does not work)|
 | `run_rules_cov` _(optional)_ _(true/false)_| run the rules-cov program at the end of the release (only for languages plugins) |
 | `slack_channel` _(optional)_ _(true/false)_| enable slack notification on the specified channel  |
+| `distribute_target` _(optional)_ _(true/false)_| enable bintray distribution to the specified target repository |
+
 
