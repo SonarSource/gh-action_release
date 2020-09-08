@@ -1,85 +1,68 @@
-# Python Container Action Template
-
-[![Action Template](https://img.shields.io/badge/Action%20Template-Python%20Container%20Action-blue.svg?colorA=24292e&colorB=0366d6&style=flat&longCache=true&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAM6wAADOsB5dZE0gAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAERSURBVCiRhZG/SsMxFEZPfsVJ61jbxaF0cRQRcRJ9hlYn30IHN/+9iquDCOIsblIrOjqKgy5aKoJQj4O3EEtbPwhJbr6Te28CmdSKeqzeqr0YbfVIrTBKakvtOl5dtTkK+v4HfA9PEyBFCY9AGVgCBLaBp1jPAyfAJ/AAdIEG0dNAiyP7+K1qIfMdonZic6+WJoBJvQlvuwDqcXadUuqPA1NKAlexbRTAIMvMOCjTbMwl1LtI/6KWJ5Q6rT6Ht1MA58AX8Apcqqt5r2qhrgAXQC3CZ6i1+KMd9TRu3MvA3aH/fFPnBodb6oe6HM8+lYHrGdRXW8M9bMZtPXUji69lmf5Cmamq7quNLFZXD9Rq7v0Bpc1o/tp0fisAAAAASUVORK5CYII=)](https://github.com/jacobtomlinson/python-container-action)
-[![Actions Status](https://github.com/jacobtomlinson/python-container-action/workflows/Lint/badge.svg)](https://github.com/jacobtomlinson/python-container-action/actions)
-[![Actions Status](https://github.com/jacobtomlinson/python-container-action/workflows/Integration%20Test/badge.svg)](https://github.com/jacobtomlinson/python-container-action/actions)
-
-This is a template for creating GitHub actions and contains a small Python application which will be built into a minimal [Container Action](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/creating-a-docker-container-action). Our final container from this template is ~50MB, yours may be a little bigger once you add some code. If you want something smaller check out my [go-container-action template](https://github.com/jacobtomlinson/go-container-action/actions).
-
-In `main.py` you will find a small example of accessing Action inputs and returning Action outputs. For more information on communicating with the workflow see the [development tools for GitHub Actions](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/development-tools-for-github-actions).
-
-> 🏁 To get started, click the `Use this template` button on this repository [which will create a new repository based on this template](https://github.blog/2019-06-06-generate-new-repositories-with-repository-templates/).
+# Sonarqube and Languages Team release action
 
 ## Usage
 
-Describe how to use your action here.
+Create a release in github with the full version number as a tag, it will automatically trigger the action.
+If the release fail, everything is rollbacked and the release is reverted to draft.
+You can retrigger the release by publishing the draft
 
 ### Example workflow
 
 ```yaml
-name: My Workflow
-on: [push, pull_request]
+name: sonar-release
+# This workflow is triggered when publishing a new github release
+on: 
+  release:
+    types:
+      - published
+
+env:
+  PYTHONUNBUFFERED: 1
+  
 jobs:
-  build:
+  sonar_release:
     runs-on: ubuntu-latest
+    name: Start release process
     steps:
-    - uses: actions/checkout@master
-    - name: Run action
+      - name: LT release
+        id: lt_release
+        with:
+          publish_to_binaries: false
+          distribute_target: "SQ-test"
+          run_rules_cov: false
+          slack_channel: test-github-action
+        env:
+          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
+          BINTRAY_USER: ${{ secrets.BINTRAY_USER }}
+          BINTRAY_TOKEN: ${{ secrets.BINTRAY_TOKEN }}
+          BURGRX_USER: ${{ secrets.BURGRX_USER }}
+          BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
+          CENTRAL_USER: ${{ secrets.CENTRAL_USER }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          CIRRUS_TOKEN: ${{ secrets.CIRRUS_TOKEN }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          PATH_PREFIX: ${{ secrets.BINARIES_PATH_PREFIX }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+          RELEASE_SSH_USER: ${{ secrets.RELEASE_SSH_USER }}
+          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}
+          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}  
+        # Put your action repo here
+        uses: SonarSource/gh-action_LT_release@tom/slack
 
-      # Put your action repo here
-      uses: me/myaction@master
-
-      # Put an example of your mandatory inputs here
-      with:
-        myInput: world
+      - name: Check outputs
+        if: always()
+        run: |
+          echo "${{ steps.lt_release.outputs.releasability }}"
+          echo "${{ steps.lt_release.outputs.release }}"
 ```
 
 ### Inputs
 
 | Input                                             | Description                                        |
 |------------------------------------------------------|-----------------------------------------------|
-| `myInput`  | An example mandatory input    |
-| `anotherInput` _(optional)_  | An example optional input    |
+| `distribute` _(optional)_ _(true/false)_ | enable distribution to maven central (only for OSS projects) |
+| `publish_to_binaries` _(optional)_  _(true/false)_| enable publication of artifacts to binaries.sonarsource.com  |
+| `attach_artifacts_to_github_release` _(optional)_ _(true/false)_| attach artifacts to the github release tag (this currently does not work)|
+| `run_rules_cov` _(optional)_ _(true/false)_| run the rules-cov program at the end of the release (only for languages plugins) |
+| `slack_channel` _(optional)_ _(true/false)_| enable slack notification on the specified channel  |
 
-### Outputs
-
-| Output                                             | Description                                        |
-|------------------------------------------------------|-----------------------------------------------|
-| `myOutput`  | An example output (returns 'Hello world')    |
-
-## Examples
-
-> NOTE: People ❤️ cut and paste examples. Be generous with them!
-
-### Using the optional input
-
-This is how to use the optional input.
-
-```yaml
-with:
-  myInput: world
-  anotherInput: optional
-```
-
-### Using outputs
-
-Show people how to use your outputs in another action.
-
-```yaml
-steps:
-- uses: actions/checkout@master
-- name: Run action
-  id: myaction
-
-  # Put your action name here
-  uses: me/myaction@master
-
-  # Put an example of your mandatory arguments here
-  with:
-    myInput: world
-
-# Put an example of using your outputs here
-- name: Check outputs
-    run: |
-    echo "Outputs - ${{ steps.myaction.outputs.myOutput }}"
-```
