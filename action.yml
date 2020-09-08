@@ -21,6 +21,9 @@ inputs:
     description: "Flag to enable running the rules-cov program for languages plugin"
     default: 'false'
     required: false
+  slack_channel:  
+    description: "Channel to post notifications"
+    required: false
   test:
     description: "Flag to enable tests"
     default: 'false'
