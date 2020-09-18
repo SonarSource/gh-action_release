@@ -40,7 +40,7 @@ class Artifactory:
     payload = {
       "targetRepo": self.bintray_target_repo,
       "sourceRepos": [source_repo],
-      "async": "false"
+      "async": "true"
     }
     print(f"payload: {payload}")
     url = f"{self.url}/api/build/distribute/{release_request.project}/{release_request.buildnumber}"
