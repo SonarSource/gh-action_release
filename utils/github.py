@@ -33,7 +33,7 @@ class GitHub:
   def current_branch(self):
     possible_branch_name = self.release_info()['target_commitish']
     if re.compile("^([a-f0-9]{40})$").match(possible_branch_name):
-      return None
+      return 'master'
     return possible_branch_name
 
   def attach_asset_to_release(self, file_path, filename):
