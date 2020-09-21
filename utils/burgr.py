@@ -75,7 +75,7 @@ class Burgr:
     response = requests.post(url, auth=self.auth_header)
     message = response.json().get('message', '')
     if response.status_code == 200 and message == "done":
-      print(f"Releasability checks started successfully")
+      print(f"Releasability checks started successfully for {version} {branch}")
       return self.start_polling_releasability_status(version, branch, nb_of_commits)
     else:
       print(f"Releasability checks failed to start: {response} '{message}'")
