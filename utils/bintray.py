@@ -27,7 +27,7 @@ class Bintray:
       polling.poll(
         lambda: self.package_latest_version(package) == version,
         step=60,
-        timeout=60*1
+        timeout=60*30
       )
     except polling.TimeoutException as te:
       self.alert_slack(f"{package} was not published to BinTray within 30 mins: {str(te)}", "#build")
