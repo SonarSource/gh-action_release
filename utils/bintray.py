@@ -13,7 +13,7 @@ class Bintray:
   central_password=None
   slack_client=None
   headers = {'content-type': 'application/json'}
-  maven_central_sync_timeout=15*30
+  maven_central_sync_timeout=60*15
 
   def __init__(self, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client):
     self.bintray_api_url = bintray_api_url
