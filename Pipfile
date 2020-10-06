@@ -19,6 +19,7 @@ atomicwrites = "*"
 pyyaml = "*"
 slackapi = "*"
 slackclient = "*"
+github3-py = "*"
 
 [requires]
 python_version = "3.7"

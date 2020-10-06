@@ -1,5 +1,7 @@
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
+from vars import github_attach
+
 
 revoke = True
 
@@ -23,7 +25,7 @@ def get_action(revoke):
   else:
     return "publishing"
 
-def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke=False):
+def publish_all_artifacts_to_binaries(artifactory, binaries, github, release_request, buildinfo, revoke=False):
   print(f"{get_action(revoke)} artifacts for {release_request.project}#{release_request.buildnumber}")
   release_url = ""
   repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace('qa', 'builds')
@@ -35,15 +37,15 @@ def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, bu
     artifacts_count = len(artifacts)
     if artifacts_count == 1:
       print("only 1")
-      return publish_artifact(artifactory, binaries, artifacts[0], version, repo, revoke)
+      return publish_artifact(artifactory, binaries, github, artifacts[0], version, repo, revoke)
     print(f"{artifacts_count} artifacts")
     for i in range(0, artifacts_count):
       print(f"artifact {artifacts[i]}")
-      release_url = publish_artifact(artifactory, binaries, artifacts[i], version, repo, revoke)
+      release_url = publish_artifact(artifactory, binaries, github, artifacts[i], version, repo, revoke)
   return release_url
 
 
-def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, revoke=False):
+def publish_artifact(artifactory, binaries, github, artifact_to_publish, version, repo, revoke=False):
   print(f"{get_action(revoke)} {artifact_to_publish}#{version}")
   artifact = artifact_to_publish.split(":")
   gid = artifact[0]
@@ -62,4 +64,6 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
     binaries.delete(filename, gid, aid, version)
   else: 
     tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
+    if github_attach:
+      github.attach_asset_to_release(tempfile,filename)
     return binaries.upload(tempfile, filename, gid, aid, version)
