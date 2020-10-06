@@ -13,6 +13,7 @@ class Bintray:
   central_password=None
   slack_client=None
   headers = {'content-type': 'application/json'}
+  maven_central_sync_timeout=60*15
 
   def __init__(self, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client):
     self.bintray_api_url = bintray_api_url
@@ -49,12 +50,20 @@ class Bintray:
     }
     url=f"{self.bintray_api_url}/maven_central_sync/sonarsource/SonarQube/{package}/versions/{version}"
     try:
-      r = requests.post(url, json=payload, headers=self.headers, auth=requests.auth.HTTPBasicAuth(self.bintray_user, self.bintray_apikey))  
+      r = requests.post(url,
+                        json=payload,
+                        headers=self.headers,
+                        uth=requests.auth.HTTPBasicAuth(self.bintray_user, self.bintray_apikey),
+                        timeout=self.maven_central_sync_timeout)
       result=r.json()
       print(f"status:{result['status']} messages:{result['messages']}")
       r.raise_for_status()
       if r.status_code == 200:
         print(f"{project}#{version} synced to central")
+    except requests.exceptions.Timeout as err:
+      self.slack_client(f"Sync of {project}#{version} did not finished in {self.maven_central_sync_timeout} seconds: "
+                        f"{err}",
+                        "#build")
     except requests.exceptions.HTTPError as err:
       self.alert_slack(f"Failed to sync {project}#{version} {err}","#build")
 
