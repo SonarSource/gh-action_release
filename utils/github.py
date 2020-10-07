@@ -1,7 +1,9 @@
 import json
 import re
-
+import os
+import mimetypes
 import requests
+from github3 import login
 
 class GitHub:
 
@@ -37,12 +39,13 @@ class GitHub:
     return possible_branch_name
 
   def attach_asset_to_release(self, file_path, filename):
-    files = {'upload_file': open(file_path, 'rb')}
-    upload_url = self.release_info().get('upload_url').replace('{?name,label}', f"?name={filename}")
-    print(upload_url)
-    headers = {'Authorization': f"token {self.github_token}"}
-    r = requests.post(upload_url, files=files, headers=headers)
-    return r
+    gh = login(token=str(self.github_token))
+    organisation, project = self.repository_full_name().split("/")
+    repository = gh.repository(organisation, project)
+    release = repository.release(id=self.release_info().get('id'))
+    asset = release.upload_asset(content_type="application/zip", name=filename, asset=open(file_path, 'rb'))
+    return asset
+
 
   def revoke_release(self):
     if not self.release_info().get('id'):
