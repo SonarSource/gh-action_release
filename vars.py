@@ -8,7 +8,7 @@ actor = os.environ.get('GITHUB_ACTOR', 'no github actor in env')
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 github_event_path = os.environ.get('GITHUB_EVENT_PATH')
-#github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
+github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
 
 burgrx_url = 'https://burgrx.sonarsource.com'
 burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
