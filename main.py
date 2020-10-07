@@ -10,7 +10,7 @@ from utils.burgr import Burgr
 from utils.cirrus import rules_cov
 from utils.github import GitHub
 from slack.errors import SlackApiError
-from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
+from vars import githup_api_url, github_token, github_event_path, github_attach, burgrx_url, burgrx_user, burgrx_password, \
   artifactory_apikey, distribute_target, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, \
   binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, passphrase, run_rules_cov, distribute, \
   repo, ref, actor, publish_to_binaries, slack_client,slack_channel
@@ -73,7 +73,7 @@ def main():
 
     if publish_to_binaries:
       binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key, binaries_path_prefix, passphrase)
-      publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
+      publish_all_artifacts_to_binaries(artifactory, binaries, github, rr, buildinfo)
       set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
     if run_rules_cov:
@@ -99,7 +99,7 @@ def main():
     notify_slack(f"Successfully released {repo}:{version} by {actor}")
 
   except Exception as e:
-    error=f"::error release did not complete correctly." + str(e)
+    error=f"::error release {repo}:{version} did not complete correctly." + str(e)
     print(error)
     notify_slack(error)
     abort_release(github, artifactory, binaries, rr)

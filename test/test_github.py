@@ -1,14 +1,15 @@
 import unittest
 import re
+import os
 
 from unittest.mock import patch
 from utils.github import GitHub
-
+from vars import githup_api_url, github_token
 
 class TestGitHub(unittest.TestCase):
 
   def setUp(self) -> None:
-    self.github = GitHub("http://localhost", "ABCE", "test/payload.json")
+    self.github = GitHub("http://localhost", github_token, "test/payload.json")
 
   def test_branch(self):
     self.assertEqual(self.github.current_branch(), "branch-1.0")
