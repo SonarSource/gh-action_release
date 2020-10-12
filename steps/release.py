@@ -64,6 +64,6 @@ def publish_artifact(artifactory, binaries, github, artifact_to_publish, version
     binaries.delete(filename, gid, aid, version)
   else: 
     tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
-    if github_attach:
-      github.attach_asset_to_release(tempfile,filename)
+    #if github_attach:
+      #github.attach_asset_to_release(tempfile,filename)
     return binaries.upload(tempfile, filename, gid, aid, version)
