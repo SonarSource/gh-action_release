@@ -43,8 +43,14 @@ class GitHub:
     organisation, project = self.repository_full_name().split("/")
     repository = gh.repository(organisation, project)
     release = repository.release(id=self.release_info().get('id'))
-    asset = release.upload_asset(content_type="application/zip", name=filename, asset=open(file_path, 'rb'))
-    return asset
+    upload = True
+    for a in release.assets():
+      if a.name == filename:
+        upload = False
+    if upload:    
+      asset = release.upload_asset(content_type="application/zip", name=filename, asset=open(file_path, 'rb'))
+      return asset
+    return None
 
 
   def revoke_release(self):
