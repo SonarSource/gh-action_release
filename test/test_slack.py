@@ -10,7 +10,7 @@ from vars import githup_api_url, github_token, github_event_path, burgrx_url, bu
 class TestSlack(unittest.TestCase):
 
   def test_slack(self):
-    bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client)
+    bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password)
     response = bintray.alert_slack("test message","#test-github-action")    
     assert response["message"]["text"] == "test message"
 
