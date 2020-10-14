@@ -65,6 +65,7 @@ def publish_artifact(artifactory, binaries, github, artifact_to_publish, version
   else: 
     tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
     if github_attach:
+      print("Attaching artifacts to github release {repo}:{version}")
       try:
         github.attach_asset_to_release(tempfile,filename)
       except Exception as e:

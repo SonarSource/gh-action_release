@@ -52,7 +52,7 @@ class GitHub:
       print(f"Attached {filename}")
       return asset
     else:
-      print(f"{filename} already attached")
+      print(f"{filename} already attached to github release")
       return None
 
 
