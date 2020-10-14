@@ -85,7 +85,7 @@ def main():
       set_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
 
     if (distribute and buildinfo.is_public()):
-      bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client)
+      bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password)
       try:
         bintray.await_package_ready(buildinfo.get_package(), version)
         bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
