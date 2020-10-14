@@ -47,10 +47,13 @@ class GitHub:
     for a in release.assets():
       if a.name == filename:
         upload = False
-    if upload:    
+    if upload:          
       asset = release.upload_asset(content_type="application/zip", name=filename, asset=open(file_path, 'rb'))
+      print(f"Attached {filename}")
       return asset
-    return None
+    else:
+      print(f"{filename} already attached")
+      return None
 
 
   def revoke_release(self):
