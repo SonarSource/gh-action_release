@@ -1,7 +1,7 @@
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from vars import github_attach
-from main import notify_slack
+from utils.slack import alert_slack
 
 revoke = True
 
@@ -68,7 +68,7 @@ def publish_artifact(artifactory, binaries, github, artifact_to_publish, version
       try:
         github.attach_asset_to_release(tempfile,filename)
       except Exception as e:
-        errMsg=f"Error could not upload {filename} to github release {str(e)}"
+        errMsg=f"Error could not upload {filename} to github release {repo}:{version} {str(e)}"
         print(errMsg)      
-        notify_slack(errMsg)
+        alert_slack(errMsg,"#build")
     return binaries.upload(tempfile, filename, gid, aid, version)

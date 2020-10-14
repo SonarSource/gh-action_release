@@ -3,25 +3,23 @@ import polling
 import requests
 from flask import make_response
 import urllib.parse
-from slack.errors import SlackApiError
+from utils.slack import alert_slack
 
 class Bintray:
   bintray_api_url=None
   bintray_user=None
   bintray_apikey=None
   central_user=None
-  central_password=None
-  slack_client=None
+  central_password=None  
   headers = {'content-type': 'application/json'}
   maven_central_sync_timeout=60*15
 
-  def __init__(self, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client):
+  def __init__(self, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password):
     self.bintray_api_url = bintray_api_url
     self.bintray_user = bintray_user
     self.bintray_apikey = bintray_apikey
     self.central_user = central_user
     self.central_password = central_password 
-    self.slack_client = slack_client
 
   def await_package_ready(self, package, version):
     try:
@@ -31,7 +29,7 @@ class Bintray:
         timeout=60*30
       )
     except polling.TimeoutException as te:
-      self.alert_slack(f"{package} {version} was not published to BinTray within 30 mins: {str(te)}", "#build")
+      alert_slack(f"{package} {version} was not published to BinTray within 30 mins: {str(te)}", "#build")
       raise te
 
   def package_latest_version(self, package) -> str:
@@ -61,16 +59,8 @@ class Bintray:
       if r.status_code == 200:
         print(f"{project}#{version} synced to central")
     except requests.exceptions.Timeout as err:
-      self.slack_client(f"Sync of {project}#{version} did not finished in {self.maven_central_sync_timeout} seconds: "
-                        f"{err}",
-                        "#build")
+      alert_slack(f"Sync of {project}#{version} did not finished in {self.maven_central_sync_timeout} seconds: ","#build")
     except requests.exceptions.HTTPError as err:
-      self.alert_slack(f"Failed to sync {project}#{version} {err}","#build")
+      alert_slack(f"Failed to sync {project}#{version} {err}","#build")
 
-  def alert_slack(self,msg,channel):
-    try:
-      return self.slack_client.chat_postMessage(
-        channel=channel,
-        text=msg)
-    except SlackApiError as e:
-      print(f"Could not notify slack: {e.response['error']}")
+  
