@@ -53,7 +53,7 @@ class Bintray:
       r = requests.post(url,
                         json=payload,
                         headers=self.headers,
-                        uth=requests.auth.HTTPBasicAuth(self.bintray_user, self.bintray_apikey),
+                        auth=requests.auth.HTTPBasicAuth(self.bintray_user, self.bintray_apikey),
                         timeout=self.maven_central_sync_timeout)
       result=r.json()
       print(f"status:{result['status']} messages:{result['messages']}")
