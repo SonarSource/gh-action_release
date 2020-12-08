@@ -91,9 +91,9 @@ def main():
         bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
         set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
       except Exception as e:
-        warn = "::warn maven central sync not possible." + str(e)
+        warn = f"::warn maven central sync not possible for {project}#{version}" + str(e)
         print(warn)
-        notify_slack(warn)
+        bintray.alert_slack(warn,"#build")
 
     burgr.notify(buildinfo, 'passed')
     notify_slack(f"Successfully released {repo}:{version} by {actor}")
