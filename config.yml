@@ -31,6 +31,7 @@ run_task:
   build_script:
     - curl -L -o ${CIRRUS_WORKING_DIR}/rulescov.jar --silent --user ${ARTIFACTORY_PRIVATE_USERNAME}:${ARTIFACTORY_PRIVATE_PASSWORD} "${ARTIFACTORY_URL}/sonarsource-private-releases/com/sonarsource/rulescov/rulescov/\[RELEASE\]/rulescov-\[RELEASE\]-jar-with-dependencies.jar"
     - java -version
-    - java -jar ${CIRRUS_WORKING_DIR}/rulescov.jar --github-slug ${SLUG} --version ${VERSION} --github-token ${GITHUB_TOKEN} --jira-root-url https://jira.sonarsource.com --jira-username sonartech --jira-password ${SONARTECH_JIRA_PASSWORD} --working-directory ${CIRRUS_WORKING_DIR} 
+    - mkdir -p ${CIRRUS_WORKING_DIR}/tmp_rules_cov
+    - java -jar ${CIRRUS_WORKING_DIR}/rulescov.jar --github-slug ${SLUG} --version ${VERSION} --github-token ${GITHUB_TOKEN} --jira-root-url https://jira.sonarsource.com --jira-username sonartech --jira-password ${SONARTECH_JIRA_PASSWORD} --working-directory ${CIRRUS_WORKING_DIR}/tmp_rules_cov 
 
   
