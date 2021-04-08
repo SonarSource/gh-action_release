@@ -8,15 +8,15 @@ actor = os.environ.get('GITHUB_ACTOR', 'no github actor in env')
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 github_event_path = os.environ.get('GITHUB_EVENT_PATH')
-github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE').lower() == "true"
+github_attach: bool = os.environ.get('INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE', 'false').lower() == "true"
 
 burgrx_url = 'https://burgrx.sonarsource.com'
 burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
 burgrx_password = os.environ.get('BURGRX_PASSWORD', 'no burgrx password in env')
 
-publish_to_binaries: bool = os.environ.get('INPUT_PUBLISH_TO_BINARIES','false').lower() == "true"
-distribute: bool = os.environ.get('INPUT_DISTRIBUTE','false').lower() == "true"
-run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV','false').lower() == "true"
+publish_to_binaries: bool = os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true"
+distribute: bool = os.environ.get('INPUT_DISTRIBUTE', 'false').lower() == "true"
+run_rules_cov: bool = os.environ.get('INPUT_RUN_RULES_COV', 'false').lower() == "true"
 
 artifactory_apikey = os.environ.get('ARTIFACTORY_API_KEY', 'no api key in env')
 distribute_target = os.environ.get('INPUT_DISTRIBUTE_TARGET') or None
