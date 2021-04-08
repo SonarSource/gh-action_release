@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 import polling
 import requests
 from polling import TimeoutException
@@ -19,6 +20,24 @@ def get_corresponding_pipeline(commits_info, version):
 
 def is_finished(status: str):
   return status == 'errored' or status == 'failed' or status == 'passed'
+
+
+def format_ra_check(check):
+  state = check['state']
+  # \u2705 is "white heavy check mark", \u274c is "cross mark"
+  status_char = '\u2705' if state == 'PASSED' else '\u274c'
+  reason = f" - {check.get('message', '')}" if state != 'PASSED' else ''
+  return f"* {status_char} {check['name']}: {state}{reason}"
+
+
+def format_failed_releasability(releasability):
+  metadata = json.loads(releasability['metadata'])
+  return '\n'.join([ format_ra_check(check) for check in metadata['checks'] if check['state'] != 'NOT_RELEVANT' ])
+
+
+class ReleasabilityFailure(Exception):
+  def __init__(self, releasability):
+    super(Exception, self).__init__(format_failed_releasability(releasability))
 
 
 class Burgr:
@@ -115,7 +134,10 @@ class Burgr:
                                                check_releasable),
         step=step,
         timeout=timeout)
-      print(f"Releasability checks finished with status '{releasability['status']}'")
+      status = releasability['status']
+      print(f"Releasability checks finished with status '{status}'")
+      if status != 'passed':
+        raise ReleasabilityFailure(releasability)
       return releasability.get('metadata')
     except TimeoutException:
       print("Releasability timed out")

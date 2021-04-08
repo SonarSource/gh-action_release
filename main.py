@@ -59,9 +59,10 @@ def main():
   try:
     burgr.releasability_checks(version, github.current_branch())
   except Exception as e:
-    print(f"::error relesability did not complete correctly. " + str(e))
+    print(f"::error releasability did not complete correctly. " + str(e))
+    github.revoke_release()
     sys.exit(1)
-  set_output("releasability", f"{repo}:{version} relesability DONE")
+  set_output("releasability", f"{repo}:{version} releasability DONE")
 
   artifactory = Artifactory(artifactory_apikey, distribute_target)
   buildinfo = artifactory.receive_build_info(rr)
