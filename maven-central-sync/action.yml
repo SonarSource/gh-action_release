@@ -1,0 +1,14 @@
+name: 'Maven Central Sync'
+description: 'Syncs a open source project with maven central'
+inputs:
+  local-repo-dir:
+    description: 'Directory of artifacts to sync'
+    required: true
+outputs:
+  repo:
+    description: 'Name of the staging repo'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - ${{ inputs.local-repo-dir }}
