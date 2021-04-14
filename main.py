@@ -89,7 +89,8 @@ def main():
       bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client)
       try:
         bintray.await_package_ready(buildinfo.get_package(), version)
-        bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
+        #we do not sync to central through bintray anymore
+        #bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
         set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
       except Exception as e:
         warn = f"::warn maven central sync not possible for {project}#{version}" + str(e)
