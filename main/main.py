@@ -5,15 +5,13 @@ from steps.release import revoke_release, publish_all_artifacts_to_binaries
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.binaries import Binaries
-from utils.bintray import Bintray
 from utils.burgr import Burgr
 from utils.cirrus import rules_cov
 from utils.github import GitHub
 from slack.errors import SlackApiError
 from vars import githup_api_url, github_token, github_event_path, github_attach, burgrx_url, burgrx_user, burgrx_password, \
-  artifactory_apikey, distribute_target, bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, \
-  binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, passphrase, run_rules_cov, distribute, \
-  repo, ref, actor, publish_to_binaries, slack_client,slack_channel
+  artifactory_apikey, binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, \
+  passphrase, run_rules_cov, repo, ref, actor, publish_to_binaries, slack_client,slack_channel
 
 
 def set_output(function, output):
@@ -64,7 +62,7 @@ def main():
     sys.exit(1)
   set_output("releasability", f"{repo}:{version} releasability DONE")
 
-  artifactory = Artifactory(artifactory_apikey, distribute_target)
+  artifactory = Artifactory(artifactory_apikey)
   buildinfo = artifactory.receive_build_info(rr)
   binaries = None
 
@@ -80,22 +78,6 @@ def main():
     if run_rules_cov:
       rules_cov(rr, buildinfo)
       set_output("rules_cov", f"{repo}:{version} rules_cov DONE")
-
-    if (distribute and buildinfo.is_public()) or distribute_target is not None:
-      artifactory.distribute_to_bintray(rr, buildinfo)
-      set_output("distribute_to_bintray", f"{repo}:{version} distribute_to_bintray DONE")
-
-    if (distribute and buildinfo.is_public()):
-      bintray = Bintray(bintray_api_url, bintray_user, bintray_apikey, central_user, central_password, slack_client)
-      try:
-        bintray.await_package_ready(buildinfo.get_package(), version)
-        #we do not sync to central through bintray anymore
-        #bintray.sync_to_central(rr.project, buildinfo.get_package(), version)
-        set_output("sync_to_central", f"{repo}:{version} sync_to_central DONE")
-      except Exception as e:
-        warn = f"::warn maven central sync not possible for {project}#{version}" + str(e)
-        print(warn)
-        bintray.alert_slack(warn,"#build")
 
     burgr.notify(buildinfo, 'passed')
     notify_slack(f"Successfully released {repo}:{version} by {actor}")

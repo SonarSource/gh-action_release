@@ -10,14 +10,10 @@ class Artifactory:
   url = 'https://repox.jfrog.io/repox'
   api_key = None
   headers = {'content-type': 'application/json'}
-  default_bintray_target_repo = "SonarQube-bintray"
-  bintray_target_repo = default_bintray_target_repo
 
-  def __init__(self, api_key: str, custom_bintray_target_repo = None):
+  def __init__(self, api_key: str):
     self.api_key = api_key
     self.headers['X-JFrog-Art-Api'] = api_key
-    if custom_bintray_target_repo is not None:
-      self.bintray_target_repo = custom_bintray_target_repo
 
   def receive_build_info(self, release_request):
     url = f"{self.url}/api/build/{release_request.project}/{release_request.buildnumber}"
@@ -29,28 +25,6 @@ class Artifactory:
       print(r.status_code)
       print(r.content)
       raise Exception('unknown build')
-
-  def distribute_to_bintray(self, release_request, buildinfo):
-    print(f"Distributing {release_request.project}#{release_request.buildnumber} to bintray")
-
-    source_repo = "sonarsource-public-releases"
-    if self.bintray_target_repo != self.default_bintray_target_repo:
-      source_repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace("qa", "releases")
-
-    payload = {
-      "targetRepo": self.bintray_target_repo,
-      "sourceRepos": [source_repo],
-      "async": "true"
-    }
-    print(f"payload: {payload}")
-    url = f"{self.url}/api/build/distribute/{release_request.project}/{release_request.buildnumber}"
-    try:
-      r = requests.post(url, json=payload, headers=self.headers)
-      r.raise_for_status()
-      if r.status_code == 200:
-        print(f"{release_request.project}#{release_request.buildnumber} pushed to bintray ({self.bintray_target_repo}) ready to sync to central")
-    except requests.exceptions.HTTPError as err:
-      print(f"Failed to distribute {release_request.project}#{release_request.buildnumber} {err}")
 
   def promote(self, release_request, buildinfo, revoke=False):
     status = 'released'
