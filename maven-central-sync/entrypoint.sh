@@ -26,4 +26,4 @@ $deploy -DstagingRepositoryId="$STAGING_REPO" -DrepositoryDirectory="$LOCAL_REPO
 
 $close -DstagingRepositoryId="$STAGING_REPO"
 
-#$release -DstagingRepositoryId="$STAGING_REPO"
+$release -DstagingRepositoryId="$STAGING_REPO"
