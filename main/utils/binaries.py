@@ -16,16 +16,15 @@ class Binaries:
   passphrase: str
   ssh_client=None
   private_ssh_key = None
-  upload_checksums = ["md5", "sha1", "sha256"]
+  upload_checksums = ["md5", "sha1", "sha256", "asc"]
     
 
-  def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str, binaries_path_prefix: str, passphrase: str):
+  def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str, binaries_path_prefix: str):
     self.binaries_host = binaries_host
     self.binaries_url = f"https://{binaries_host}"
     self.binaries_ssh_user = binaries_ssh_user
     self.binaries_ssh_key = binaries_ssh_key
     self.binaries_path_prefix = binaries_path_prefix
-    self.passphrase =  passphrase
     self.ssh_client = paramiko.SSHClient()
     self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     self.private_ssh_key = paramiko.RSAKey.from_private_key(StringIO(self.binaries_ssh_key))
@@ -64,9 +63,6 @@ class Binaries:
       sle_unzip_dir = f"{directory}/{version}"
       self.exec_ssh_command(f"mkdir -p {sle_unzip_dir}")
       self.exec_ssh_command(f"cd {sle_unzip_dir} && unzip ../org.sonarlint.eclipse.site-{version}.zip")
-    # sign file
-    self.exec_ssh_command(f"gpg --batch --passphrase {self.passphrase} --armor --detach-sig --default-key infra@sonarsource.com {directory}/{filename}")
-    print(f'signed {directory}/{filename}')
     self.ssh_client.close()
     return release_url
 
