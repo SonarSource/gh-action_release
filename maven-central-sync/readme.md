@@ -1,5 +1,19 @@
 # Maven Central Sync
 
+## Staging Profile ID
+The endpoint `https://s01.oss.sonatype.org/service/local/staging/profiles` will return a xml where you can lookup the IDs for staging profiles.
+```xml
+<stagingProfiles>
+    <data>
+        <stagingProfile>
+            <id>13c1877339a4cf</id>
+            <name>org.sonarsource</name>
+            ...
+        </stagingProfile>
+    </data>
+</stagingProfiles>
+```
+
 ## Usage
 ```yaml
 jobs:
