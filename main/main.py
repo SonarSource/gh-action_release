@@ -10,8 +10,8 @@ from utils.cirrus import rules_cov
 from utils.github import GitHub
 from slack.errors import SlackApiError
 from vars import githup_api_url, github_token, github_event_path, github_attach, burgrx_url, burgrx_user, burgrx_password, \
-  artifactory_apikey, binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, \
-  passphrase, run_rules_cov, repo, ref, actor, publish_to_binaries, slack_client,slack_channel
+  artifactory_apikey, binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, run_rules_cov, repo, \
+  ref, actor, publish_to_binaries, slack_client,slack_channel
 
 
 def set_output(function, output):
@@ -71,7 +71,7 @@ def main():
     set_output("promote", f"{repo}:{version} promote DONE")
 
     if publish_to_binaries:
-      binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key, binaries_path_prefix, passphrase)
+      binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key, binaries_path_prefix)
       publish_all_artifacts_to_binaries(artifactory, binaries, github, rr, buildinfo)
       set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
