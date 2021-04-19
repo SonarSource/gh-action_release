@@ -22,7 +22,7 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v1
       - name: JFrog config
-        run: jfrog rt config repox --url https://repox.jfrog.io/artifactory/ --apikey $ARTIFACTORY_API_KEY
+        run: jfrog rt config repox --url https://repox.jfrog.io/artifactory/ --apikey $ARTIFACTORY_API_KEY --basic-auth-only
         env:
           ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
       - name: Get the version
@@ -36,6 +36,7 @@ jobs:
       - name: Download Artifacts
         uses: SonarSource/gh-action_release/download-build@v3
         with:
+          build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
       - name: Maven Central Sync
         id: maven-central-sync
@@ -47,10 +48,11 @@ jobs:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
       - name: Notify on failure
-        if: ${{ steps.maven-central-sync.outcome == 'failure' }}
+        if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
         uses: 8398a7/action-slack@v3
         with:
-          status: ${{ job.status }}
+          text: 'Maven sync failed'
+          status: failure
           fields: repo,author,eventName
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_BUILD_WEBHOOK }}
