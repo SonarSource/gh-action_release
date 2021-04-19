@@ -1,0 +1,21 @@
+name: 'Download build'
+description: 'Download all artifacts and checksums of a build'
+inputs:
+  local-repo-dir:
+    description: 'Empty directory to store the artifacts'
+    required: true
+  remote-repo:
+    description: 'Repository to download from'
+    required: true
+    default: 'sonarsource-public-releases'
+runs:
+  using: 'composite'
+  steps:
+    - name: Download artifacts
+      shell: bash
+      working-directory: ${{ inputs.local-repo-dir }}
+      run: jfrog rt download --fail-no-op --build "${{ github.event.repository.name }}/${{ steps.get_version.outputs.build }}" ${{ inputs.remote-repo }}/
+    - name: Download checksums
+      shell: bash
+      working-directory: ${{ inputs.local-repo-dir }}
+      run: find . -type f -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \) -exec jfrog rt curl "${{ inputs.remote-repo }}/{{}}.{md5,sha1,sha256}" --output "#1.#2" \;
