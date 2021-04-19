@@ -8,13 +8,16 @@ inputs:
     description: 'Repository to download from'
     required: true
     default: 'sonarsource-public-releases'
+  build-number:
+    description: 'Build number'
+    required: true
 runs:
   using: 'composite'
   steps:
     - name: Download artifacts
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
-      run: jfrog rt download --fail-no-op --build "${{ github.event.repository.name }}/${{ steps.get_version.outputs.build }}" ${{ inputs.remote-repo }}/
+      run: jfrog rt download --fail-no-op --build "${{ github.event.repository.name }}/${{ inputs.build-number }}" ${{ inputs.remote-repo }}/
     - name: Download checksums
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
