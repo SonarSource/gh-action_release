@@ -1,5 +1,7 @@
 # Sonarqube and Languages Team release action
 
+The latest version is on branch v3
+
 ## Usage
 
 Create a release in github with the full version number as a tag, it will automatically trigger the action.
