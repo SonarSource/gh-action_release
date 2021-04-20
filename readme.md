@@ -8,8 +8,47 @@ The release workflow consists of 3 SonarSource maintained actions:
 
 ## Usage
 ```yaml
+name: sonar-release
+
+on:
+  release:
+    types:
+      - published
+
 jobs:
   release:
+    runs-on: ubuntu-latest
+    name: Release
+    steps:
+      - name: Release
+        id: release
+        env:
+          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
+          BURGRX_USER: ${{ secrets.BURGRX_USER }}
+          BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
+          CIRRUS_TOKEN: ${{ secrets.CIRRUS_TOKEN }}
+          PATH_PREFIX: ${{ secrets.BINARIES_PATH_PREFIX }}
+          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+          RELEASE_SSH_USER: ${{ secrets.RELEASE_SSH_USER }}
+          RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}
+          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
+        uses: SonarSource/gh-action_release/main@v3
+        with:
+          publish_to_binaries: true
+          attach_artifacts_to_github_release: false
+          run_rules_cov: false
+          slack_channel: builders-guild
+      - name: Release action results
+        if: always()
+        run: |
+          echo "${{ steps.lt_release.outputs.releasability }}"
+          echo "${{ steps.lt_release.outputs.release }}"
+
+  maven-central-sync:
+    runs-on: ubuntu-latest
+    name: Maven Central Sync
+    needs:
+      - release
     steps:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v1
