@@ -6,8 +6,12 @@ RUN pip install pipenv
 RUN pipenv lock --requirements > requirements.txt
 RUN pip install --target=/app -r requirements.txt
 
-FROM gcr.io/distroless/python3-debian10
+FROM python:3.7-slim
 COPY --from=build-env /app /app
 
+COPY bin/ /usr/local/bin
+
+RUN apt-get update && apt-get install -y gpg && rm -rf /var/lib/apt/lists/*
+
 ENV PYTHONPATH=/app
-CMD ["/app/main.py"]
+CMD ["/usr/local/bin/entrypoint.sh"]
