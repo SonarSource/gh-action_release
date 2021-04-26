@@ -113,6 +113,8 @@ def current_branch():
 
 
 def main():
+    print(f"::error  this version is deprecated, please contact the release engineer guild to update your workflow to v3")
+    sys.exit(1)
     repo=os.environ["GITHUB_REPOSITORY"]
     tag=os.environ["GITHUB_REF"]
     version=tag.replace('refs/tags/', '', 1)
