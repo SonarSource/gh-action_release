@@ -36,13 +36,15 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
 def main():
   organisation, project = repo.split("/")
   version = ref.replace('refs/tags/', '', 1)
-  
-  # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER
-  if re.compile('\d+\.\d+\.\d+(?:-M\d+)?\.\d+').match(version) is None:                
+
+  # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER (SEMVER)
+  version_pattern = re.compile('^\d+\.\d+\.\d+(?:-M\d+)?(?:\.|\+)(\d+)$')
+  version_match = version_pattern.match(version)
+  if version_match is None:
     print(f"::error Found wrong version: {version}")
     sys.exit(1)
 
-  build_number = version.split(".")[-1]
+  build_number = version_match.groups()[0]
 
   github = GitHub(githup_api_url, github_token, github_event_path)
 
