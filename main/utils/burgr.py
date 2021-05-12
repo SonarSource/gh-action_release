@@ -90,6 +90,11 @@ class Burgr:
       """
 
     print(f"Starting releasability check: {self.release_request.project}#{version}")
+
+    # SLVSCODE-specific
+    if self.release_request.project == 'sonarlint-vscode':
+      version = version.split('+')[0]
+
     url = f"{self.url}/api/project/SonarSource/{self.release_request.project}/releasability/start/{version}"
     response = requests.post(url, auth=self.auth_header)
     message = response.json().get('message', '')
