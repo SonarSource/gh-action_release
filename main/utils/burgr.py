@@ -77,17 +77,21 @@ class Burgr:
             print(f"burgr notification failed code:{r.status_code}")
 
     def releasability_checks(self, version: str, branch: str = 'master', nb_of_commits: int = 5):
-        r"""Starts the releasability check operation. Post the start releasability HTTP request to Burgrx and polls until
-      all checks have completed.
+        r"""Starts the releasability check operation. Post the start releasability HTTP request to Burgrx and polls
+        until all checks have completed.
 
-      :param project: Github project name, ex: 'sonar-dummy'
-      :param version: full version to be checked for releasability.
-      :param branch: branch to be checked for releasability.
-      :param nb_of_commits: number of latest commits on the branch to get the status from.
-      :return: True if releasability check succeeded, False otherwise.
-      """
+        :param version: full version to be checked for releasability.
+        :param branch: branch to be checked for releasability.
+        :param nb_of_commits: number of latest commits on the branch to get the status from.
+        :return: True if releasability check succeeded, False otherwise.
+        """
 
         print(f"Starting releasability check: {self.release_request.project}#{version}")
+
+        # SLVSCODE-specific
+        if self.release_request.project == 'sonarlint-vscode':
+            version = version.split('+')[0]
+
         url = f"{self.url}/api/project/SonarSource/{self.release_request.project}/releasability/start/{version}"
         response = requests.post(url, auth=self.auth_header)
         message = response.json().get('message', '')
@@ -107,15 +111,14 @@ class Burgr:
                                            check_releasable: bool = True) -> bool:
         r"""Starts polling Burgrx for latest releasability status.
 
-      :param project: Github project name, ex: 'sonar-dummy'
-      :param version: full version to be checked for releasability.
-      :param branch: branch to be checked for releasability.
-      :param nb_of_commits: number of latest commits on the branch to get the status from.
-      :param step: step in seconds between polls. (For testing, otherwise use default value)
-      :param timeout: timeout in seconds for attempting to get status. (For testing, otherwise use default value)
-      :param check_releasable: whether should check for 'releasable' flag in json response. (For testing, otherwise use default value)
-      :return: Metadata containing detailed releasability information, False if an unexpected error occurred.
-      """
+        :param version: full version to be checked for releasability.
+        :param branch: branch to be checked for releasability.
+        :param nb_of_commits: number of latest commits on the branch to get the status from.
+        :param step: step in seconds between polls. (For testing, otherwise use default value)
+        :param timeout: timeout in seconds for attempting to get status. (For testing, otherwise use default value)
+        :param check_releasable: whether should check for 'releasable' flag in json response. (For testing, otherwise use default value)
+        :return: Metadata containing detailed releasability information, False if an unexpected error occurred.
+        """
 
         url = f"{self.url}/api/commitPipelinesStages"
         url_params = {
