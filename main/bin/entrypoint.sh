@@ -3,7 +3,11 @@
 set -oue pipefail
 
 REVOKED_KEY=CFCA4A29D26468DE
-BUILD="${GITHUB_REPOSITORY#*/}/${GITHUB_REF##*.}"
+if [ "${GITHUB_REPOSITORY}" = "SonarSource/sonarlint-vscode" ]; then
+  BUILD="${GITHUB_REPOSITORY#*/}/${GITHUB_REF##*+}"
+else
+  BUILD="${GITHUB_REPOSITORY#*/}/${GITHUB_REF##*.}"
+fi
 
 echo "BUILD=$BUILD"
 
