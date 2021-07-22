@@ -1,0 +1,11 @@
+name: 'Helm chart update index'
+description: 'Release a helm chart on github'
+inputs:
+  package-path:
+    description: 'Path to the package'
+    required: true
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
+  args:
+    - "${{ inputs.package-path }}"
