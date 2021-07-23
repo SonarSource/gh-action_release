@@ -1,6 +1,9 @@
 name: 'Helm chart update index'
 description: 'Release a helm chart on github'
 inputs:
+  repository-name:
+    description: 'Short repository name'
+    required: true
   package-path:
     description: 'Path to the package'
     required: true
@@ -11,6 +14,8 @@ inputs:
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    GITHUB_REPOSITORY_SHORT: "${{ inputs.repository-name }}"
   args:
     - "${{ inputs.package-path }}"
     - "${{ inputs.release-name }}"
