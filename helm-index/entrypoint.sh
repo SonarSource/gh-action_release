@@ -7,5 +7,6 @@ cr index \
     --git-repo "$GITHUB_REPOSITORY" \
     --owner "SonarSource" \
     --package-path "$1" \
+    --release-name-template "$2" \
     --push \
     --token $CR_TOKEN

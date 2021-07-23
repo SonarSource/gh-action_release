@@ -4,8 +4,13 @@ inputs:
   package-path:
     description: 'Path to the package'
     required: true
+  release-name:
+    description: 'Name of the github release'
+    required: true
+    default: "{{ .Version }}"
 runs:
   using: 'docker'
   image: 'Dockerfile'
   args:
     - "${{ inputs.package-path }}"
+    - "${{ inputs.release-name }}"
