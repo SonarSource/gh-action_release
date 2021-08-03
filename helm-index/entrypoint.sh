@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+set -x
+
 GH_PAGES_FOLDER="$(pwd)/../gh-pages"
 git worktree add "$GH_PAGES_FOLDER" gh-pages
 ls -l "$1"
