@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+echo $@
+
 rm -rf .cr-index
 mkdir -p .cr-index
 
