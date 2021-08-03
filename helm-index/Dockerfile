@@ -1,4 +1,4 @@
-ARG VERSION=2.12.0
+ARG VERSION=3.6.3
 FROM  alpine/helm:$VERSION
 
 COPY entrypoint.sh /entrypoint.sh
