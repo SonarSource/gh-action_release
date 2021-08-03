@@ -1,5 +1,5 @@
-ARG VERSION=v1.2.1
-FROM quay.io/helmpack/chart-releaser:$VERSION
+ARG VERSION=2.12.0
+FROM  alpine/helm:$VERSION
 
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
