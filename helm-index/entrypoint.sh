@@ -6,7 +6,7 @@ set -x
 
 GH_PAGES_FOLDER="$(pwd)/../gh-pages"
 git worktree add "$GH_PAGES_FOLDER" gh-pages
-cp "$1/*.tgz" "$GH_PAGES_FOLDER"
+cp -r "$1/" "$GH_PAGES_FOLDER/"
 (cd "$GH_PAGES_FOLDER" && {
     helm repo index --merge index.yaml .
     git add index.yaml
