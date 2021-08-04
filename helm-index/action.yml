@@ -10,7 +10,6 @@ inputs:
   release-name:
     description: 'Name of the github release'
     required: true
-    default: "{{ .Version }}"
 runs:
   using: 'docker'
   image: 'Dockerfile'
