@@ -2,8 +2,6 @@
 
 set -euo pipefail
 
-set -x
-
 GH_PAGES_FOLDER="$(pwd)/../gh-pages"
 git worktree add "$GH_PAGES_FOLDER" gh-pages
 cp -rT "$1/" "$GH_PAGES_FOLDER/"
