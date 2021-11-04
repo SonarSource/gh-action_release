@@ -2,27 +2,12 @@ name: "SonarSource LT/SQ release"
 description: "Release SonarSource LT & SQ projects"
 author: "Thomas Vérin & Malena Ebert"
 inputs:
-  attach_artifacts_to_github_release:
-    description: "Flag to enable attachment of artifacts to the github release"
-    default: 'false'
-    required: false
   publish_to_binaries:
     description: "Flag to disable the publication to binaries"
     default: 'true'
     required: false
-  distribute:
-    description: "Flag to enable distribute_release gcp function"
-    default: 'false'
-    required: false
-  distribute_target:
-    description: "Switch default distribution target for BinTray"
-    required: false
   slack_channel:  
     description: "Channel to post notifications"
-    required: false
-  test:
-    description: "Flag to enable tests"
-    default: 'false'
     required: false
 outputs:
   releasability:
@@ -31,8 +16,6 @@ outputs:
     description: "Output to detect if promote was executed"
   publish_to_binaries:
     description: "Output to detect if publish_to_binaries was executed"
-  distribute_to_bintray:
-    description: "Output to detect if distribute_to_bintray was executed"
   sync_to_central:
     description: "Output to detect if sync_to_central was executed"
 runs:
