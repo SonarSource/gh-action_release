@@ -1,10 +1,12 @@
-# GH Action release
+# SonarSource GitHub release action
 
-The release workflow consists of 3 SonarSource maintained actions:
+This action implements the release process for all SonarSource projects.
+It must be used when you publish a GitHub release.
 
-* [main](main)
-* [download-build](download-build)
-* [maven-central-sync](maven-central-sync)
+It implements 4 steps that must be used depending on the kind of projects:
+* [main](main): checks for releasability, promotes artifacts to release repositories and publish artifacts to binaries (if enabled)
+* [download-build](download-build) and [maven-central-sync](maven-central-sync): deploys to Maven central
+* [helm-index](helm-index): releases a helm chart on github
 
 ## Usage
 ```yaml
@@ -34,8 +36,7 @@ jobs:
           SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
         uses: SonarSource/gh-action_release/main@v3
         with:
-          publish_to_binaries: true
-          attach_artifacts_to_github_release: false
+          publish_to_binaries: true # Used only if the binaries is delivered to costumers
           slack_channel: builders-guild
       - name: Release action results
         if: always()
