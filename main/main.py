@@ -6,11 +6,10 @@ from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.binaries import Binaries
 from utils.burgr import Burgr
-from utils.cirrus import rules_cov
 from utils.github import GitHub
 from slack.errors import SlackApiError
-from vars import githup_api_url, github_token, github_event_path, github_attach, burgrx_url, burgrx_user, burgrx_password, \
-  artifactory_apikey, binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, run_rules_cov, repo, \
+from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
+  artifactory_apikey, binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, repo, \
   ref, actor, publish_to_binaries, slack_client,slack_channel
 
 
@@ -76,10 +75,6 @@ def main():
       binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key, binaries_path_prefix)
       publish_all_artifacts_to_binaries(artifactory, binaries, github, rr, buildinfo)
       set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
-
-    if run_rules_cov:
-      rules_cov(rr, buildinfo)
-      set_output("rules_cov", f"{repo}:{version} rules_cov DONE")
 
     burgr.notify(buildinfo, 'passed')
     notify_slack(f"Successfully released {repo}:{version} by {actor}")

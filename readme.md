@@ -36,7 +36,6 @@ jobs:
         with:
           publish_to_binaries: true
           attach_artifacts_to_github_release: false
-          run_rules_cov: false
           slack_channel: builders-guild
       - name: Release action results
         if: always()

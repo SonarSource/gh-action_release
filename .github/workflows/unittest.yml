@@ -43,5 +43,3 @@ jobs:
           INPUT_DISTRIBUTE: true
           INPUT_PUBLISH_TO_BINARIES: true
           INPUT_ATTACH_ARTIFACTS_TO_GITHUB_RELEASE: true
-          INPUT_RUN_RULES_COV: false
-          
