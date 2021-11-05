@@ -17,10 +17,6 @@ inputs:
   distribute_target:
     description: "Switch default distribution target for BinTray"
     required: false
-  run_rules_cov:
-    description: "Flag to enable running the rules-cov program for languages plugin"
-    default: 'false'
-    required: false
   slack_channel:  
     description: "Channel to post notifications"
     required: false
@@ -35,8 +31,6 @@ outputs:
     description: "Output to detect if promote was executed"
   publish_to_binaries:
     description: "Output to detect if publish_to_binaries was executed"
-  run_rules_cov:
-    description: "Output to detect if run_rules_cov was executed"
   distribute_to_bintray:
     description: "Output to detect if distribute_to_bintray was executed"
   sync_to_central:
