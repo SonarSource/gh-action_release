@@ -6,7 +6,7 @@ inputs:
     description: "Flag to disable the publication to binaries"
     default: 'true'
     required: false
-  slack_channel:  
+  slack_channel:
     description: "Channel to post notifications"
     required: false
 outputs:
