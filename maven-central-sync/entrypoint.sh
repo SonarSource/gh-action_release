@@ -2,11 +2,14 @@
 
 set -euo pipefail
 
-LOCAL_REPO_DIR=$1
+LOCAL_REPO_DIR="$1"
+NEXUS_URL="$2"
+STAGING_PROFILE_ID="$3"
+DO_RELEASE="$4"
 
 MVN_NEXUS_STAGING_CMD="mvn org.sonatype.plugins:nexus-staging-maven-plugin:1.6.7:"
-DEFAULT_OPTS="-DnexusUrl=https://s01.oss.sonatype.org/ -DserverId=ossrh"
-PROFILE_OPT="-DstagingProfileId=13c1877339a4cf"
+DEFAULT_OPTS="-DnexusUrl=$NEXUS_URL -DserverId=ossrh"
+PROFILE_OPT="-DstagingProfileId=$STAGING_PROFILE_ID"
 
 # Open a new staging repository
 open="$MVN_NEXUS_STAGING_CMD:rc-open $DEFAULT_OPTS $PROFILE_OPT"
@@ -26,4 +29,6 @@ $deploy -DstagingRepositoryId="$STAGING_REPO" -DrepositoryDirectory="$LOCAL_REPO
 
 $close -DstagingRepositoryId="$STAGING_REPO"
 
-$release -DstagingRepositoryId="$STAGING_REPO"
+if [ $DO_RELEASE = true ]; then
+    $release -DstagingRepositoryId="$STAGING_REPO"
+fi
