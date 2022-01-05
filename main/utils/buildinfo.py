@@ -16,6 +16,17 @@ class BuildInfo:
     def get_version(self):
         return self.json['buildInfo']['modules'][0]['id'].split(":")[-1]
 
+    def get_source_and_target_repos(self, revoke):
+        repo = self.json['buildInfo']['statuses'][0]['repository']
+        repo_type = repo.split('-')[-1]
+        if revoke:
+            sourcerepo = repo.replace(repo_type, 'releases')
+            targetrepo = repo.replace(repo_type, 'builds')
+        else:
+            sourcerepo = repo.replace(repo_type, 'builds')
+            targetrepo = repo.replace(repo_type, 'releases')
+        return sourcerepo, targetrepo
+
     def get_artifacts_to_publish(self):
         artifacts = None
         try:

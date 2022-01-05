@@ -29,18 +29,6 @@ class Artifactory:
     def promote(self, release_request, buildinfo, revoke=False):
         status = 'released'
 
-        repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO')
-        if revoke:
-            sourcerepo = repo.replace('qa', 'releases')
-            targetrepo = repo.replace('qa', 'builds')
-            status = "it-passed"
-        else:
-            sourcerepo = repo.replace('qa', 'builds')
-            targetrepo = repo.replace('qa', 'releases')
-
-        print(
-            f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to {targetrepo}")
-
         if buildinfo.is_multi():
             params = {
                 'buildName': release_request.project,
@@ -69,7 +57,14 @@ class Artifactory:
                 "{!s}={!s}".format(key, val) for (key, val) in params.items())
             r = requests.get(url, headers=self.headers)
         else:
+            sourcerepo, targetrepo = buildinfo.get_source_and_target_repos(revoke)
+
+            print(f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to "
+                  f"{targetrepo}")
+
             url = f"{self.url}/api/build/promote/{release_request.project}/{release_request.buildnumber}"
+            if revoke:
+                status = "it-passed"
             json_payload = {
                 "status": f"{status}",
                 "sourceRepo": f"{sourcerepo}",
