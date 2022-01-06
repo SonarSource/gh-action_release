@@ -30,12 +30,8 @@ class Artifactory:
         status = 'released'
 
         if buildinfo.is_multi():
-            params = {
-                'buildName': release_request.project,
-                'buildNumber': release_request.buildnumber,
-                'status': status
-            }
             if revoke:
+                status = "it-passed"
                 moreparams = {
                     'src1': 'sonarsource-private-releases',
                     'target1': 'sonarsource-private-builds',
@@ -49,6 +45,11 @@ class Artifactory:
                     'src2': 'sonarsource-public-builds',
                     'target2': 'sonarsource-public-releases',
                 }
+            params = {
+                'buildName': release_request.project,
+                'buildNumber': release_request.buildnumber,
+                'status': status
+            }
             params.update(moreparams)
 
             print(f"Promoting multi repositories: {moreparams}")
