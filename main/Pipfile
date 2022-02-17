@@ -11,6 +11,7 @@ polling = "*"
 paramiko = "*"
 scp = "*"
 slackclient = "*"
+boto3 = "*"
 
 [requires]
 python_version = "3.7"
