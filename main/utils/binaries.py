@@ -101,7 +101,7 @@ class Binaries:
         if stderr_contents:
             raise Exception(f"Error during the SSH command '{command}': {stderr_contents}")
 
-    def aws_upload(self, temp_file, filename, gid, aid, version):
+    def s3_upload(self, temp_file, filename, gid, aid, version):
         binaries_repo = self.get_binaries_repo(gid)
         if aid == "sonar-application":
             filename = f"sonarqube-{version}.zip"
@@ -129,7 +129,7 @@ class Binaries:
                         client.upload_file(filename, self.binaries_bucket_name, f"{sle_unzip_bucket_key}/{root}/{filename})")
             print(f'uploaded content of {temp_file} to s3://{self.binaries_bucket_name}/{sle_unzip_bucket_key}')
 
-    def aws_delete(self, filename, gid, aid, version):
+    def s3_delete(self, filename, gid, aid, version):
         binaries_repo = self.get_binaries_repo(gid)
         if aid == "sonar-application":
             filename = f"sonarqube-{version}.zip"

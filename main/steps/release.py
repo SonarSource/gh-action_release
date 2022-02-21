@@ -60,9 +60,9 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
     if qual:
         filename = f"{aid}-{version}-{qual}.{ext}"
     if revoke:
-        binaries.aws_delete(filename, gid, aid, version)
+        binaries.s3_delete(filename, gid, aid, version)
         binaries.delete(filename, gid, aid, version)
     else:
         tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
-        binaries.aws_upload(tempfile, filename, gid, aid, version)
+        binaries.s3_upload(tempfile, filename, gid, aid, version)
         return binaries.upload(tempfile, filename, gid, aid, version)
