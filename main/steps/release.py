@@ -1,5 +1,6 @@
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
+import boto3
 
 revoke = True
 
@@ -36,9 +37,6 @@ def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, bu
         print(f"{get_action(revoke)}: {allartifacts}")
         artifacts = allartifacts.split(",")
         artifacts_count = len(artifacts)
-        if artifacts_count == 1:
-            print("only 1")
-            return publish_artifact(artifactory, binaries, artifacts[0], version, repo, revoke)
         print(f"{artifacts_count} artifacts")
         for i in range(0, artifacts_count):
             print(f"artifact {artifacts[i]}")
@@ -62,7 +60,9 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
     if qual:
         filename = f"{aid}-{version}-{qual}.{ext}"
     if revoke:
+        binaries.s3_delete(filename, gid, aid, version)
         binaries.delete(filename, gid, aid, version)
     else:
         tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
+        binaries.s3_upload(tempfile, filename, gid, aid, version)
         return binaries.upload(tempfile, filename, gid, aid, version)

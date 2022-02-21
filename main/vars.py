@@ -21,6 +21,7 @@ binaries_host = 'binaries.sonarsource.com'
 binaries_ssh_user = os.environ.get('RELEASE_SSH_USER', 'no ssh user in env')
 binaries_ssh_key = os.environ.get('RELEASE_SSH_KEY', 'no ssh key in env')
 binaries_path_prefix = os.environ.get('PATH_PREFIX', '/tmp')
+binaries_bucket_name = os.environ.get('BINARIES_AWS_DEPLOY', 'no binaries bucket in the env')
 
 slack_token = os.environ.get('SLACK_API_TOKEN', 'no slack token in env')
 slack_client = WebClient(slack_token)
