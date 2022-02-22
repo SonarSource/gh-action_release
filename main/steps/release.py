@@ -1,6 +1,5 @@
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
-import boto3
 
 revoke = True
 
@@ -29,7 +28,6 @@ def get_action(revoke):
 
 def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke=False):
     print(f"{get_action(revoke)} artifacts for {release_request.project}#{release_request.buildnumber}")
-    release_url = ""
     repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace('qa', 'builds')
     version = buildinfo.get_version()
     allartifacts = buildinfo.get_artifacts_to_publish()
@@ -40,8 +38,7 @@ def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, bu
         print(f"{artifacts_count} artifacts")
         for i in range(0, artifacts_count):
             print(f"artifact {artifacts[i]}")
-            release_url = publish_artifact(artifactory, binaries, artifacts[i], version, repo, revoke)
-    return release_url
+            publish_artifact(artifactory, binaries, artifacts[i], version, repo, revoke)
 
 
 def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, revoke=False):
@@ -61,8 +58,6 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
         filename = f"{aid}-{version}-{qual}.{ext}"
     if revoke:
         binaries.s3_delete(filename, gid, aid, version)
-        binaries.delete(filename, gid, aid, version)
     else:
-        tempfile = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
-        binaries.s3_upload(tempfile, filename, gid, aid, version)
-        return binaries.upload(tempfile, filename, gid, aid, version)
+        temp_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
+        binaries.s3_upload(temp_file, filename, gid, aid, version)
