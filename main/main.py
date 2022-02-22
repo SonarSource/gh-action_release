@@ -40,7 +40,7 @@ def main():
     version = ref.replace('refs/tags/', '', 1)
 
     # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER (SEMVER)
-    version_pattern = re.compile('^\d+\.\d+\.\d+(?:-M\d+)?(?:\.|\+)(\d+)$')
+    version_pattern = re.compile(r'^\d+\.\d+\.\d+(?:-M\d+)?(?:\.|\+)(\d+)$')
     version_match = version_pattern.match(version)
     if version_match is None:
         print(f"::error Found wrong version: {version}")
