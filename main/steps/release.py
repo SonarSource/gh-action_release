@@ -1,7 +1,7 @@
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 
-revoke = True
+REVOKE = True
 
 
 def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseRequest):
@@ -13,7 +13,7 @@ def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseR
         raise e
     try:
         if binaries is not None:
-            publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke)
+            publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, REVOKE)
     except Exception as e:
         print(f"Error could not delete {release_request.project} {release_request.buildnumber} {str(e)}")
         raise e

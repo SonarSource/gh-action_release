@@ -1,37 +1,18 @@
 import os
 import tempfile
 import zipfile
-from io import StringIO
 
 import boto3
-import paramiko
 
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
 
 
 class Binaries:
-    binaries_host: str
-    binaries_url: str
-    binaries_ssh_user: str
-    binaries_ssh_key: str
-    binaries_path_prefix: str
-    passphrase: str
-    ssh_client = None
-    private_ssh_key = None
     upload_checksums = ["md5", "sha1", "sha256", "asc"]
 
-    def __init__(self, binaries_host: str, binaries_ssh_user: str, binaries_ssh_key: str, binaries_path_prefix: str,
-                 binaries_bucket_name: str):
-        self.binaries_host = binaries_host
-        self.binaries_url = f"https://{binaries_host}"
-        self.binaries_ssh_user = binaries_ssh_user
-        self.binaries_ssh_key = binaries_ssh_key
-        self.binaries_path_prefix = binaries_path_prefix
+    def __init__(self, binaries_bucket_name: str):
         self.binaries_bucket_name = binaries_bucket_name
-        self.ssh_client = paramiko.SSHClient()
-        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        self.private_ssh_key = paramiko.RSAKey.from_private_key(StringIO(self.binaries_ssh_key))
 
     @staticmethod
     def get_binaries_repo(gid):
@@ -39,15 +20,6 @@ class Binaries:
             return COMMERCIAL_REPO
         else:
             return OSS_REPO
-
-    def exec_ssh_command(self, command):
-        stdin, stdout, stderr = self.ssh_client.exec_command(command)
-        stdout_contents = '\n'.join(stdout.readlines())
-        print(f"stdout: {stdout_contents}")
-        stderr_contents = '\n'.join(stderr.readlines())
-        print(f"stderr: {stderr_contents}")
-        if stderr_contents:
-            raise Exception(f"Error during the SSH command '{command}': {stderr_contents}")
 
     def s3_upload(self, temp_file, filename, gid, aid, version):
         binaries_repo = Binaries.get_binaries_repo(gid)
