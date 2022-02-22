@@ -6,7 +6,7 @@ It must be used when you publish a GitHub release.
 It implements 4 steps that must be used depending on the kind of projects:
 * [main](main): checks for releasability, promotes artifacts to release repositories and publish artifacts to binaries (if enabled)
 * [download-build](download-build) and [maven-central-sync](maven-central-sync): deploys to Maven central
-* [helm-index](helm-index): releases a helm chart on github
+* [helm-index](helm-index): releases a helm chart on GitHub
 
 ## Usage
 ```yaml
@@ -34,7 +34,7 @@ jobs:
           RELEASE_SSH_USER: ${{ secrets.RELEASE_SSH_USER }}
           RELEASE_SSH_KEY: ${{ secrets.RELEASE_SSH_KEY }}
           SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
-        uses: SonarSource/gh-action_release/main@v3
+        uses: SonarSource/gh-action_release/main@4.2.0
         with:
           publish_to_binaries: true # Used only if the binaries is delivered to costumers
           slack_channel: builders-guild
@@ -65,14 +65,14 @@ jobs:
         id: local_repo
         run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@v3
+        uses: SonarSource/gh-action_release/download-build@4.0.1
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@v3
+        uses: SonarSource/gh-action_release/maven-central-sync@4.0.1
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:
