@@ -9,8 +9,7 @@ from utils.burgr import Burgr
 from utils.github import GitHub
 from slack.errors import SlackApiError
 from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
-    artifactory_apikey, binaries_ssh_key, binaries_host, binaries_ssh_user, binaries_path_prefix, repo, \
-    ref, actor, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
+    artifactory_apikey, repo, ref, actor, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
 
 
 def set_output(function, output):
@@ -40,7 +39,7 @@ def main():
     version = ref.replace('refs/tags/', '', 1)
 
     # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER (SEMVER)
-    version_pattern = re.compile(r'^\d+\.\d+\.\d+(?:-M\d+)?(?:\.|\+)(\d+)$')
+    version_pattern = re.compile(r'^\d+\.\d+\.\d+(?:-M\d+)?[.+](\d+)$')
     version_match = version_pattern.match(version)
     if version_match is None:
         print(f"::error Found wrong version: {version}")
@@ -75,7 +74,7 @@ def main():
         set_output("promote", f"{repo}:{version} promote DONE")
 
         if publish_to_binaries:
-            binaries = Binaries(binaries_host, binaries_ssh_user, binaries_ssh_key, binaries_path_prefix, binaries_bucket_name)
+            binaries = Binaries(binaries_bucket_name)
             publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
             set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 

@@ -4,14 +4,14 @@ class BuildInfo:
     def __init__(self, json):
         self.json = json
 
-    def get_property(self, property, default=""):
+    def get_property(self, property_name, default=""):
         try:
-            return self.json['buildInfo']['properties'][property]
+            return self.json['buildInfo']['properties'][property_name]
         except BaseException:
             return default
 
-    def get_module_property(self, property):
-        return self.json['buildInfo']['modules'][0]['properties'][property]
+    def get_module_property(self, property_name):
+        return self.json['buildInfo']['modules'][0]['properties'][property_name]
 
     def get_version(self):
         return self.json['buildInfo']['modules'][0]['id'].split(":")[-1]
