@@ -26,8 +26,8 @@ It implements 4 steps that must be used depending on the kind of projects:
         id: release
         uses: SonarSource/gh-action_release/main@v4
         with:
-          publish_to_binaries: true # Default: true
-          slack_channel: build
+          publish_to_binaries: true # optional, default: true
+          slack_channel: build # optional
         env:
           ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
           BINARIES_AWS_DEPLOY: ${{ secrets.BINARIES_AWS_DEPLOY }} # Required for pushing the binaries
@@ -39,6 +39,8 @@ It implements 4 steps that must be used depending on the kind of projects:
         if: always()
         run: |
           echo "${{ steps.release.outputs.releasability }}"
+          echo "${{ steps.release.outputs.promote }}"
+          echo "${{ steps.release.outputs.publish_to_binaries }}"
           echo "${{ steps.release.outputs.release }}"
 ```
 
@@ -51,7 +53,7 @@ It implements 4 steps that must be used depending on the kind of projects:
         uses: SonarSource/gh-action_release/main@v4
         with:
           publish_to_binaries: false
-          slack_channel: build
+          slack_channel: build # optional
         env:
           ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
@@ -62,6 +64,8 @@ It implements 4 steps that must be used depending on the kind of projects:
         if: always()
         run: |
           echo "${{ steps.release.outputs.releasability }}"
+          echo "${{ steps.release.outputs.promote }}"
+          echo "${{ steps.release.outputs.publish_to_binaries }}"
           echo "${{ steps.release.outputs.release }}"
 ```
 
@@ -143,8 +147,8 @@ jobs:
         id: release
         uses: SonarSource/gh-action_release/main@v4
         with:
-          publish_to_binaries: true # Default: true
-          slack_channel: build
+          publish_to_binaries: true # optional, default: true
+          slack_channel: build # optional
         env:
           ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
           BINARIES_AWS_DEPLOY: ${{ secrets.BINARIES_AWS_DEPLOY }} # Required for pushing the binaries
@@ -156,6 +160,8 @@ jobs:
         if: always()
         run: |
           echo "${{ steps.release.outputs.releasability }}"
+          echo "${{ steps.release.outputs.promote }}"
+          echo "${{ steps.release.outputs.publish_to_binaries }}"
           echo "${{ steps.release.outputs.release }}"
 
   maven-central-sync: # Only required for OSS projects
