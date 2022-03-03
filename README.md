@@ -10,7 +10,7 @@ It implements 4 steps that must be used depending on the kind of projects:
 
 ## Usage
 
-:warning: The `maven-central-sync` is reuqired for OSS projects only
+:warning: The `maven-central-sync` is required for OSS projects only
 
 ```yaml
 name: sonar-release
