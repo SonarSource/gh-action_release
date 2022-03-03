@@ -25,10 +25,17 @@ jobs:
     runs-on: ubuntu-latest
     name: Release
     steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.BINARIES_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.BINARIES_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.BINARIES_AWS_REGION }}
       - name: Release
         id: release
         env:
           ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
+          BINARIES_AWS_DEPLOY: ${{ secrets.BINARIES_AWS_DEPLOY }} # Required for pushing the binaries
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
           BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
           CIRRUS_TOKEN: ${{ secrets.CIRRUS_TOKEN }}
