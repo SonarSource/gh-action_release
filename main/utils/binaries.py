@@ -74,7 +74,7 @@ class Binaries:
                 zip_ref.extractall(tmpdirname)
                 for root, _, files in os.walk(tmpdirname):
                     for filename in files:
-                        client.upload_file(filename, self.binaries_bucket_name, f"{sle_unzip_bucket_key}/{root}/{filename})")
+                        client.upload_file(os.path.join(root, filename), self.binaries_bucket_name, f"{sle_unzip_bucket_key}/{root}/{filename})")
             print(f'uploaded content of {temp_file} to s3://{self.binaries_bucket_name}/{sle_unzip_bucket_key}')
 
     def s3_delete(self, filename, gid, aid, version):
