@@ -9,6 +9,9 @@ It implements 4 steps that must be used depending on the kind of projects:
 * [helm-index](helm-index): releases a helm chart on GitHub
 
 ## Usage
+
+:warning: The `maven-central-sync` is reuqired for OSS projects only
+
 ```yaml
 name: sonar-release
 
@@ -44,7 +47,7 @@ jobs:
           echo "${{ steps.lt_release.outputs.releasability }}"
           echo "${{ steps.lt_release.outputs.release }}"
 
-  maven-central-sync:
+  maven-central-sync: # Only required for OSS projects
     runs-on: ubuntu-latest
     name: Maven Central Sync
     needs:
