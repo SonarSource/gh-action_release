@@ -47,7 +47,7 @@ jobs:
         uses: SonarSource/gh-action_release/main@v4
         with:
           publish_to_binaries: true # Used only if the binaries is delivered to costumers
-          slack_channel: builders-guild
+          slack_channel: build
       - name: Release action results
         if: always()
         run: |
