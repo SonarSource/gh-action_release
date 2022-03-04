@@ -28,8 +28,26 @@ class Artifactory:
 
     def promote(self, release_request, buildinfo, revoke=False):
         status = 'released'
+        try:
+            # We compute the source and target repositories using metadata from the Artifactory
+            # This is the normal case where promotion was done by JFrog integration such as CLI, Rest API or AzureDevOps
+            sourcerepo, targetrepo = buildinfo.get_source_and_target_repos(revoke)
+            print(f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to "
+                  f"{targetrepo}")
 
-        if buildinfo.is_multi():
+            url = f"{self.url}/api/build/promote/{release_request.project}/{release_request.buildnumber}"
+            if revoke:
+                status = "it-passed"
+            json_payload = {
+                "status": f"{status}",
+                "sourceRepo": f"{sourcerepo}",
+                "targetRepo": f"{targetrepo}"
+            }
+            r = requests.post(url, data=json.dumps(json_payload), headers=self.headers)
+        except KeyError:
+            # The promotion was not done by a JFrog integration (the homemade user plugin multipromote was used instead)
+            # This is used by sonar-enterprise and slang-enterprise where OSS and private artifacts need to be promoted
+            # In this case, the release status does not have the key 'repository' set and the source and target repositories are hardcoded
             if revoke:
                 status = "it-passed"
                 moreparams = {
@@ -57,21 +75,6 @@ class Artifactory:
             url = f"{self.url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
                 "{!s}={!s}".format(key, val) for (key, val) in params.items())
             r = requests.get(url, headers=self.headers)
-        else:
-            sourcerepo, targetrepo = buildinfo.get_source_and_target_repos(revoke)
-
-            print(f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to "
-                  f"{targetrepo}")
-
-            url = f"{self.url}/api/build/promote/{release_request.project}/{release_request.buildnumber}"
-            if revoke:
-                status = "it-passed"
-            json_payload = {
-                "status": f"{status}",
-                "sourceRepo": f"{sourcerepo}",
-                "targetRepo": f"{targetrepo}"
-            }
-            r = requests.post(url, data=json.dumps(json_payload), headers=self.headers)
         if not r.ok:
             raise Exception(f"Promotion failed with code: {r.status_code}. Response was: {r.text}")
 

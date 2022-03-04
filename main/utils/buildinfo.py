@@ -38,20 +38,6 @@ class BuildInfo:
                 print("no artifacts to publish")
         return artifacts
 
-    def is_multi(self):
-        allartifacts = self.get_artifacts_to_publish()
-        if allartifacts:
-            artifacts = allartifacts.split(",")
-            artifacts_count = len(artifacts)
-            if artifacts_count == 1:
-                return False
-            ref = artifacts[0][0:3]
-            for i in range(0, artifacts_count):
-                current = artifacts[i - 1][0:3]
-                if current != ref:
-                    return True
-        return False
-
     def is_public(self):
         artifacts = self.get_artifacts_to_publish()
         if artifacts:
