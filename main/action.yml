@@ -16,8 +16,8 @@ outputs:
     description: "Output to detect if promote was executed"
   publish_to_binaries:
     description: "Output to detect if publish_to_binaries was executed"
-  sync_to_central:
-    description: "Output to detect if sync_to_central was executed"
+  release:
+    description: "Output to detect if release was revoked"
 runs:
   using: "docker"
   image: "Dockerfile"
