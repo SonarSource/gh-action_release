@@ -51,8 +51,10 @@ jobs:
       - name: Release action results
         if: always()
         run: |
-          echo "${{ steps.lt_release.outputs.releasability }}"
-          echo "${{ steps.lt_release.outputs.release }}"
+          echo "${{ steps.release.outputs.releasability }}"
+          echo "${{ steps.release.outputs.promote }}"          
+          echo "${{ steps.release.outputs.publish_to_binaries }}"
+          echo "${{ steps.release.outputs.release }}"
 
   maven-central-sync: # Only required for OSS projects
     runs-on: ubuntu-latest
