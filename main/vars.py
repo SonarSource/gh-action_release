@@ -3,15 +3,13 @@ from slack import WebClient
 
 repo = os.environ.get('GITHUB_REPOSITORY', 'no github repo in env')
 ref = os.environ.get('GITHUB_REF', 'no github repo in env')
-actor = os.environ.get('GITHUB_ACTOR', 'no github actor in env')
 
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 github_event_path = os.environ.get('GITHUB_EVENT_PATH')
 
-burgrx_url = 'https://burgrx.sonarsource.com'
-burgrx_user = os.environ.get('BURGRX_USER', 'no burgrx user in env')
-burgrx_password = os.environ.get('BURGRX_PASSWORD', 'no burgrx password in env')
+releasability_access_key_id = os.environ.get('RELEASABILITY_AWS_ACCESS_KEY_ID', 'no releasability access key id in env')
+releasability_secret_access_key = os.environ.get('RELEASABILITY_AWS_SECRET_ACCESS_KEY', 'no releasability secret key in env')
 
 publish_to_binaries: bool = os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true"
 

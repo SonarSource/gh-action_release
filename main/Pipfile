@@ -7,9 +7,10 @@ verify_ssl = true
 
 [packages]
 requests = "*"
-polling = "*"
+scp = "*"
 slackclient = "*"
 boto3 = "*"
+coloredlogs = "*"
 
 [requires]
 python_version = "3.7"

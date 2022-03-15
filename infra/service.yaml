@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Plug the release workflows on the Releasability service
+
+Parameters:
+
+  EnvType:
+    Description: Environment type.
+    Type: String
+    AllowedValues:
+      - Dev
+      - Staging
+      - Prod
+    ConstraintDescription: Must specify Dev, Staging or Prod.
+
+  ReleasabilityResultTopicArn:
+    Description: The SSM parameter containing the ARN of the Releasability result topic.
+    Type: AWS::SSM::Parameter::Value<String>
+
+Resources:
+
+  # This queue is used by GitHub release action
+  ReleasabilityResultQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub Releasability-Result-${EnvType}
+      VisibilityTimeout: 60
+      MessageRetentionPeriod: 60 # we only keep messages for 60s as the same process is the emmiter and the consumer of the message
+
+  ReleasabilityResultQueueUrl:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /Burgr/Releasability/${EnvType}/ReleasabilityResultQueueURL
+      Type: String
+      Value: !Ref ReleasabilityResultQueue
+      Description: The URL of the queue for releasability.
+
+  ReleasabilityResultQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Id: MyQueuePolicy
+        Version: '2012-10-17'
+        Statement:
+        - Sid: Allow-User-SendMessage
+          Effect: Allow
+          Principal: "*"
+          Action:
+          - sqs:SendMessage
+          Resource: "*"
+          Condition:
+            StringEquals:
+              'AWS:SourceAccount' : !Sub ${AWS::AccountId}
+      Queues:
+      - !Ref ReleasabilityResultQueue
+
+  ReleasabilityResultQueueTopicSubscription:
+    DependsOn: ReleasabilityResultQueuePolicy
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !GetAtt ReleasabilityResultQueue.Arn
+      Protocol: sqs
+      TopicArn: !Ref ReleasabilityResultTopicArn
+      RawMessageDelivery: true
+
+  ReleaseUsers: #' Functional account used by the GitHub release workflows to connect releasability
+    Type: AWS::IAM::User
+    Properties:
+      UserName: release-user
+      Policies:
+        - PolicyName: ReleaseUsersReadSSMPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowParameterStoreActiveGroupRead
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:GetParameters
+                Resource: arn:aws:ssm:eu-west-1:*:parameter/Burgr/Releasability/*/Releasability*
+        - PolicyName: ReleaseUsersPublishReleasability
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowPublishToReleasabilitySNS
+                Effect: Allow
+                Action:
+                  - sns:Publish
+                Resource: arn:aws:sns:eu-west-1:*:Burgr-Releasability-Service-*-ReleasabilityTrigger-*
+        - PolicyName: ReleaseUsersReadReleasabilityQueue
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowReceiveMessageFromReleasabilityQueue
+                Effect: Allow
+                Action:
+                  - sqs:ReceiveMessage
+                Resource: arn:aws:sqs:eu-west-1:*:Releasability-Result-*
+        - PolicyName: ReleaseUsersListFunctions
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowListFunctions
+                Effect: Allow
+                Action:
+                  - lambda:ListFunctions
+                Resource: '*'
+        - PolicyName: ReleaseUsersListSubscriptionsByTopic
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: AllowListSubscriptionsByTopic
+                Effect: Allow
+                Action:
+                  - SNS:ListSubscriptionsByTopic
+                Resource: arn:aws:sns:eu-west-1:*:Burgr-Releasability-Service-*-ReleasabilityTrigger-*

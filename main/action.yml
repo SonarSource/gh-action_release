@@ -9,15 +9,6 @@ inputs:
   slack_channel:
     description: "Channel to post notifications"
     required: false
-outputs:
-  releasability:
-    description: "Output to detect if releasability was successful"
-  promote:
-    description: "Output to detect if promote was executed"
-  publish_to_binaries:
-    description: "Output to detect if publish_to_binaries was executed"
-  release:
-    description: "Output to detect if release was revoked"
 runs:
   using: "docker"
   image: "Dockerfile"
