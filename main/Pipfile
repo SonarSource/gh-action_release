@@ -7,7 +7,6 @@ verify_ssl = true
 
 [packages]
 requests = "*"
-polling = "*"
 scp = "*"
 slackclient = "*"
 boto3 = "*"

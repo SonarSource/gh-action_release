@@ -24,7 +24,7 @@ It implements 4 steps that must be used depending on the kind of projects:
           aws-region: ${{ secrets.BINARIES_AWS_REGION }}
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@v4
+        uses: SonarSource/gh-action_release/main@v5
         with:
           publish_to_binaries: true # optional, default: true
           slack_channel: build # optional
@@ -34,7 +34,9 @@ It implements 4 steps that must be used depending on the kind of projects:
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
           BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
+          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
+          RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
+          RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
       - name: Release action results
         if: always()
         run: |
@@ -50,7 +52,7 @@ It implements 4 steps that must be used depending on the kind of projects:
     steps:
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@v4
+        uses: SonarSource/gh-action_release/main@v5
         with:
           publish_to_binaries: false
           slack_channel: build # optional
@@ -59,7 +61,9 @@ It implements 4 steps that must be used depending on the kind of projects:
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
           BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
+          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
+          RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
+          RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
       - name: Release action results
         if: always()
         run: |
@@ -92,14 +96,14 @@ It implements 4 steps that must be used depending on the kind of projects:
         id: local_repo
         run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@v4
+        uses: SonarSource/gh-action_release/download-build@v5
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@v4
+        uses: SonarSource/gh-action_release/maven-central-sync@v5
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:
@@ -145,7 +149,7 @@ jobs:
           aws-region: ${{ secrets.BINARIES_AWS_REGION }}
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@v4
+        uses: SonarSource/gh-action_release/main@v5
         with:
           publish_to_binaries: true # optional, default: true
           slack_channel: build # optional
@@ -155,7 +159,9 @@ jobs:
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
           BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
+          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
+          RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
+          RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
       - name: Release action results
         if: always()
         run: |
@@ -185,14 +191,14 @@ jobs:
         id: local_repo
         run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@v4
+        uses: SonarSource/gh-action_release/download-build@v5
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@v4
+        uses: SonarSource/gh-action_release/maven-central-sync@v5
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:

@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 
@@ -5,11 +6,12 @@ from steps.release import revoke_release, publish_all_artifacts_to_binaries
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 from utils.binaries import Binaries
-from utils.burgr import Burgr
 from utils.github import GitHub
 from slack.errors import SlackApiError
-from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
-    artifactory_apikey, repo, ref, actor, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
+
+from utils.releasability import Releasability
+from vars import githup_api_url, github_token, github_event_path, releasability_access_key_id, releasability_secret_access_key, \
+    artifactory_apikey, repo, ref, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
 
 
 def set_output(function, output):
@@ -55,12 +57,16 @@ def main():
         sys.exit(1)
 
     rr = ReleaseRequest(organisation, project, build_number)
-    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, rr)
+    releasability = Releasability(
+        releasability_access_key_id, releasability_secret_access_key, os.environ.get('RELEASABILITY_ENV_TYPE', 'Prod'), rr
+    )
 
     try:
-        burgr.releasability_checks(version, github.current_branch())
+        releasability.check(version, github.current_branch(), os.environ.get('GITHUB_SHA'))
     except Exception as e:
-        print(f"::error releasability did not complete correctly. " + str(e))
+        error = f"ERROR {str(e)}"
+        print(error)
+        notify_slack(error)
         github.revoke_release()
         sys.exit(1)
     set_output("releasability", f"{repo}:{version} releasability DONE")
@@ -77,9 +83,6 @@ def main():
             binaries = Binaries(binaries_bucket_name)
             publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
             set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
-
-        burgr.notify(buildinfo, 'passed')
-        notify_slack(f"Successfully released {repo}:{version} by {actor}")
 
     except Exception as e:
         error = f"::error release {repo}:{version} did not complete correctly." + str(e)
