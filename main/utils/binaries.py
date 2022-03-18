@@ -11,8 +11,9 @@ COMMERCIAL_REPO = "CommercialDistribution"
 class Binaries:
     upload_checksums = ["md5", "sha1", "sha256", "asc"]
 
-    def __init__(self, binaries_bucket_name: str):
+    def __init__(self, binaries_bucket_name: str, access_key_id: str, secret_access_key: str, region: str):
         self.binaries_bucket_name = binaries_bucket_name
+        self.session = boto3.Session(aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key, region_name=region)
 
     @staticmethod
     def get_binaries_repo(gid):
@@ -32,7 +33,7 @@ class Binaries:
         else:
             bucket_key = f"{binaries_repo}/{aid}/{filename}"
 
-        client = boto3.client('s3')
+        client = self.session.client('s3')
         client.upload_file(temp_file, self.binaries_bucket_name, bucket_key)
         print(f'uploaded {temp_file} to s3://{self.binaries_bucket_name}/{bucket_key}')
         for checksum in self.upload_checksums:
@@ -56,9 +57,9 @@ class Binaries:
             aid = "sonarqube"
         bucket_key = f"{binaries_repo}/{aid}/{filename}"
 
-        client = boto3.client('s3')
+        client = self.session.client('s3')
         client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
-        s3 = boto3.resource('s3')
+        s3 = self.session.resource('s3')
         bucket = s3.Bucket(self.binaries_bucket_name)
         objects = bucket.objects.filter(Prefix=f'{bucket_key}.')
         objects.delete()

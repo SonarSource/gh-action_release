@@ -1,135 +1,22 @@
-# SonarSource GitHub release action
+# SonarSource GitHub release tooling
 
-This action implements the release process for all SonarSource projects. It must be used when you publish a GitHub release.
+This tooling implements the release process for all SonarSource projects. It must be used when you publish a GitHub release.
 
-It implements 4 steps that must be used depending on the kind of projects:
+It implements 3 reusable workflows that must be used depending on the kind of projects:
 
-* [main](main): checks for releasability, promotes artifacts to release repositories and publish artifacts to binaries (if enabled)
-* [download-build](download-build) and [maven-central-sync](maven-central-sync): deploys to Maven central
+* [release-publish.yml](.github/workflows/release-publish.yml): checks for releasability, promotes artifacts to release repositories and publish artifacts to binaries. It shoudl be used by any products that are delivered to customers (SonarQube, analysers and SonarLint)
+* [release.yml](.github/workflows/release.yml): checks for releasability and promotes artifacts to release repositories. It shoudl be used by any products that are not delivered to customers
+* [maven-central-sync.yml](.github/workflows/maven-central-sync.yml): deploys to Maven central. It should be used by any OSS pojects  
+
+And an action:
 * [helm-index](helm-index): releases a helm chart on GitHub
 
 ## Usage
 
-### Release, Promotion and Publication
-
-#### With Publication of Binaries
+### Public projects delivered to customers (SonarLint and Analysers)
 
 ```yaml
-    steps:
-      - name: Configure AWS Credentials # Required for pushing the binaries
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.BINARIES_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.BINARIES_AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.BINARIES_AWS_REGION }}
-      - name: Release
-        id: release
-        uses: SonarSource/gh-action_release/main@v5
-        with:
-          publish_to_binaries: true # optional, default: true
-          slack_channel: build # optional
-        env:
-          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
-          BINARIES_AWS_DEPLOY: ${{ secrets.BINARIES_AWS_DEPLOY }} # Required for pushing the binaries
-          BURGRX_USER: ${{ secrets.BURGRX_USER }}
-          BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
-          RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
-          RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
-      - name: Release action results
-        if: always()
-        run: |
-          echo "${{ steps.release.outputs.releasability }}"
-          echo "${{ steps.release.outputs.promote }}"
-          echo "${{ steps.release.outputs.publish_to_binaries }}"
-          echo "${{ steps.release.outputs.release }}"
-```
-
-#### Without Publication of Binaries
-
-```yaml
-    steps:
-      - name: Release
-        id: release
-        uses: SonarSource/gh-action_release/main@v5
-        with:
-          publish_to_binaries: false
-          slack_channel: build # optional
-        env:
-          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
-          BURGRX_USER: ${{ secrets.BURGRX_USER }}
-          BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
-          RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
-          RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
-      - name: Release action results
-        if: always()
-        run: |
-          echo "${{ steps.release.outputs.releasability }}"
-          echo "${{ steps.release.outputs.promote }}"
-          echo "${{ steps.release.outputs.publish_to_binaries }}"
-          echo "${{ steps.release.outputs.release }}"
-```
-
-### Deploy to Maven Central
-
-:warning: The `maven-central-sync` is required for OSS projects only
-
-```yaml
-    needs:
-      - release
-    steps:
-      - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v1
-      - name: JFrog config
-        run: jfrog rt config repox --url https://repox.jfrog.io/artifactory/ --apikey $ARTIFACTORY_API_KEY --basic-auth-only
-        env:
-          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
-      - name: Get the version
-        id: get_version
-        run: |
-          IFS=. read major minor patch build <<< "${{ github.event.release.tag_name }}"
-          echo ::set-output name=build::"${build}"
-      - name: Create local repository directory
-        id: local_repo
-        run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
-      - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@v5
-        with:
-          build-number: ${{ steps.get_version.outputs.build }}
-          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
-      - name: Maven Central Sync
-        id: maven-central-sync
-        continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@v5
-        with:
-          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
-        env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-      - name: Notify on failure
-        if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
-        uses: 8398a7/action-slack@v3
-        with:
-          text: 'Maven sync failed'
-          status: failure
-          fields: repo,author,eventName
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_BUILD_WEBHOOK }}
-```
-
-### Helm Chart Release
-
-See [helm-index/action.yml](helm-index/action.yml)
-
-## Full example
-
-:warning: The `maven-central-sync` is required for OSS projects only
-
-```yaml
-name: sonar-release
+name: release
 
 on:
   release:
@@ -138,102 +25,130 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
     name: Release
-    steps:
-      - name: Configure AWS Credentials # Required for pushing the binaries
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.BINARIES_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.BINARIES_AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.BINARIES_AWS_REGION }}
-      - name: Release
-        id: release
-        uses: SonarSource/gh-action_release/main@v5
-        with:
-          publish_to_binaries: true # optional, default: true
-          slack_channel: build # optional
-        env:
-          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
-          BINARIES_AWS_DEPLOY: ${{ secrets.BINARIES_AWS_DEPLOY }} # Required for pushing the binaries
-          BURGRX_USER: ${{ secrets.BURGRX_USER }}
-          BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
-          GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
-          RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
-          RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
-      - name: Release action results
-        if: always()
-        run: |
-          echo "${{ steps.release.outputs.releasability }}"
-          echo "${{ steps.release.outputs.promote }}"
-          echo "${{ steps.release.outputs.publish_to_binaries }}"
-          echo "${{ steps.release.outputs.release }}"
-
-  maven-central-sync: # Only required for OSS projects
-    runs-on: ubuntu-latest
-    name: Maven Central Sync
+    uses: SonarSource/gh-action_release/.github/workflows/release-publish.yml@v5
+    with:
+      slack_channel: build # optional (the slack channel of the team)
+    secrets:
+      artifactory-api-key: ${{ secrets.ARTIFACTORY_API_KEY }}
+      release-github-token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      slack-api-token: ${{ secrets.SLACK_API_TOKEN }}
+      binaries-aws-deploy: ${{ secrets.BINARIES_AWS_DEPLOY }}
+      binaries-aws-access-key-id: ${{ secrets.BINARIES_AWS_ACCESS_KEY_ID }}
+      binaries-aws-secret-access-key: ${{ secrets.BINARIES_AWS_SECRET_ACCESS_KEY }}
+      binaries-aws-region: ${{ secrets.BINARIES_AWS_REGION }}
+      releasability-aws-access-key-id: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
+      releasability-aws-secret-access-key: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
+  maven-central-sync:
     needs:
       - release
-    steps:
-      - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v1
-      - name: JFrog config
-        run: jfrog rt config repox --url https://repox.jfrog.io/artifactory/ --apikey $ARTIFACTORY_API_KEY --basic-auth-only
-        env:
-          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
-      - name: Get the version
-        id: get_version
-        run: |
-          IFS=. read major minor patch build <<< "${{ github.event.release.tag_name }}"
-          echo ::set-output name=build::"${build}"
-      - name: Create local repository directory
-        id: local_repo
-        run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
-      - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@v5
-        with:
-          build-number: ${{ steps.get_version.outputs.build }}
-          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
-      - name: Maven Central Sync
-        id: maven-central-sync
-        continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@v5
-        with:
-          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
-        env:
-          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-      - name: Notify on failure
-        if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
-        uses: 8398a7/action-slack@v3
-        with:
-          text: 'Maven sync failed'
-          status: failure
-          fields: repo,author,eventName
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_BUILD_WEBHOOK }}
+    name: Maven Central Sync
+    uses: SonarSource/gh-action_release/.github/workflows/maven-central-sync.yml@task/dav/build-1184-releasability
+    secrets:
+      artifactory-cli-config-public-reader: ${{ secrets.REPOX_CLI_CONFIG_PUBLIC_READER }}
+      sonatype-oss-hosting-username: ${{ secrets.OSSRH_USERNAME }}
+      sonatype-oss-hosting-password: ${{ secrets.OSSRH_PASSWORD }}
+      slack-build-webhook-url: ${{ secrets.SLACK_BUILD_WEBHOOK }}
 ```
+
+### Private projects delivered to customers (SonarQube and Analysers)
+
+```yaml
+name: release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    name: Release
+    uses: SonarSource/gh-action_release/.github/workflows/release-publish.yml@v5
+    with:
+      slack_channel: build # optional (the slack channel of the team)
+    secrets:
+      artifactory-api-key: ${{ secrets.ARTIFACTORY_API_KEY }}
+      release-github-token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      slack-api-token: ${{ secrets.SLACK_API_TOKEN }}
+      binaries-aws-deploy: ${{ secrets.BINARIES_AWS_DEPLOY }}
+      binaries-aws-access-key-id: ${{ secrets.BINARIES_AWS_ACCESS_KEY_ID }}
+      binaries-aws-secret-access-key: ${{ secrets.BINARIES_AWS_SECRET_ACCESS_KEY }}
+      binaries-aws-region: ${{ secrets.BINARIES_AWS_REGION }}
+      releasability-aws-access-key-id: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
+      releasability-aws-secret-access-key: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
+```
+
+### Other public projects
+
+```yaml
+name: release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    name: Release
+    uses: SonarSource/gh-action_release/.github/workflows/release.yml@v5
+    with:
+      slack_channel: build # optional (the slack channel of the team)
+    secrets:
+      artifactory-api-key: ${{ secrets.ARTIFACTORY_API_KEY }}
+      release-github-token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      slack-api-token: ${{ secrets.SLACK_API_TOKEN }}
+      releasability-aws-access-key-id: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
+      releasability-aws-secret-access-key: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
+  maven-central-sync:
+    needs:
+      - release
+    name: Maven Central Sync
+    uses: SonarSource/gh-action_release/.github/workflows/maven-central-sync.yml@task/dav/build-1184-releasability
+    secrets:
+      artifactory-cli-config-public-reader: ${{ secrets.REPOX_CLI_CONFIG_PUBLIC_READER }}
+      sonatype-oss-hosting-username: ${{ secrets.OSSRH_USERNAME }}
+      sonatype-oss-hosting-password: ${{ secrets.OSSRH_PASSWORD }}
+      slack-build-webhook-url: ${{ secrets.SLACK_BUILD_WEBHOOK }}
+```
+
+### Other private projects
+
+```yaml
+name: release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    name: Release
+    uses: SonarSource/gh-action_release/.github/workflows/release.yml@v5
+    with:
+      slack_channel: build # optional (the slack channel of the team)
+    secrets:
+      artifactory-api-key: ${{ secrets.ARTIFACTORY_API_KEY }}
+      release-github-token: ${{ secrets.RELEASE_GITHUB_TOKEN }}
+      slack-api-token: ${{ secrets.SLACK_API_TOKEN }}
+      releasability-aws-access-key-id: ${{ secrets.RELEASABILITY_AWS_ACCESS_KEY_ID }}
+      releasability-aws-secret-access-key: ${{ secrets.RELEASABILITY_AWS_SECRET_ACCESS_KEY }}
+```
+
+### Helm Chart Release action
+
+See [helm-index/action.yml](helm-index/action.yml)
+
 
 ## Versioning
 
-Using the versioned semantic [tags](#Tags) is recommended for security and reliability.
+All the workflow and actions in this repository are released together following semantic versioning.
 
-See [GitHub: Using tags for release management](https://docs.github.com/en/actions/creating-actions/about-custom-actions#using-tags-for-release-management)
-and [GitHub: Keeping your actions up to date with Dependabot](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/keeping-your-actions-up-to-date-with-dependabot)
-.
+For convenience, it is recomended to use the [branches](#Branches) following the major releases.
 
-For convenience, it is possible to use the [branches](#Branches) following the major releases.
-
-### Tags
-
-All the actions in this repository are released together following semantic versioning,
-ie: [`4.2.0`](https://github.com/SonarSource/gh-action_release/releases/tag/4.2.0).
-
-```yaml
-    steps:
-      - uses: SonarSource/gh-action_release/main@4.2.0
-```
+Using the versioned semantic [tags](#Tags) is also possible.
 
 ### Branches
 
@@ -243,10 +158,25 @@ Branches prefixed with a `v` are pointers to the last major versions, ie: [`v4`]
 
 ```yaml
     steps:
-      - uses: SonarSource/gh-action_release/main@v4
+      - uses: SonarSource/gh-action_release/.github/workflows/release-publish.yml@v5
 ```
 
-Note: use only branches with precaution and confidence in the provider.
+```yaml
+    steps:
+      - uses: SonarSource/gh-action_release/helm-index@v5
+```
+
+### Tags
+
+```yaml
+    steps:
+      - uses: SonarSource/gh-action_release/.github/workflows/release-publish.yml@5.0.0
+```
+
+```yaml
+    steps:
+      - uses: SonarSource/gh-action_release/helm-index@5.0.0
+```
 
 ## References
 

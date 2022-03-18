@@ -1,0 +1,50 @@
+name: release
+
+on:
+  workflow_call:
+    inputs:
+      slack_channel:
+        required: false
+        type: string
+    secrets:
+      artifactory-api-key:
+        required: true
+      release-github-token:
+        required: true
+      slack-api-token:
+        required: true
+      releasability-aws-access-key-id:
+        required: true
+      releasability-aws-secret-access-key:
+        required: true
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Release
+    steps:
+      - name: Release
+        id: release
+        # Must specify a GitHub ref fot the release action:
+        #   From https://docs.github.com/en/actions/using-workflows/reusing-workflows:
+        #     If you reuse a workflow from a different repository, any actions in the called workflow run as if they were part of the caller workflow. For example, if the called workflow uses actions/checkout, the action checks out the contents of the repository that hosts the caller workflow, not the called workflow.
+        uses: SonarSource/gh-action_release/main@task/dav/build-1184-releasability
+        with:
+          publish_to_binaries: false
+          slack_channel: ${{ inputs.slack_channel }}
+        env:
+          ARTIFACTORY_API_KEY: ${{ secrets.artifactory-api-key }}
+          GITHUB_TOKEN: ${{ secrets.release-github-token }}
+          SLACK_API_TOKEN: ${{ secrets.slack-api-token }}
+          RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.releasability-aws-access-key-id }}
+          RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.releasability-aws-secret-access-key }}
+      - name: Release action results
+        if: always()
+        run: |
+          echo "${{ steps.release.outputs.releasability }}"
+          echo "${{ steps.release.outputs.promote }}"
+          echo "${{ steps.release.outputs.publish_to_binaries }}"
+          echo "${{ steps.release.outputs.release }}"

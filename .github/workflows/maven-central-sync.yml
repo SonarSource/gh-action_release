@@ -1,0 +1,63 @@
+name: maven-central-sync
+
+on:
+  workflow_call:
+    secrets:
+      artifactory-cli-config-public-reader:
+        required: true
+      sonatype-oss-hosting-username:
+        required: true
+      sonatype-oss-hosting-password:
+        required: true
+      slack-build-webhook-url:
+        required: true
+  release:
+    types:
+      - published
+
+jobs:
+  maven-central-sync:
+    runs-on: ubuntu-latest
+    name: Maven Central Sync
+    steps:
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@48d7925d2c5cc5045aa90f855f398b061dcf64ee # tag=v2
+        env:
+          JF_ARTIFACTORY_1: ${{ secrets.artifactory-cli-config-public-reader }}
+      - name: Get the version
+        id: get_version
+        run: |
+          IFS=. read major minor patch build <<< "${{ github.event.release.tag_name }}"
+          echo ::set-output name=build::"${build}"
+      - name: Create local repository directory
+        id: local_repo
+        run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
+      - name: Download Artifacts
+        # Must specify a GitHub ref fot the release action:
+        #   From https://docs.github.com/en/actions/using-workflows/reusing-workflows:
+        #     If you reuse a workflow from a different repository, any actions in the called workflow run as if they were part of the caller workflow. For example, if the called workflow uses actions/checkout, the action checks out the contents of the repository that hosts the caller workflow, not the called workflow.
+        uses: SonarSource/gh-action_release/download-build@task/dav/build-1184-releasability
+        with:
+          build-number: ${{ steps.get_version.outputs.build }}
+          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
+      - name: Maven Central Sync
+        id: maven-central-sync
+        continue-on-error: true
+        # Must specify a GitHub ref fot the release action:
+        #   From https://docs.github.com/en/actions/using-workflows/reusing-workflows:
+        #     If you reuse a workflow from a different repository, any actions in the called workflow run as if they were part of the caller workflow. For example, if the called workflow uses actions/checkout, the action checks out the contents of the repository that hosts the caller workflow, not the called workflow.
+        uses: SonarSource/gh-action_release/maven-central-sync@task/dav/build-1184-releasability
+        with:
+          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
+        env:
+          OSSRH_USERNAME: ${{ secrets.sonatype-oss-hosting-username }}
+          OSSRH_PASSWORD: ${{ secrets.sonatype-oss-hosting-password }}
+      - name: Notify on failure
+        if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          text: 'Maven sync failed'
+          status: failure
+          fields: repo,author,eventName
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.slack-build-webhook-url }}

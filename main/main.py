@@ -11,7 +11,8 @@ from slack.errors import SlackApiError
 
 from utils.releasability import Releasability
 from vars import githup_api_url, github_token, github_event_path, releasability_access_key_id, releasability_secret_access_key, \
-    artifactory_apikey, repo, ref, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
+    artifactory_apikey, repo, ref, publish_to_binaries, slack_client, slack_channel, \
+    binaries_bucket_name, binaries_access_key_id, binaries_secret_access_key, binaries_region
 
 
 def set_output(function, output):
@@ -80,7 +81,7 @@ def main():
         set_output("promote", f"{repo}:{version} promote DONE")
 
         if publish_to_binaries:
-            binaries = Binaries(binaries_bucket_name)
+            binaries = Binaries(binaries_bucket_name, binaries_access_key_id, binaries_secret_access_key, binaries_region)
             publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
             set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
