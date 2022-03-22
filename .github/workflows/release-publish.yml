@@ -53,6 +53,7 @@ jobs:
           BINARIES_AWS_REGION: ${{ secrets.binaries-aws-region }}
           RELEASABILITY_AWS_ACCESS_KEY_ID: ${{ secrets.releasability-aws-access-key-id }}
           RELEASABILITY_AWS_SECRET_ACCESS_KEY: ${{ secrets.releasability-aws-secret-access-key }}
+          RELEASABILITY_ENV_TYPE: Dev
       - name: Release action results
         if: always()
         run: |
