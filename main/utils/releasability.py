@@ -1,7 +1,10 @@
 import boto3
 import json
 import uuid
+import logging
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger(__name__)
 
 
 class PendingReleasability:
@@ -64,8 +67,6 @@ class Releasability:
         self.sns_input_arn, self.sns_output_arn = self._get_input_and_output_topics_arn()
 
     def check(self, version, branch, git_sha1):
-        print(f"Starting releasability check: {self.release_request.project}#{version}")
-
         # SLVSCODE-specific
         if self.release_request.project == 'sonarlint-vscode':
             version = version.split('+')[0]
@@ -75,9 +76,8 @@ class Releasability:
         pending_releasability = PendingReleasability(releasability_id, checks_count, timeout)
         try:
             status, result = self._get_releasability_status(pending_releasability)
-            print(result)
+            logger.info(f'\n{result}')
         except Exception as e:
-            print(f"Cannot complete releasability checks:", e)
             raise e
         if not status:
             raise Exception('Releasability failed')
@@ -101,7 +101,7 @@ class Releasability:
             TopicArn=self.sns_input_arn,
             Message=str(sns_request),
         )
-        print(f"Issued SNS message {response['MessageId']}; the request identifier is {releasability_id}")
+        logger.info(f"Issued SNS message {response['MessageId']}; the request identifier is {releasability_id}")
         return releasability_id
 
     def _get_releasability_status(self, pending_releasability: PendingReleasability):
@@ -165,5 +165,5 @@ def _receive_messages(queue, max_number, wait_time):
         )
         return messages
     except ClientError as error:
-        print("Couldn't receive messages from queue")
+        logger.error("Couldn't receive messages from queue")
         raise error

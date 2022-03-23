@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 class BuildInfo:
     json = None
 
@@ -35,7 +40,7 @@ class BuildInfo:
             try:
                 artifacts = self.get_property('buildInfo.env.ARTIFACTS_TO_PUBLISH')
             except:
-                print("no artifacts to publish")
+                logger.warning("No artifacts to publish")
         return artifacts
 
     def is_public(self):

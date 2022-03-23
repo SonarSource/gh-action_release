@@ -1,6 +1,10 @@
+import logging
+
 from utils.ReleaseRequest import ReleaseRequest
 from utils.artifactory import Artifactory
 
+
+logger = logging.getLogger(__name__)
 REVOKE = True
 
 
@@ -9,40 +13,37 @@ def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseR
     try:
         artifactory.promote(release_request, buildinfo, True)
     except Exception as e:
-        print(f"Error could not unpromote {release_request.project} {release_request.buildnumber} {str(e)}")
+        logger.error(f"Could not unpromote {release_request.project} {release_request.buildnumber} {str(e)}")
         raise e
     try:
         if binaries is not None:
             publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, REVOKE)
     except Exception as e:
-        print(f"Error could not delete {release_request.project} {release_request.buildnumber} {str(e)}")
+        logger.error(f"Could not delete {release_request.project} {release_request.buildnumber} {str(e)}")
         raise e
 
 
 def get_action(revoke):
     if revoke:
-        return "deleting"
+        return "Deleting"
     else:
-        return "publishing"
+        return "Publishing"
 
 
 def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke=False):
-    print(f"{get_action(revoke)} artifacts for {release_request.project}#{release_request.buildnumber}")
+    logger.info(f"{get_action(revoke)} artifacts for {release_request.project}#{release_request.buildnumber}")
     repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace('qa', 'builds')
     version = buildinfo.get_version()
     allartifacts = buildinfo.get_artifacts_to_publish()
     if allartifacts:
-        print(f"{get_action(revoke)}: {allartifacts}")
         artifacts = allartifacts.split(",")
         artifacts_count = len(artifacts)
-        print(f"{artifacts_count} artifacts")
+        logger.info(f"{get_action(revoke)} {artifacts_count} artifacts")
         for i in range(0, artifacts_count):
-            print(f"artifact {artifacts[i]}")
             publish_artifact(artifactory, binaries, artifacts[i], version, repo, revoke)
 
 
 def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, revoke=False):
-    print(f"{get_action(revoke)} {artifact_to_publish}#{version}")
     artifact = artifact_to_publish.split(":")
     gid = artifact[0]
     aid = artifact[1]
@@ -51,11 +52,11 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
     if len(artifact) > 3:
         qual = artifact[3]
     artifactory_repo = repo.replace('builds', 'releases')
-    print(f"{gid} {aid} {ext} {qual}")
 
     filename = f"{aid}-{version}.{ext}"
     if qual:
         filename = f"{aid}-{version}-{qual}.{ext}"
+    logger.info(f"{get_action(revoke)} artifact {gid} {filename}")
     if revoke:
         binaries.s3_delete(filename, gid, aid, version)
     else:
