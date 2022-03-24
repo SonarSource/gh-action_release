@@ -1,5 +1,6 @@
 import re
 import sys
+import traceback
 
 from steps.release import revoke_release, publish_all_artifacts_to_binaries
 from utils.ReleaseRequest import ReleaseRequest
@@ -20,8 +21,8 @@ def notify_slack(msg):
     if slack_channel is not None:
         try:
             return slack_client.chat_postMessage(
-                channel=slack_channel,
-                text=msg)
+                    channel=slack_channel,
+                    text=msg)
         except SlackApiError as e:
             print(f"Could not notify slack: {e.response['error']}")
 
@@ -82,8 +83,9 @@ def main():
         notify_slack(f"Successfully released {repo}:{version} by {actor}")
 
     except Exception as e:
-        error = f"::error release {repo}:{version} did not complete correctly." + str(e)
+        error = f"::error release {repo}:{version} did not complete correctly: {repr(e)}"
         print(error)
+        print(traceback.format_exc())
         notify_slack(error)
         abort_release(github, artifactory, binaries, rr)
         sys.exit(1)
