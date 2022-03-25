@@ -154,7 +154,7 @@ Using the versioned semantic [tags](#Tags) is also possible.
 
 The `master` branch shall not be referenced by end-users.
 
-Branches prefixed with a `v` are pointers to the last major versions, ie: [`v4`](https://github.com/SonarSource/gh-action_release/tree/v4).
+Branches prefixed with a `v` are pointers to the last major versions, ie: [`v5`](https://github.com/SonarSource/gh-action_release/tree/v5).
 
 ```yaml
     steps:
@@ -178,10 +178,25 @@ Branches prefixed with a `v` are pointers to the last major versions, ie: [`v4`]
       - uses: SonarSource/gh-action_release/helm-index@5.0.0
 ```
 
-## References
+## Technical documentation
 
-[Xtranet/RE/Artifact Management#GitHub Actions](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/872153170/Artifact+Management#GitHub-Actions)
+### Releasability checks
 
-[Semantic Versioning 2.0.0](https://semver.org/)
+The release process will trigger a release using the AWS IAM user and listen to the AWS SQS queue for the results of all checks.
 
-[GitHub: About Custom Actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
+#### Requirements
+
+* the dedicated AWS infrastructure to be deployed (see [documentation](infra/README.md))
+* the GitHub secrets `RELEASABILITY_AWS_ACCESS_KEY_ID` and `RELEASABILITY_AWS_SECRET_ACCESS_KEY`
+
+#### Testing environement
+
+You can test any change by:
+* deploying the infrastructure on the development account
+* add an environment variable to the reusable workflows:
+  ```
+   uses: SonarSource/gh-action_release/main@<your branch>
+    env:
+      RELEASABILITY_ENV_TYPE: Dev
+  ```
+  
