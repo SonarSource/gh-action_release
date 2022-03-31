@@ -31,7 +31,7 @@ jobs:
         # Must specify a GitHub ref fot the release action:
         #   From https://docs.github.com/en/actions/using-workflows/reusing-workflows:
         #     If you reuse a workflow from a different repository, any actions in the called workflow run as if they were part of the caller workflow. For example, if the called workflow uses actions/checkout, the action checks out the contents of the repository that hosts the caller workflow, not the called workflow.
-        uses: SonarSource/gh-action_release/main@task/dav/build-1184-releasability
+        uses: SonarSource/gh-action_release/main@task/dav/build-1040-releasability-only
         with:
           publish_to_binaries: false
           slack_channel: ${{ inputs.slack_channel }}

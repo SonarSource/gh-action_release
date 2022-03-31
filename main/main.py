@@ -74,25 +74,28 @@ def main():
         github.revoke_release()
         sys.exit(1)
 
-    artifactory = Artifactory(artifactory_apikey)
-    binaries = None
+    if release_info['prerelease']:
+        logger.warning('This is a Pre-release, no further action is performed')
+    else:
+        artifactory = Artifactory(artifactory_apikey)
+        binaries = None
 
-    try:
-        buildinfo = artifactory.receive_build_info(rr)
-        artifactory.promote(rr, buildinfo)
+        try:
+            buildinfo = artifactory.receive_build_info(rr)
+            artifactory.promote(rr, buildinfo)
 
-        if publish_to_binaries:
-            binaries = Binaries(binaries_bucket_name, binaries_access_key_id, binaries_secret_access_key, binaries_region)
-            publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
-        else:
-            logger.info('Artifacts are not published')
+            if publish_to_binaries:
+                binaries = Binaries(binaries_bucket_name, binaries_access_key_id, binaries_secret_access_key, binaries_region)
+                publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
+            else:
+                logger.info('Artifacts are not published')
 
-    except Exception as e:
-        error = f"Release {repo}:{version} did not complete correctly: {str(e)}"
-        logger.error(error)
-        notify_slack(error)
-        abort_release(github, artifactory, binaries, rr)
-        sys.exit(1)
+        except Exception as e:
+            error = f"Release {repo}:{version} did not complete correctly: {str(e)}"
+            logger.error(error)
+            notify_slack(error)
+            abort_release(github, artifactory, binaries, rr)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

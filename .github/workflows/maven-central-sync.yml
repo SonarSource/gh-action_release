@@ -17,6 +17,7 @@ on:
 
 jobs:
   maven-central-sync:
+    if: github.event.release.prerelease == false
     runs-on: ubuntu-latest
     name: Maven Central Sync
     steps:
@@ -36,7 +37,7 @@ jobs:
         # Must specify a GitHub ref fot the release action:
         #   From https://docs.github.com/en/actions/using-workflows/reusing-workflows:
         #     If you reuse a workflow from a different repository, any actions in the called workflow run as if they were part of the caller workflow. For example, if the called workflow uses actions/checkout, the action checks out the contents of the repository that hosts the caller workflow, not the called workflow.
-        uses: SonarSource/gh-action_release/download-build@task/dav/build-1184-releasability
+        uses: SonarSource/gh-action_release/download-build@task/dav/build-1040-releasability-only
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -46,7 +47,7 @@ jobs:
         # Must specify a GitHub ref fot the release action:
         #   From https://docs.github.com/en/actions/using-workflows/reusing-workflows:
         #     If you reuse a workflow from a different repository, any actions in the called workflow run as if they were part of the caller workflow. For example, if the called workflow uses actions/checkout, the action checks out the contents of the repository that hosts the caller workflow, not the called workflow.
-        uses: SonarSource/gh-action_release/maven-central-sync@task/dav/build-1184-releasability
+        uses: SonarSource/gh-action_release/maven-central-sync@task/dav/build-1040-releasability-only
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:
