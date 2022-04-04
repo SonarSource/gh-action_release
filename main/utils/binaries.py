@@ -41,13 +41,16 @@ class Binaries:
 
         # SonarLint Eclipse is also unzipped on binaries for compatibility with P2 client
         if aid == "org.sonarlint.eclipse.site":
-            sle_unzip_bucket_key = f"{bucket_key}/{version}"
+            bucket_key = f"SonarLint-for-Eclipse/releases/{version}"
             with tempfile.TemporaryDirectory() as tmpdirname, zipfile.ZipFile(temp_file, 'r') as zip_ref:
                 zip_ref.extractall(tmpdirname)
                 for root, _, files in os.walk(tmpdirname):
                     for filename in files:
-                        client.upload_file(os.path.join(root, filename), self.binaries_bucket_name, f"{sle_unzip_bucket_key}/{root}/{filename})")
-            print(f'uploaded content of {temp_file} to s3://{self.binaries_bucket_name}/{sle_unzip_bucket_key}')
+                        local_file = os.path.join(root, filename)
+                        s3_file = os.path.join(bucket_key, os.path.relpath(local_file, tmpdirname))
+                        print(f"upload {s3_file}")
+                        client.upload_file(local_file, self.binaries_bucket_name, s3_file)
+            print(f'uploaded content of {temp_file} to s3://{self.binaries_bucket_name}/{bucket_key}')
 
     def s3_delete(self, filename, gid, aid, version):
         binaries_repo = Binaries.get_binaries_repo(gid)
