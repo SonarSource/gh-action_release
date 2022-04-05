@@ -82,21 +82,14 @@ class Releasability:
         if not status:
             raise Exception('Releasability failed')
 
-    def _start_releasability(self, version, revision, branch_name=None, pr_number=None):
+    def _start_releasability(self, version, revision, branch_name):
 
         releasability_id = str(uuid.uuid4())
-        sns_request = {
-            'uuid': releasability_id,
-            'responseToARN': self.sns_output_arn,
-            'repoSlug': f'{self.release_request.org}/{self.release_request.project}',
-            'version': version,
-            'vcsRevision': revision,
-            'artifactoryBuildNumber': int(self.release_request.buildnumber)
-        }
-        if branch_name:
-            sns_request['branchName'] = branch_name
-        if pr_number:
-            sns_request['prNumber'] = pr_number
+        sns_request = {'uuid': releasability_id, 'responseToARN': self.sns_output_arn,
+                       'repoSlug': f'{self.release_request.org}/{self.release_request.project}', 'version': version,
+                       'vcsRevision': revision, 'artifactoryBuildNumber': int(self.release_request.buildnumber), 'branchName': branch_name}
+        if branch_name not in ['master', 'main'] and not branch_name.startswith('branch-'):
+            sns_request['prNumber'] = 42  # Tells the releasability checks that some checks are not relevant on short living branches
         response = self.session.client('sns').publish(
             TopicArn=self.sns_input_arn,
             Message=str(sns_request),
