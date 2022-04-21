@@ -78,11 +78,11 @@ It implements 4 steps that must be used depending on the kind of projects:
       - release
     steps:
       - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v1
+        uses: jfrog/setup-jfrog-cli@v2
       - name: JFrog config
         run: jfrog rt config repox --url https://repox.jfrog.io/artifactory/ --apikey $ARTIFACTORY_API_KEY --basic-auth-only
         env:
-          ARTIFACTORY_API_KEY: ${{ secrets.ARTIFACTORY_API_KEY }}
+          JF_ARTIFACTORY_1: ${{ secrets.REPOX_CLI_CONFIG_PUBLIC_READER }}
       - name: Get the version
         id: get_version
         run: |
