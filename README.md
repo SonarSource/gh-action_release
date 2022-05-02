@@ -34,7 +34,7 @@ It implements 4 steps that must be used depending on the kind of projects:
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
           BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
+          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
       - name: Release action results
         if: always()
         run: |
@@ -59,7 +59,7 @@ It implements 4 steps that must be used depending on the kind of projects:
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
           BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
+          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
       - name: Release action results
         if: always()
         run: |
@@ -155,7 +155,7 @@ jobs:
           BURGRX_USER: ${{ secrets.BURGRX_USER }}
           BURGRX_PASSWORD: ${{ secrets.BURGRX_PASSWORD }}
           GITHUB_TOKEN: ${{ secrets.RELEASE_GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{secrets.SLACK_API_TOKEN }}
+          SLACK_API_TOKEN: ${{ secrets.SLACK_API_TOKEN }}
       - name: Release action results
         if: always()
         run: |
@@ -241,6 +241,20 @@ Branches prefixed with a `v` are pointers to the last major versions, ie: [`v4`]
 ```
 
 Note: use only branches with precaution and confidence in the provider.
+
+## Development
+
+The development is done on `master` and the `branch-*` maintenance branches.
+
+### Release
+
+Create a release from a maintained branches, then update the `v*` shortcut:
+
+```shell
+git fetch --tags
+git update-ref -m "reset: update branch v4 to tag 4.2.5" refs/heads/v4 4.2.5
+git push origin v4
+```
 
 ## References
 
