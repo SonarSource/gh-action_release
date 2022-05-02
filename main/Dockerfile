@@ -3,7 +3,7 @@ ADD . /app
 WORKDIR /app
 RUN pip install --upgrade pip
 RUN pip install pipenv
-RUN pipenv lock --requirements > requirements.txt
+RUN pipenv requirements > requirements.txt
 RUN pip install --target=/app -r requirements.txt
 
 FROM python:3.7-slim
