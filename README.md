@@ -2,11 +2,10 @@
 
 This action implements the release process for all SonarSource projects. It must be used when you publish a GitHub release.
 
-It implements 4 steps that must be used depending on the kind of projects:
+It implements 3 steps that must be used depending on the kind of projects:
 
 * [main](main): checks for releasability, promotes artifacts to release repositories and publish artifacts to binaries (if enabled)
 * [download-build](download-build) and [maven-central-sync](maven-central-sync): deploys to Maven central
-* [helm-index](helm-index): releases a helm chart on GitHub
 
 ## Usage
 
@@ -113,10 +112,6 @@ It implements 4 steps that must be used depending on the kind of projects:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_BUILD_WEBHOOK }}
 ```
-
-### Helm Chart Release
-
-See [helm-index/action.yml](helm-index/action.yml)
 
 ## Full example
 
