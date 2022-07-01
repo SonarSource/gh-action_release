@@ -5,7 +5,7 @@ import requests
 from polling import TimeoutException
 from requests.auth import HTTPBasicAuth
 from requests.models import Response
-from utils.ReleaseRequest import ReleaseRequest
+from release.steps.ReleaseRequest import ReleaseRequest
 
 
 def get_corresponding_pipeline(commits_info, version):

@@ -2,14 +2,14 @@ import re
 import sys
 import traceback
 
-from steps.release import revoke_release, publish_all_artifacts_to_binaries
-from utils.ReleaseRequest import ReleaseRequest
-from utils.artifactory import Artifactory
-from utils.binaries import Binaries
-from utils.burgr import Burgr
-from utils.github import GitHub
+from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
+from release.steps.ReleaseRequest import ReleaseRequest
+from release.utils.artifactory import Artifactory
+from release.utils.binaries import Binaries
+from release.utils.burgr import Burgr
+from release.utils.github import GitHub
 from slack.errors import SlackApiError
-from vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
+from release.vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
     artifactory_apikey, repo, ref, actor, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
 
 

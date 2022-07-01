@@ -1,5 +1,5 @@
-from utils.ReleaseRequest import ReleaseRequest
-from utils.artifactory import Artifactory
+from release.utils.artifactory import Artifactory
+from release.steps import ReleaseRequest
 
 REVOKE = True
 

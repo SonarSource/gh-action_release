@@ -3,7 +3,7 @@ import urllib
 import requests
 import tempfile
 
-from utils.buildinfo import BuildInfo
+from release.utils.buildinfo import BuildInfo
 
 
 class Artifactory:

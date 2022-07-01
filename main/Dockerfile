@@ -10,4 +10,4 @@ FROM gcr.io/distroless/python3-debian10
 COPY --from=build-env /app /app
 
 ENV PYTHONPATH=/app
-CMD ["/app/main.py"]
+CMD ["/app/release/main.py"]
