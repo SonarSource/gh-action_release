@@ -1,4 +1,4 @@
-FROM python:3.7-slim AS build-env
+FROM python:3.10-slim AS build-env
 ADD . /app
 WORKDIR /app
 RUN pip install --upgrade pip
