@@ -6,5 +6,5 @@ test:
 		--cov-report html:build/coverage-html \
 		--cov-report xml:build/coverage.xml \
 		--cov-report term \
-		--cov=./ \
+		--cov=release/ \
 		tests/

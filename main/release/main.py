@@ -10,7 +10,7 @@ from release.utils.burgr import Burgr
 from release.utils.github import GitHub
 from slack_sdk.errors import SlackApiError
 from release.vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
-    artifactory_apikey, repo, ref, actor, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
+    artifactory_apikey, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
 
 
 def set_output(function, output):
@@ -36,6 +36,10 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
 
 
 def main():
+    github = GitHub(githup_api_url, github_token, github_event_path)
+    repo = github.get_repo()
+    ref = github.get_ref()
+
     organisation, project = repo.split("/")
     version = ref.replace('refs/tags/', '', 1)
 
@@ -48,18 +52,18 @@ def main():
 
     build_number = version_match.groups()[0]
 
-    github = GitHub(githup_api_url, github_token, github_event_path)
 
     release_info = github.release_info(version)
     if not release_info:
         print(f"::error  No release info found")
         sys.exit(1)
 
-    rr = ReleaseRequest(organisation, project, build_number)
+    rr = ReleaseRequest(organisation, project, build_number, github.current_branch(), github.get_sha())
     burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, rr)
 
     try:
-        burgr.releasability_checks(version, github.current_branch())
+        burgr.start_releasability_checks(version)
+        burgr.get_releasability_status(version)
     except Exception as e:
         print(f"::error releasability did not complete correctly. " + str(e))
         github.revoke_release()
@@ -79,8 +83,8 @@ def main():
             publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
             set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
 
-        burgr.notify(buildinfo, 'passed')
-        notify_slack(f"Successfully released {repo}:{version} by {actor}")
+        burgr.notify('passed')
+        notify_slack(f"Successfully released {repo}:{version}")
 
     except Exception as e:
         error = f"::error release {repo}:{version} did not complete correctly: {repr(e)}"

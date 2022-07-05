@@ -52,9 +52,7 @@ class Burgr:
 
     # This will only work for a branch build, not a PR build
     # because a PR build notification needs `"pr_number": NUMBER` instead of `'branch': NAME`
-    def notify(self, buildinfo, status):
-        branch = buildinfo.get_property('buildInfo.env.GITHUB_BRANCH', "master")
-        sha1 = buildinfo.get_property('buildInfo.env.GIT_SHA1')
+    def notify(self, status):
         payload = {
             'repository': f"{self.release_request.org}/{self.release_request.project}",
             'pipeline': self.release_request.buildnumber,
@@ -62,8 +60,8 @@ class Burgr:
             'system': 'github',
             'type': 'release',
             'number': self.release_request.buildnumber,
-            'branch': branch,
-            'sha1': sha1,
+            'branch': self.release_request.branch,
+            'sha1': self.release_request.sha,
             'url': f"https://github.com/{self.release_request.org}/{self.release_request.project}/releases",
             'status': status,
             'metadata': '',
@@ -76,14 +74,10 @@ class Burgr:
         if r.status_code != 201:
             print(f"burgr notification failed code:{r.status_code}")
 
-    def releasability_checks(self, version: str, branch: str = 'master', nb_of_commits: int = 5):
-        r"""Starts the releasability check operation. Post the start releasability HTTP request to Burgrx and polls
-        until all checks have completed.
+    def start_releasability_checks(self, version: str):
+        r"""Starts the releasability check operation. Post the start releasability HTTP request to Burgrx.
 
         :param version: full version to be checked for releasability.
-        :param branch: branch to be checked for releasability.
-        :param nb_of_commits: number of latest commits on the branch to get the status from.
-        :return: True if releasability check succeeded, False otherwise.
         """
 
         print(f"Starting releasability check: {self.release_request.project}#{version}")
@@ -94,25 +88,22 @@ class Burgr:
 
         url = f"{self.url}/api/project/SonarSource/{self.release_request.project}/releasability/start/{version}"
         response = requests.post(url, auth=self.auth_header)
-        message = response.json().get('message', '')
+        message = json.loads(response.text).get('message', '')
         if response.status_code == 200 and message == "done":
-            print(f"Releasability checks started successfully for {version} {branch}")
-            return self.start_polling_releasability_status(version, branch, nb_of_commits)
+            print(f"Releasability checks started successfully for {version} {self.release_request.branch}")
         else:
             print(f"Releasability checks failed to start: {response} '{message}'")
             raise Exception(f"Releasability checks failed to start: '{message}'")
 
-    def start_polling_releasability_status(self,
-                                           version: str,
-                                           branch: str,
-                                           nb_of_commits: int,
-                                           step: int = 4,
-                                           timeout: int = 300,
-                                           check_releasable: bool = True) -> bool:
-        r"""Starts polling Burgrx for latest releasability status.
+    def get_releasability_status(self,
+                                 version: str,
+                                 nb_of_commits: int = 5,
+                                 step: int = 4,
+                                 timeout: int = 300,
+                                 check_releasable: bool = True) -> bool:
+        r"""Get Burgrx for latest releasability status (polls until all checks have completed.)
 
         :param version: full version to be checked for releasability.
-        :param branch: branch to be checked for releasability.
         :param nb_of_commits: number of latest commits on the branch to get the status from.
         :param step: step in seconds between polls. (For testing, otherwise use default value)
         :param timeout: timeout in seconds for attempting to get status. (For testing, otherwise use default value)
@@ -123,7 +114,7 @@ class Burgr:
         url = f"{self.url}/api/commitPipelinesStages"
         url_params = {
             "project": f"{self.release_request.org}/{self.release_request.project}",
-            "branch": branch,
+            "branch": self.release_request.branch,
             "nbOfCommits": nb_of_commits,
             "startAtCommit": 0
         }
