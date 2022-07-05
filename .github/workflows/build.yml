@@ -25,15 +25,6 @@ jobs:
           sed -i "s|<source>${GITHUB_WORKSPACE}|<source>/github/workspace|g" "${GITHUB_WORKSPACE}/main/build/coverage.xml"
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
-        with:
-          args: >
-            -Dsonar.organization=sonarsource
-            -Dsonar.projectKey=SonarSource_gh-action_release
-            -Dsonar.python.version=3.10
-            -Dsonar.python.coverage.reportPaths=main/build/coverage.xml
-            -Dsonar.sources=main
-            -Dsonar.exclusions=main/tests/*
-            -Dsonar.tests=main/tests
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
