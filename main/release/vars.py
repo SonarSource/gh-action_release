@@ -1,10 +1,6 @@
 import os
 from slack_sdk import WebClient
 
-repo = os.environ.get('GITHUB_REPOSITORY', 'no github repo in env')
-ref = os.environ.get('GITHUB_REF', 'no github repo in env')
-actor = os.environ.get('GITHUB_ACTOR', 'no github actor in env')
-
 githup_api_url = "https://api.github.com"
 github_token = os.environ.get('GITHUB_TOKEN', 'no github token in env')
 github_event_path = os.environ.get('GITHUB_EVENT_PATH')

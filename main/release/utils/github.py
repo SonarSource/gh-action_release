@@ -1,4 +1,5 @@
 import json
+import os
 import re
 import requests
 
@@ -33,6 +34,15 @@ class GitHub:
         if re.compile("^([a-f0-9]{40})$").match(possible_branch_name):
             return 'master'
         return possible_branch_name
+
+    def get_sha(self):
+        return os.environ.get('GITHUB_SHA')
+
+    def get_repo(self):
+        return os.environ.get('GITHUB_REPOSITORY')
+
+    def get_ref(self):
+        return os.environ.get('GITHUB_REF')
 
     def revoke_release(self):
         if not self.release_info().get('id'):
