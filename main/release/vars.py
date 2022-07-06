@@ -1,5 +1,5 @@
 import os
-from slack import WebClient
+from slack_sdk import WebClient
 
 repo = os.environ.get('GITHUB_REPOSITORY', 'no github repo in env')
 ref = os.environ.get('GITHUB_REF', 'no github repo in env')

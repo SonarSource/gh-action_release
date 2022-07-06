@@ -8,7 +8,7 @@ from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
-from slack.errors import SlackApiError
+from slack_sdk.errors import SlackApiError
 from release.vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
     artifactory_apikey, repo, ref, actor, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
 

@@ -9,7 +9,7 @@ pytest-cov = "*"
 [packages]
 requests = "*"
 polling = "*"
-slackclient = "*"
+slack_sdk = "*"
 boto3 = "*"
 
 [requires]
