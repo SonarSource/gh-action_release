@@ -7,7 +7,7 @@ from release.utils.burgr import Burgr
 
 @fixture
 def release_request():
-    return ReleaseRequest('org', 'project', 'buildnumber', 'branch', 'sha')
+    return ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
 
 
 class BurgrResponse:
@@ -42,7 +42,7 @@ def test_notify(release_request):
 
 def test_releasability_checks(release_request):
     with patch('release.utils.burgr.requests.post', return_value=BurgrResponse(200)) as request:
-        Burgr('url', 'user', 'password', release_request).start_releasability_checks('version')
+        Burgr('url', 'user', 'password', release_request).start_releasability_checks()
         request.assert_called_once_with(
             'url/api/project/SonarSource/project/releasability/start/version',
             auth=ANY

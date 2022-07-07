@@ -1,7 +1,3 @@
-import re
-import sys
-import traceback
-
 from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
@@ -9,12 +5,11 @@ from release.utils.binaries import Binaries
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
 from slack_sdk.errors import SlackApiError
-from release.vars import githup_api_url, github_token, github_event_path, burgrx_url, burgrx_user, burgrx_password, \
-    artifactory_apikey, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
+from release.vars import burgrx_url, burgrx_user, burgrx_password, artifactory_apikey, slack_client, slack_channel, binaries_bucket_name
 
 
 def set_output(function, output):
-    print(f"::set-output name={function}::{output}")
+    print(f"::set-output name={function}::{function} {output}")
 
 
 def notify_slack(msg):
@@ -28,71 +23,44 @@ def notify_slack(msg):
 
 
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest):
-    print(f"::error  Aborting release")
+    print(f"::error Aborting release")
     github.revoke_release()
     revoke_release(artifactory, binaries, rr)
     set_output("release", f"{rr.project}:{rr.buildnumber} revoked")
-    sys.exit(1)
 
 
 def main():
-    github = GitHub(githup_api_url, github_token, github_event_path)
-    repo = github.get_repo()
-    ref = github.get_ref()
+    github = GitHub()
+    release_request = github.get_release_request()
 
-    organisation, project = repo.split("/")
-    version = ref.replace('refs/tags/', '', 1)
-
-    # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER (SEMVER)
-    version_pattern = re.compile(r'^\d+\.\d+\.\d+(?:-M\d+)?[.+](\d+)$')
-    version_match = version_pattern.match(version)
-    if version_match is None:
-        print(f"::error Found wrong version: {version}")
-        sys.exit(1)
-
-    build_number = version_match.groups()[0]
-
-
-    release_info = github.release_info(version)
-    if not release_info:
-        print(f"::error  No release info found")
-        sys.exit(1)
-
-    rr = ReleaseRequest(organisation, project, build_number, github.current_branch(), github.get_sha())
-    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, rr)
-
+    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request)
     try:
-        burgr.start_releasability_checks(version)
-        burgr.get_releasability_status(version)
+        burgr.start_releasability_checks()
+        burgr.get_releasability_status()
+        set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
     except Exception as e:
-        print(f"::error releasability did not complete correctly. " + str(e))
+        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
         github.revoke_release()
-        sys.exit(1)
-    set_output("releasability", f"{repo}:{version} releasability DONE")
+        raise e
 
     artifactory = Artifactory(artifactory_apikey)
-    buildinfo = artifactory.receive_build_info(rr)
+    buildinfo = artifactory.receive_build_info(release_request)
     binaries = None
-
     try:
-        artifactory.promote(rr, buildinfo)
-        set_output("promote", f"{repo}:{version} promote DONE")
+        artifactory.promote(release_request, buildinfo)
+        set_output("promote", 'done')  # There is no value to do it expect to not break existing workflows
 
-        if publish_to_binaries:
+        if github.is_publish_to_binaries():
             binaries = Binaries(binaries_bucket_name)
-            publish_all_artifacts_to_binaries(artifactory, binaries, rr, buildinfo)
-            set_output("publish_to_binaries", f"{repo}:{version} publish_to_binaries DONE")
+            publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo)
+            set_output("publish_to_binaries", "done")  # There is no value to do it expect to not break existing workflows
 
         burgr.notify('passed')
-        notify_slack(f"Successfully released {repo}:{version}")
-
+        notify_slack(f"Successfully released {release_request.project}:{release_request.version}")
     except Exception as e:
-        error = f"::error release {repo}:{version} did not complete correctly: {repr(e)}"
-        print(error)
-        print(traceback.format_exc())
-        notify_slack(error)
-        abort_release(github, artifactory, binaries, rr)
-        sys.exit(1)
+        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
+        abort_release(github, artifactory, binaries, release_request)
+        raise e
 
 
 if __name__ == "__main__":
