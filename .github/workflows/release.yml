@@ -1,0 +1,18 @@
+name: sonar-release
+# This workflow is triggered when publishing a new github release
+on:
+  release:
+    types:
+      - published
+
+env:
+  PYTHONUNBUFFERED: 1
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Release
+    steps:
+      - name: Release
+        id: release
+        uses: SonarSource/gh-action_release/main@bc14983 # branch=test/dav
