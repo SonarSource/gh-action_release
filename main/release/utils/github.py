@@ -30,9 +30,12 @@ class GitHub:
         version_match = version_pattern.match(version)
         if version_match is None:
             raise GitHubException('The tag must follow this pattern: X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER')
+        branch_name = self._get_release()['target_commitish']
+        if re.compile("^([a-f0-9]{40})$").match(branch_name):
+            branch_name = 'master'
         return ReleaseRequest(organisation, project,
                               version, version_match.groups()[0],
-                              self._get_release()['target_commitish'], os.environ.get('GITHUB_SHA'))
+                              branch_name, os.environ.get('GITHUB_SHA'))
 
     def revoke_release(self) -> None:
         tag_name = self._get_release()["tag_name"]
