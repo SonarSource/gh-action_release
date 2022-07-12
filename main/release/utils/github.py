@@ -20,6 +20,7 @@ class GitHub:
             raise GitHubException('The action was not triggered on release event')
         with open(os.environ.get('GITHUB_EVENT_PATH')) as file:
             self.event = json.load(file)
+            print(self.event)
 
     def get_release_request(self) -> ReleaseRequest:
         repo = self._get_repository()["full_name"]
