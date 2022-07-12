@@ -74,12 +74,8 @@ class Burgr:
         if r.status_code != 201:
             print(f"burgr notification failed code:{r.status_code}")
 
-    def start_releasability_checks(self, version: str):
-        r"""Starts the releasability check operation. Post the start releasability HTTP request to Burgrx.
-
-        :param version: full version to be checked for releasability.
-        """
-
+    def start_releasability_checks(self):
+        version = self.release_request.version
         print(f"Starting releasability check: {self.release_request.project}#{version}")
 
         # SLVSCODE-specific
@@ -96,14 +92,12 @@ class Burgr:
             raise Exception(f"Releasability checks failed to start: '{message}'")
 
     def get_releasability_status(self,
-                                 version: str,
                                  nb_of_commits: int = 5,
                                  step: int = 4,
                                  timeout: int = 300,
                                  check_releasable: bool = True) -> bool:
         r"""Get Burgrx for latest releasability status (polls until all checks have completed.)
 
-        :param version: full version to be checked for releasability.
         :param nb_of_commits: number of latest commits on the branch to get the status from.
         :param step: step in seconds between polls. (For testing, otherwise use default value)
         :param timeout: timeout in seconds for attempting to get status. (For testing, otherwise use default value)
@@ -118,11 +112,10 @@ class Burgr:
             "nbOfCommits": nb_of_commits,
             "startAtCommit": 0
         }
-
         try:
             releasability = polling.poll(
                 lambda: self.get_latest_releasability_stage(requests.get(url, params=url_params, auth=self.auth_header),
-                                                            version,
+                                                            self.release_request.version,
                                                             check_releasable),
                 step=step,
                 timeout=timeout)

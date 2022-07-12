@@ -3,56 +3,54 @@ import os
 import re
 import requests
 
+from release.steps.ReleaseRequest import ReleaseRequest
+
+
+class GitHubException(Exception):
+    pass
+
 
 class GitHub:
-    github_api_url: str
-    github_token: str
-    github_event: {}
+    token: str
+    event: {}
 
-    def __init__(self, github_api_url, github_token, github_event_path):
-        with open(github_event_path) as file:
-            self.github_event = json.load(file)
-        self.github_token = github_token
-        self.github_api_url = github_api_url
+    def __init__(self):
+        self.token = os.environ.get('GITHUB_TOKEN')
+        if os.environ.get('GITHUB_EVENT_NAME') != 'release':
+            raise GitHubException('The action was not triggered on release event')
+        with open(os.environ.get('GITHUB_EVENT_PATH')) as file:
+            self.event = json.load(file)
 
-    def release_info(self, version=None) -> {}:
-        if version is None:
-            return self.github_event["release"]
-        elif self.github_event["release"].get('tag_name') == version:
-            return self.github_event["release"]
-        else:
-            return None
+    def get_release_request(self) -> ReleaseRequest:
+        repo = self._get_repository()["full_name"]
+        organisation, project = repo.split("/")
+        version = self._get_release()['tag_name']
+        # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER (SEMVER)
+        version_pattern = re.compile(r'^\d+\.\d+\.\d+(?:-M\d+)?[.+](\d+)$')
+        version_match = version_pattern.match(version)
+        if version_match is None:
+            raise GitHubException('The tag must follow this pattern: X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER')
+        branch_name = self._get_release()['target_commitish']
+        if re.compile("^([a-f0-9]{40})$").match(branch_name):
+            branch_name = 'master'
+        return ReleaseRequest(organisation, project,
+                              version, version_match.groups()[0],
+                              branch_name, os.environ.get('GITHUB_SHA'))
 
-    def repository_full_name(self) -> str:
-        return self.github_event["repository"]["full_name"]
+    def revoke_release(self) -> None:
+        tag_name = self._get_release()["tag_name"]
+        headers = {'Authorization': f'token {self.token}'}
+        payload = {'draft': True, 'tag_name': tag_name}
+        requests.patch(self._get_release()['url'], json=payload, headers=headers)
+        # Delete tag
+        requests.delete(self._get_repository().get("git_refs_url").replace("{/sha}", f'/tags/{tag_name}'), headers=headers)
 
-    def repository_info(self):
-        return self.github_event["repository"]
+    @staticmethod
+    def is_publish_to_binaries():
+        return os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true"
 
-    def current_branch(self):
-        possible_branch_name = self.release_info()['target_commitish']
-        if re.compile("^([a-f0-9]{40})$").match(possible_branch_name):
-            return 'master'
-        return possible_branch_name
+    def _get_release(self) -> {}:
+        return self.event["release"]
 
-    def get_sha(self):
-        return os.environ.get('GITHUB_SHA')
-
-    def get_repo(self):
-        return os.environ.get('GITHUB_REPOSITORY')
-
-    def get_ref(self):
-        return os.environ.get('GITHUB_REF')
-
-    def revoke_release(self):
-        if not self.release_info().get('id'):
-            return None
-        version = self.release_info()["tag_name"]
-        url = self.repository_info().get("releases_url").replace("{/id}", str(self.release_info().get('id')))
-        headers = {'Authorization': f"token {self.github_token}"}
-        payload = {'draft': True, 'tag_name': version}
-        r = requests.patch(url, json=payload, headers=headers)
-        # delete tag
-        url = f"{self.github_api_url}/repos/{self.repository_full_name()}/git/refs/tags/{version}"
-        requests.delete(url, headers=headers)
-        return r.json()
+    def _get_repository(self) -> {}:
+        return self.event["repository"]
