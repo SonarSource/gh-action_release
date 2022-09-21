@@ -13,7 +13,7 @@ class Artifactory:
 
     def __init__(self, api_key: str):
         self.api_key = api_key
-        self.headers['X-JFrog-Art-Api'] = api_key
+        self.headers['Authorization'] = "Bearer "+api_key
 
     def receive_build_info(self, release_request):
         url = f"{self.url}/api/build/{release_request.project}/{release_request.buildnumber}"
@@ -90,7 +90,7 @@ class Artifactory:
         url = f"{artifactory}/{gid_path}/{aid}/{version}/{filename}"
         print(url)
         opener = urllib.request.build_opener()
-        opener.addheaders = [('X-JFrog-Art-Api', self.api_key)]
+        opener.addheaders = [('Authorization', "Bearer "+self.api_key)]
         urllib.request.install_opener(opener)
         # for sonarqube rename artifact from sonar-application.zip to sonarqube.zip
         if aid == "sonar-application":
