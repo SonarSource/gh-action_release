@@ -5,7 +5,7 @@ from release.utils.binaries import Binaries
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
 from slack_sdk.errors import SlackApiError
-from release.vars import burgrx_url, burgrx_user, burgrx_password, artifactory_apikey, slack_client, slack_channel, binaries_bucket_name
+from release.vars import burgrx_url, burgrx_user, burgrx_password, artifactory_access_token, slack_client, slack_channel, binaries_bucket_name
 
 
 def set_output(function, output):
@@ -43,7 +43,7 @@ def main():
         github.revoke_release()
         raise e
 
-    artifactory = Artifactory(artifactory_apikey)
+    artifactory = Artifactory(artifactory_access_token)
     buildinfo = artifactory.receive_build_info(release_request)
     binaries = None
     try:

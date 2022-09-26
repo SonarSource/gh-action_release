@@ -8,12 +8,12 @@ from release.utils.buildinfo import BuildInfo
 
 class Artifactory:
     url = 'https://repox.jfrog.io/repox'
-    api_key = None
+    access_token = None
     headers = {'content-type': 'application/json'}
 
-    def __init__(self, api_key: str):
-        self.api_key = api_key
-        self.headers['X-JFrog-Art-Api'] = api_key
+    def __init__(self, access_token: str):
+        self.access_token = access_token
+        self.headers['Authorization'] = "Bearer "+access_token
 
     def receive_build_info(self, release_request):
         url = f"{self.url}/api/build/{release_request.project}/{release_request.buildnumber}"
@@ -90,7 +90,7 @@ class Artifactory:
         url = f"{artifactory}/{gid_path}/{aid}/{version}/{filename}"
         print(url)
         opener = urllib.request.build_opener()
-        opener.addheaders = [('X-JFrog-Art-Api', self.api_key)]
+        opener.addheaders = [('Authorization', "Bearer "+self.access_token)]
         urllib.request.install_opener(opener)
         # for sonarqube rename artifact from sonar-application.zip to sonarqube.zip
         if aid == "sonar-application":
