@@ -1,3 +1,5 @@
+# yamllint disable rule:line-length
+---
 name: Release
 on:
   workflow_call:
@@ -27,21 +29,19 @@ on:
         description: artifactory reader suffix specified in vault repo config
         default: private-reader
         required: false
-
-env:
-  PUBLISH_TO_BINARIES: ${{ inputs.publishToBinaries }}
-  SLACK_CHANNEL: ${{ inputs.slackChannel }}
-  VAULT_ADDR: ${{ inputs.vaultAddr }}
-  ARTIFACTORY_ROLE_SUFFIX: ${{ inputs.artifactoryRoleSuffix }}
-  PYTHONUNBUFFERED: 1
+      mavenCentralSync:
+        type: boolean
+        description: enable synchronization to maven central
+        default: false
+        required: false
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # to authenticate via OIDC
-      contents: write # to revert a github release
+      id-token: write  # to authenticate via OIDC
+      contents: write  # to revert a github release
     timeout-minutes: 30
     if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
     outputs:
@@ -52,15 +52,11 @@ jobs:
     steps:
       - name: Vault Secrets
         id: secrets
-        uses: hashicorp/vault-action@7d98524254c38dc6892804f991526ff30905f643 # tag=v2.4.2
+        uses: SonarSource/vault-action-wrapper@d1c1ab4ca5ad07fd9cdfe1eff038a39673dfca64  # tag=2.4.2-1
         with:
-          url: ${{ env.VAULT_ADDR }}
-          exportEnv: false
-          method: jwt
-          path: jwt-ghwf
-          role: ${{ format('github-{0}-{1}', github.repository_owner, github.event.repository.name) }}
+          url: ${{ inputs.vaultAddr }}
           secrets: |
-            ${{ format('development/artifactory/token/{0}-{1}-{2}', github.repository_owner, github.event.repository.name, env.ARTIFACTORY_ROLE_SUFFIX) }} access_token | artifactory_access_token;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
             development/kv/data/slack token | slack_api_token;
             development/kv/data/repox url | artifactory_url;
             development/kv/data/burgr github_username | burgrx_username;
@@ -70,20 +66,21 @@ jobs:
             development/aws/sts/downloads security_token | binaries_aws_security_token;
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@d4f1cca676dced03adbe15cddfb2dfc666c1ece9 # tag=v5
+        uses: SonarSource/gh-action_release/main@v5
         with:
-          publish_to_binaries: ${{ env.PUBLISH_TO_BINARIES }} # Used only if the binaries is delivered to costumers
-          slack_channel: ${{ env.SLACK_CHANNEL }}
+          publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries is delivered to costumers
+          slack_channel: ${{ inputs.slackChannel }}
         env:
-          ARTIFACTORY_API_KEY: ${{ steps.secrets.outputs.artifactory_access_token }}
-          BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }} # Required for pushing the binaries
-          BURGRX_USER: ${{ steps.secrets.outputs.burgrx_username }}
-          BURGRX_PASSWORD: ${{ steps.secrets.outputs.burgrx_password }}
+          PYTHONUNBUFFERED: 1
+          ARTIFACTORY_API_KEY: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+          BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
+          BURGRX_USER: ${{ fromJSON(steps.secrets.outputs.vault).burgrx_username }}
+          BURGRX_PASSWORD: ${{ fromJSON(steps.secrets.outputs.vault).burgrx_password }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SLACK_API_TOKEN: ${{steps.secrets.outputs.slack_api_token }}
-          AWS_ACCESS_KEY_ID: ${{ steps.secrets.outputs.binaries_aws_access_key_id }}
-          AWS_SECRET_ACCESS_KEY: ${{ steps.secrets.outputs.binaries_aws_secret_access_key }}
-          AWS_SESSION_TOKEN: ${{ steps.secrets.outputs.binaries_aws_security_token }}
+          SLACK_API_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).slack_api_token }}
+          AWS_ACCESS_KEY_ID: ${{ fromJSON(steps.secrets.outputs.vault).binaries_aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ fromJSON(steps.secrets.outputs.vault).binaries_aws_secret_access_key }}
+          AWS_SESSION_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).binaries_aws_security_token }}
           AWS_DEFAULT_REGION: eu-central-1
       - name: Release action results
         if: always()
@@ -92,3 +89,12 @@ jobs:
           echo "${{ steps.release.outputs.promote }}"
           echo "${{ steps.release.outputs.publish_to_binaries }}"
           echo "${{ steps.release.outputs.release }}"
+
+  mavenCentral:
+    name: Maven Central
+    needs: release
+    if: ${{ inputs.mavenCentralSync }}
+    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@v5
+    with:
+      vaultAddr: ${{ inputs.vaultAddr }}
+      artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
