@@ -9,7 +9,22 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-20.04
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      VAULT_ADDR: https://vault.sonar.build:8200
     steps:
+      - name: Vault Secrets
+        id: secrets
+        uses: hashicorp/vault-action@7d98524254c38dc6892804f991526ff30905f643 # tag=v2.4.2
+        with:
+          url: ${{ env.VAULT_ADDR }}
+          method: jwt
+          path: jwt-ghwf
+          role: github-sonarsource-gh-action_release
+          secrets: |
+            development/kv/data/sonarcloud token | SONAR_TOKEN;
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3.0.2
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
@@ -27,4 +42,3 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
-          SONAR_TOKEN: ${{ secrets.SONARCLOUD_TOKEN }}
