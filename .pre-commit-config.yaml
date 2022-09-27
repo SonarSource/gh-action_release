@@ -10,3 +10,9 @@ repos:
       - id: check-yaml
       - id: check-added-large-files
       - id: check-executables-have-shebangs
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 9ff55b0adf11b603e0e2b4e1d639255278f4316f  # frozen: 0.18.3
+    hooks:
+      - id: check-github-actions
+        files: .*/action.ya?ml
+      - id: check-github-workflows
