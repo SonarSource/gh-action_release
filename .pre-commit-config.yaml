@@ -1,3 +1,4 @@
+---
 repos:
   - repo: meta
     hooks:
@@ -20,3 +21,7 @@ repos:
     rev: 5341f388c2a962d3bc66e075f00b80ab45b15f24 # v0.1.20
     hooks:
       - id: shellcheck
+  - repo: https://github.com/renovatebot/pre-commit-hooks
+    rev: 32ee411cf36142e6082f10870ae62172ce9af133  # frozen: 35.32.0
+    hooks:
+      - id: renovate-config-validator
