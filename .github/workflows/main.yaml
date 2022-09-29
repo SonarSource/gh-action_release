@@ -72,7 +72,7 @@ jobs:
           slack_channel: ${{ inputs.slackChannel }}
         env:
           PYTHONUNBUFFERED: 1
-          ARTIFACTORY_API_KEY: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+          ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
           BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
           BURGRX_USER: ${{ fromJSON(steps.secrets.outputs.vault).burgrx_username }}
           BURGRX_PASSWORD: ${{ fromJSON(steps.secrets.outputs.vault).burgrx_password }}
