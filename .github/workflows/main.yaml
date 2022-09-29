@@ -27,7 +27,7 @@ on:
       artifactoryRoleSuffix:
         type: string
         description: artifactory reader suffix specified in vault repo config
-        default: private-reader
+        default: promoter
         required: false
       mavenCentralSync:
         type: boolean
