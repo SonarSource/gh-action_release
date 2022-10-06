@@ -53,7 +53,7 @@ ie: [`5.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0).
 
 ```yaml
     steps:
-      - uses: SonarSource/gh-action_release/main@5.0
+      - uses: SonarSource/gh-action_release/main@5.0.0
 ```
 
 ### Branches
