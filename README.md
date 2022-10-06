@@ -12,28 +12,23 @@ This action implements the release process for all SonarSource projects. It must
 
 ```yaml
 ---
-  name: sonar-release
-  # This workflow is triggered when publishing a new github release
-  # yamllint disable-line rule:truthy
-  on:
-    release:
-      types:
-        - published
-    workflow_dispatch:
-  
-  env:
-    PYTHONUNBUFFERED: 1
-  
-  jobs:
-    release:
-      permissions:
-        id-token: write
-        contents: write
-      uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
-      with:
-        publishToBinaries: true  # disabled by default
-        mavenCentralSync: true   # disabled by default
+name: sonar-release
+# This workflow is triggered when publishing a new github release
+# yamllint disable-line rule:truthy
+on:
+  release:
+    types:
+      - published
 
+jobs:
+  release:
+    permissions:
+      id-token: write
+      contents: write
+    uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
+    with:
+      publishToBinaries: true  # disabled by default
+      mavenCentralSync: true   # disabled by default
 ```
 
 ## Versioning
@@ -49,7 +44,7 @@ For convenience, it is possible to use the [branches](#Branches) following the m
 ### Tags
 
 All the actions in this repository are released together following semantic versioning,
-ie: [`5.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0).
+ie: [`5.0.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0.0).
 
 ```yaml
     steps:
