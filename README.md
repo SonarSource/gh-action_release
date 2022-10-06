@@ -31,8 +31,8 @@ This action implements the release process for all SonarSource projects. It must
         contents: write
       uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
       with:
-        publishToBinaries: true
-        mavenCentralSync: true
+        publishToBinaries: true  # disabled by default
+        mavenCentralSync: true   # disabled by default
 
 ```
 
