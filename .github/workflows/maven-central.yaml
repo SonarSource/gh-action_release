@@ -31,13 +31,13 @@ jobs:
         id: get_version
         run: |
           IFS=. read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
-          echo ::set-output name=build::"${build}"
-          echo ::set-output name=patch::"${patch}"
-          echo ::set-output name=minor::"${minor}"
-          echo ::set-output name=major::"${major}"
+          echo "build=${build}" >> $GITHUB_OUTPUT
+          echo "patch=${patch}" >> $GITHUB_OUTPUT
+          echo "minor=${minor}" >> $GITHUB_OUTPUT
+          echo "major=${major}" >> $GITHUB_OUTPUT
       - name: Create local repository directory
         id: local_repo
-        run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
+        run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
       - name: Vault
         id: secrets
         uses: SonarSource/vault-action-wrapper@d1c1ab4ca5ad07fd9cdfe1eff038a39673dfca64  # tag=2.4.2-1
