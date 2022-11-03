@@ -94,7 +94,7 @@ jobs:
     name: Maven Central
     needs: release
     if: ${{ inputs.mavenCentralSync }}
-    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@v5
+    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@BUILD-2024
     with:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
