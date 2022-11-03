@@ -66,7 +66,7 @@ jobs:
             development/aws/sts/downloads security_token | binaries_aws_security_token;
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@v5
+        uses: SonarSource/gh-action_release/main@BUILD-2024
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries is delivered to costumers
           slack_channel: ${{ inputs.slackChannel }}
