@@ -31,25 +31,25 @@ jobs:
         id: get_version
         run: |
           IFS=. read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
-          echo ::set-output name=build::"${build}"
-          echo ::set-output name=patch::"${patch}"
-          echo ::set-output name=minor::"${minor}"
-          echo ::set-output name=major::"${major}"
+          echo "build=${build}" >> $GITHUB_OUTPUT
+          echo "patch=${patch}" >> $GITHUB_OUTPUT
+          echo "minor=${minor}" >> $GITHUB_OUTPUT
+          echo "major=${major}" >> $GITHUB_OUTPUT
       - name: Create local repository directory
         id: local_repo
-        run: echo ::set-output name=dir::"$(mktemp -d repo.XXXXXXXX)"
+        run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
       - name: Vault
         id: secrets
         uses: SonarSource/vault-action-wrapper@d1c1ab4ca5ad07fd9cdfe1eff038a39673dfca64  # tag=2.4.2-1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
-            development/artifactory/token/{GITHUB_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token  | artifactory_access_token;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token  | artifactory_access_token;
             development/kv/data/ossrh username | ossrh_username;
             development/kv/data/ossrh password | ossrh_password;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@9cf4f98bd54270b71eb35b4defe9ed3ded81d335  # tag=2.4.1
+        uses: SonarSource/jfrog-setup-wrapper@eb712d76540e5d1f3756303f30387657fb204e52  # tag=2.4.1-1
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
