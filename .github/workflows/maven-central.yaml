@@ -44,7 +44,7 @@ jobs:
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
-            development/artifactory/token/{GITHUB_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token  | artifactory_access_token;
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token  | artifactory_access_token;
             development/kv/data/ossrh username | ossrh_username;
             development/kv/data/ossrh password | ossrh_password;
             development/kv/data/slack webhook | slack_webhook;
