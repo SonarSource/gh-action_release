@@ -49,7 +49,7 @@ jobs:
             development/kv/data/ossrh password | ossrh_password;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@9cf4f98bd54270b71eb35b4defe9ed3ded81d335  # tag=2.4.1
+        uses: SonarSource/jfrog-setup-wrapper@eb712d76540e5d1f3756303f30387657fb204e52  # tag=2.4.1-1
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
