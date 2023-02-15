@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import json
 import polling
 import requests
+from dryable import Dryable
 from polling import TimeoutException
 from requests.auth import HTTPBasicAuth
 from requests.models import Response
@@ -52,6 +53,7 @@ class Burgr:
 
     # This will only work for a branch build, not a PR build
     # because a PR build notification needs `"pr_number": NUMBER` instead of `'branch': NAME`
+    @Dryable(logging_msg='{function}()')
     def notify(self, status):
         payload = {
             'repository': f"{self.release_request.org}/{self.release_request.project}",
@@ -74,6 +76,7 @@ class Burgr:
         if r.status_code != 201:
             print(f"burgr notification failed code:{r.status_code}")
 
+    @Dryable(logging_msg='{function}()')
     def start_releasability_checks(self):
         version = self.release_request.version
         print(f"Starting releasability check: {self.release_request.project}#{version}")
@@ -91,6 +94,7 @@ class Burgr:
             print(f"Releasability checks failed to start: {response} '{message}'")
             raise Exception(f"Releasability checks failed to start: '{message}'")
 
+    @Dryable(logging_msg='{function}()')
     def get_releasability_status(self,
                                  nb_of_commits: int = 5,
                                  step: int = 4,

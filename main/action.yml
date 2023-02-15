@@ -9,6 +9,10 @@ inputs:
   slack_channel:
     description: "Channel to post notifications"
     required: false
+  dry_run:
+    description: "Don't actually do anything, but still report what would be done (when true)."
+    default: 'false'
+    required: false
 outputs:
   releasability:
     description: "Output to detect if releasability was successful"

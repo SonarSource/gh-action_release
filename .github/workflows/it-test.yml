@@ -1,0 +1,29 @@
+# This workflow verifies that for the given sets of inputs/outputs the gh-action_release defined in the current branch (PR)
+# still works as expected.
+#
+# It checks for the current branch, and allows checking of new input/output parameters at the PR time  (Fail fast principles)
+# without having to release the action first and then use it in a side project.
+name: gh-action_release Integration Test
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    name: "it-tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4 # Necessary to access local action
+      - uses: ./main
+        env:
+          BURGRX_USER: "bob user"
+          BURGRX_PASSWORD: "*******"
+          ARTIFACTORY_ACCESS_TOKEN: "42"
+          BINARIES_AWS_DEPLOY: "s3://empty"
+          SLACK_API_TOKEN: "slack-token-test"
+        with:
+            dry_run: true
+            publish_to_binaries: false
+            slack_channel: build

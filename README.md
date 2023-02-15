@@ -33,6 +33,20 @@ Available options:
 - mavenCentralSync (default: false): enable synchronization to Maven Central, **for OSS projects only**
 - slackChannel (default: build): notification Slack channel
 - artifactoryRoleSuffix (default: promoter): Artifactory promoter suffix
+- dryRun (default: false): perform a dry run execution
+
+## Dry Run
+For testing purpose you may want to use this gh-action without really releasing.
+There comes the dry run.
+
+What the dry run will do and not do:
+* Will not communicate with burger
+* Will not promote any artifacts in repox
+* Will not push binaries
+* Will not publish to slack
+
+Instead, it will actually print the sequence of operations that would have 
+been performed based on the provided inputs defined in `with:` section.
 
 ## Versioning
 
