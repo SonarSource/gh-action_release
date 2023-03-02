@@ -1,5 +1,8 @@
-from release.utils.artifactory import Artifactory
 from release.steps import ReleaseRequest
+from release.utils.artifactory import Artifactory
+from release.utils.burgr import Burgr
+from release.utils.github import GitHub
+from release.utils.slack import notify_slack
 
 REVOKE = True
 
@@ -61,3 +64,20 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
     else:
         temp_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
         binaries.s3_upload(temp_file, filename, gid, aid, version)
+
+
+def set_output(function, output):
+    print(f"::set-output name={function}::{function} {output}")
+
+
+def releasability_checks(github: GitHub, burgr: Burgr, release_request: ReleaseRequest.ReleaseRequest | None):
+    if release_request is None:
+        release_request = github.get_release_request()
+    try:
+        burgr.start_releasability_checks()
+        burgr.get_releasability_status()
+        set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
+    except Exception as e:
+        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
+        github.revoke_release()
+        raise e

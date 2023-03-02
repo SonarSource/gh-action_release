@@ -1,25 +1,11 @@
-from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
+from release.utils.release import revoke_release, publish_all_artifacts_to_binaries, set_output, releasability_checks
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
-from slack_sdk.errors import SlackApiError
-from release.vars import burgrx_url, burgrx_user, burgrx_password, artifactory_access_token, slack_client, slack_channel, binaries_bucket_name
-
-
-def set_output(function, output):
-    print(f"::set-output name={function}::{function} {output}")
-
-
-def notify_slack(msg):
-    if slack_channel is not None:
-        try:
-            return slack_client.chat_postMessage(
-                    channel=slack_channel,
-                    text=msg)
-        except SlackApiError as e:
-            print(f"Could not notify slack: {e.response['error']}")
+from release.utils.slack import notify_slack
+from release.vars import burgrx_url, burgrx_user, burgrx_password, artifactory_access_token, binaries_bucket_name
 
 
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest):
@@ -33,15 +19,8 @@ def main():
     github = GitHub()
     release_request = github.get_release_request()
 
-    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request)
-    try:
-        burgr.start_releasability_checks()
-        burgr.get_releasability_status()
-        set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
-    except Exception as e:
-        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
-        github.revoke_release()
-        raise e
+    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request=release_request)
+    releasability_checks(github, burgr, release_request)
 
     artifactory = Artifactory(artifactory_access_token)
     buildinfo = artifactory.receive_build_info(release_request)
