@@ -1,8 +1,6 @@
 import os
 
 from dryable import Dryable
-from slack_sdk.errors import SlackApiError
-
 from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
@@ -10,29 +8,15 @@ from release.utils.binaries import Binaries
 from release.utils.burgr import Burgr
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
-from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
-from release.vars import burgrx_url, burgrx_user, burgrx_password, slack_client, slack_channel, binaries_bucket_name
+from release.utils.release import publish_all_artifacts_to_binaries, releasability_checks, revoke_release, set_output
+from release.utils.slack import notify_slack
+from release.vars import binaries_bucket_name, burgrx_password, burgrx_url, burgrx_user
 
 MANDATORY_ENV_VARIABLES = [
     "BURGRX_USER",
     "BURGRX_PASSWORD",
     "ARTIFACTORY_ACCESS_TOKEN"
 ]
-
-
-def set_output(function, output):
-    print(f"::set-output name={function}::{function} {output}")
-
-
-@Dryable(logging_msg='{function}({args}{kwargs})')
-def notify_slack(msg):
-    if slack_channel is not None:
-        try:
-            return slack_client.chat_postMessage(
-                channel=slack_channel,
-                text=msg)
-        except SlackApiError as e:
-            print(f"Could not notify slack: {e.response['error']}")
 
 
 @Dryable(logging_msg='{function}()')
@@ -77,14 +61,7 @@ def main():
     release_request = github.get_release_request()
 
     burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request)
-    try:
-        burgr.start_releasability_checks()
-        burgr.get_releasability_status()
-        set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
-    except Exception as e:
-        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
-        github.revoke_release()
-        raise e
+    releasability_checks(github, burgr, release_request)
 
     artifactory = Artifactory(os.environ.get('ARTIFACTORY_ACCESS_TOKEN'))
     buildinfo = artifactory.receive_build_info(release_request)
