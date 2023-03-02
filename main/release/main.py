@@ -19,7 +19,7 @@ def main():
     github = GitHub()
     release_request = github.get_release_request()
 
-    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request=release_request)
+    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request)
     releasability_checks(github, burgr, release_request)
 
     artifactory = Artifactory(artifactory_access_token)

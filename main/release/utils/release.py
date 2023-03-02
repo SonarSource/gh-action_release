@@ -70,9 +70,7 @@ def set_output(function, output):
     print(f"::set-output name={function}::{function} {output}")
 
 
-def releasability_checks(github: GitHub, burgr: Burgr, release_request: ReleaseRequest.ReleaseRequest | None):
-    if release_request is None:
-        release_request = github.get_release_request()
+def releasability_checks(github: GitHub, burgr: Burgr, release_request: ReleaseRequest.ReleaseRequest):
     try:
         burgr.start_releasability_checks()
         burgr.get_releasability_status()

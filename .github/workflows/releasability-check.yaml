@@ -1,0 +1,21 @@
+---
+name: Releasability Check
+on:
+  workflow_call: {}
+
+jobs:
+  releasability_check:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    timeout-minutes: 30
+    # outputs:
+    #   releasability: ${{ steps.release.outputs.releasability }}
+    steps:
+      - name: Releasability Check
+        id: releasability_check
+        working-directory: main
+        run: |
+          python -m pip install --upgrade pip pipenv
+          python release/releasability_check.py
