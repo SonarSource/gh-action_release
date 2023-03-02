@@ -8,3 +8,7 @@ test:
 		--cov-report term \
 		--cov=release/ \
 		tests/
+
+releasability-check:
+	pipenv install
+	PYTHONPATH=${PWD} pipenv run releasability_check
