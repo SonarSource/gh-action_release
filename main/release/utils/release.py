@@ -56,8 +56,15 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
     filename = f"{aid}-{version}.{ext}"
     if qual:
         filename = f"{aid}-{version}-{qual}.{ext}"
-    if revoke:
-        binaries.s3_delete(filename, gid, aid, version)
+
+    if aid == "sonar-application":
+        filename = f"sonarqube-{version}.zip"
+        s3_aid = "sonarqube"
     else:
-        temp_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
-        binaries.s3_upload(temp_file, filename, gid, aid, version)
+        s3_aid = aid
+
+    if revoke:
+        binaries.s3_delete(filename, gid, s3_aid, version)
+    else:
+        artifact_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
+        binaries.s3_upload(artifact_file, filename, gid, s3_aid, version)

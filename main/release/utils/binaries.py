@@ -3,6 +3,10 @@ import tempfile
 import zipfile
 
 import boto3
+from datetime import datetime
+from importlib import resources
+from release import resources as file_resources
+from xml.dom.minidom import parseString
 
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
@@ -13,6 +17,7 @@ class Binaries:
 
     def __init__(self, binaries_bucket_name: str):
         self.binaries_bucket_name = binaries_bucket_name
+        self.client = boto3.client('s3')
 
     @staticmethod
     def get_binaries_repo(gid):
@@ -21,46 +26,65 @@ class Binaries:
         else:
             return OSS_REPO
 
-    def s3_upload(self, temp_file, filename, gid, aid, version):
-        binaries_repo = Binaries.get_binaries_repo(gid)
-        if aid == "sonar-application":
-            filename = f"sonarqube-{version}.zip"
-            aid = "sonarqube"
+    def s3_upload(self, artifact_file, filename, gid, aid, version):
         # SonarLint Eclipse is uploaded to a special directory
         if aid == "org.sonarlint.eclipse.site":
-            bucket_key = f"SonarLint-for-Eclipse/releases/{filename}"
+            root_bucket_key = "SonarLint-for-Eclipse/releases"
         else:
-            bucket_key = f"{binaries_repo}/{aid}/{filename}"
+            binaries_repo = Binaries.get_binaries_repo(gid)
+            root_bucket_key = f"{binaries_repo}/{aid}"
 
-        client = boto3.client('s3')
-        client.upload_file(temp_file, self.binaries_bucket_name, bucket_key)
-        print(f'uploaded {temp_file} to s3://{self.binaries_bucket_name}/{bucket_key}')
+        file_bucket_key = f"{root_bucket_key}/{filename}"
+        self.client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
+        print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
         for checksum in self.upload_checksums:
-            client.upload_file(f'{temp_file}.{checksum}', self.binaries_bucket_name, f'{bucket_key}.{checksum}')
-            print(f'uploaded {temp_file}.{checksum} to s3://{self.binaries_bucket_name}/{bucket_key}.{checksum}')
+            self.client.upload_file(f'{artifact_file}.{checksum}', self.binaries_bucket_name, f'{file_bucket_key}.{checksum}')
+            print(f'uploaded {artifact_file}.{checksum} to s3://{self.binaries_bucket_name}/{file_bucket_key}.{checksum}')
 
-        # SonarLint Eclipse is also unzipped on binaries for compatibility with P2 client
+        # SonarLint
         if aid == "org.sonarlint.eclipse.site":
-            bucket_key = f"SonarLint-for-Eclipse/releases/{version}"
-            with tempfile.TemporaryDirectory() as tmpdirname, zipfile.ZipFile(temp_file, 'r') as zip_ref:
-                zip_ref.extractall(tmpdirname)
-                for root, _, files in os.walk(tmpdirname):
-                    for filename in files:
-                        local_file = os.path.join(root, filename)
-                        s3_file = os.path.join(bucket_key, os.path.relpath(local_file, tmpdirname))
-                        print(f"upload {s3_file}")
-                        client.upload_file(local_file, self.binaries_bucket_name, s3_file)
-            print(f'uploaded content of {temp_file} to s3://{self.binaries_bucket_name}/{bucket_key}')
+            version_bucket_key = f"{root_bucket_key}/{version}"
+            self.upload_sonarlint_unzip(version_bucket_key, artifact_file)
+            self.upload_sonarlint_p2_site(root_bucket_key, version_bucket_key)
 
-    def s3_delete(self, filename, gid, aid, version):
+    def upload_sonarlint_unzip(self, version_bucket_key, zip_file):
+        """
+        SonarLint Eclipse is also unzipped on binaries for compatibility with P2 client
+        """
+        with tempfile.TemporaryDirectory() as tmpdirname, zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(tmpdirname)
+            for root, _, files in os.walk(tmpdirname):
+                for filename in files:
+                    local_file = os.path.join(root, filename)
+                    s3_file = os.path.join(version_bucket_key, os.path.relpath(local_file, tmpdirname))
+                    print(f"upload {s3_file}")
+                    self.client.upload_file(local_file, self.binaries_bucket_name, s3_file)
+        print(f'uploaded content of {zip_file} to s3://{self.binaries_bucket_name}/{version_bucket_key}')
+
+    def upload_sonarlint_p2_site(self, root_bucket_key, version_bucket_key):
+        """
+        Add the release to the SonarLint Eclipse P2 update site and upload
+        """
+        now_as_epoch_millis = str(round(datetime.utcnow().timestamp() * 1000))
+        composite_files = ['compositeContent.xml', 'compositeArtifacts.xml']
+        for composite_file in composite_files:
+            template = resources.read_text(file_resources, composite_file)
+            document = parseString(template)
+            document.getElementsByTagName('property')[0].setAttribute('value', now_as_epoch_millis)
+            document.getElementsByTagName('child')[-1] \
+                .setAttribute('location', f"https://binaries.sonarsource.com/{version_bucket_key}/")
+            temp_file = f"{tempfile.gettempdir()}/{composite_file}"
+            with open(temp_file, 'w') as output:
+                document.writexml(output, encoding='UTF-8')
+            composite_bucket_key = f"{root_bucket_key}/{composite_file}"
+            self.client.upload_file(temp_file, self.binaries_bucket_name, composite_bucket_key)
+            print(f'uploaded {composite_file} to s3://{self.binaries_bucket_name}/{composite_bucket_key}')
+
+    def s3_delete(self, filename, gid, aid):
         binaries_repo = Binaries.get_binaries_repo(gid)
-        if aid == "sonar-application":
-            filename = f"sonarqube-{version}.zip"
-            aid = "sonarqube"
         bucket_key = f"{binaries_repo}/{aid}/{filename}"
 
-        client = boto3.client('s3')
-        client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
+        self.client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
         s3 = boto3.resource('s3')
         bucket = s3.Bucket(self.binaries_bucket_name)
         objects = bucket.objects.filter(Prefix=f'{bucket_key}.')
