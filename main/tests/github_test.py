@@ -1,25 +1,30 @@
 import os
 from unittest.mock import patch, mock_open
+import re
 import pytest
 
-from release.utils.github import GitHub, GitHubException
+from release.utils.github import GitHub, GitHubException, ALLOWED_GITHUB_ACTIONS
+
+
+def make_exception_str_for_event(event):
+    return re.escape(f"The action was neither triggered on {ALLOWED_GITHUB_ACTIONS} events (is: '{event}'), neither with dry_run=true")
 
 
 @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'push'}, clear=True)
 def test_must_fail_on_non_release_event_given_dry_run_not_true():
-    with pytest.raises(GitHubException, match='The action was neither triggered on release event, neither with dry_run=true'):
+    with pytest.raises(GitHubException, match=make_exception_str_for_event('push')):
         GitHub()
 
 
 @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'push', 'DRY_RUN': 'false'}, clear=True)
 def test_must_not_fail_on_non_release_event_given_dry_run_is_false():
-    with pytest.raises(GitHubException, match='The action was neither triggered on release event, neither with dry_run=true'):
+    with pytest.raises(GitHubException, match=make_exception_str_for_event('push')):
         GitHub()
 
 
 @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'push', 'DRY_RUN': ''}, clear=True)
 def test_must_not_fail_on_non_release_event_given_dry_run_is_undefined():
-    with pytest.raises(GitHubException, match='The action was neither triggered on release event, neither with dry_run=true'):
+    with pytest.raises(GitHubException, match=make_exception_str_for_event('push')):
         GitHub()
 
 
@@ -175,3 +180,19 @@ def test_get_release_request_should_not_return_fake_release_request_given_dry_ru
         assert release_request.version != fake_release_request.version
         assert release_request.buildnumber != fake_release_request.buildnumber
         assert release_request.branch != fake_release_request.branch
+
+
+@patch.dict(os.environ, {"GITHUB_EVENT_NAME": "workflow_dispatch"}, clear=True)
+@patch(
+    "release.utils.github.json.load",
+    return_value={
+        "inputs": {"version": "1.0.0.0"},
+        "repository": {"default_branch": "master", "full_name": "org/project"},
+    },
+)
+def test_no_release_no_dry_run(json_load_mock):
+    with patch("release.utils.github.open", mock_open()):
+        github = GitHub()
+        release_request = github.get_release_request()
+        assert release_request.branch == 'master'
+        github.revoke_release()
