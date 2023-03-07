@@ -87,6 +87,8 @@ class Burgr:
 
         url = f"{self.url}/api/project/SonarSource/{self.release_request.project}/releasability/start/{version}"
         response = requests.post(url, auth=self.auth_header)
+        # Throw proper exception on 4xx or 5xx before attempting to consume response body.
+        response.raise_for_status()
         message = json.loads(response.text).get('message', '')
         if response.status_code == 200 and message == "done":
             print(f"Releasability checks started successfully for {version} {self.release_request.branch}")

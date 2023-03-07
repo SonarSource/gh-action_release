@@ -6,7 +6,6 @@ from pytest import fixture
 from release.releasability_check import do_releasability_checks
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.burgr import Burgr
-from release.utils.github import GitHub
 from unittest.mock import mock_open
 
 @fixture
@@ -18,6 +17,7 @@ class BurgrResponse:
     def __init__(self, status_code):
         self.status_code = status_code
         self.text = '{ "message" : "done" }'
+        self.raise_for_status = lambda: None
 
 
 def test_notify(release_request):
@@ -53,23 +53,22 @@ def test_releasability_checks(release_request):
         )
 
 
-@patch.dict(os.environ, {"GITHUB_EVENT_NAME": "release"}, clear=True)
-@patch("release.utils.github.json.load")
+@patch.dict(os.environ, {"GITHUB_EVENT_NAME": "workflow_dispatch"}, clear=True)
+@patch(
+    "release.utils.github.json.load",
+    return_value={
+        "inputs": {"version": "1.0.0.0"},
+        "repository": {"default_branch": "master", "full_name": "org/project"},
+    },
+)
 @patch.object(Burgr, "start_releasability_checks")
 @patch.object(Burgr, "get_releasability_status")
 def test_releasability_checks_script(
-    burgr_get_releasability_status, burgr_start_releasability_checks, github_event
+    json_load_mock, burgr_start_releasability_checks, burgr_get_releasability_status
 ):
     with patch("release.utils.github.open", mock_open()) as open_mock:
-        release_request = ReleaseRequest(
-            "org", "project", "version", "buildnumber", "branch", "sha"
-        )
-        with patch.object(
-            GitHub, "get_release_request", return_value=release_request
-        ) as github_release_request:
-            do_releasability_checks()
-            open_mock.assert_called_once()
-            github_event.assert_called_once()
-            github_release_request.assert_called_once()
-            burgr_start_releasability_checks.assert_called_once()
-            burgr_get_releasability_status.assert_called_once()
+        do_releasability_checks()
+        open_mock.assert_called_once()
+        json_load_mock.assert_called_once()
+        burgr_start_releasability_checks.assert_called_once()
+        burgr_get_releasability_status.assert_called_once()
