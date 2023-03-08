@@ -26,12 +26,12 @@ on:
         required: false
       artifactoryRoleSuffix:
         type: string
-        description: artifactory reader suffix specified in vault repo config
+        description: Artifactory promoter suffix specified in Vault repo config
         default: promoter
         required: false
       mavenCentralSync:
         type: boolean
-        description: enable synchronization to maven central
+        description: Enable synchronization to Maven Central
         default: false
         required: false
 
@@ -68,7 +68,7 @@ jobs:
         id: release
         uses: SonarSource/gh-action_release/main@v5
         with:
-          publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries is delivered to costumers
+          publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
         env:
           PYTHONUNBUFFERED: 1
