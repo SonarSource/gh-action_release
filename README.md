@@ -6,10 +6,6 @@ This action implements the release process for all SonarSource projects. It must
 
 ### Release, Promotion and Publication
 
-## Full example 
-
-:warning: The `maven-central-sync` is required for OSS projects only, to disable it remove mavenCentralSync or set it to False
-
 ```yaml
 ---
 name: sonar-release
@@ -27,9 +23,16 @@ jobs:
       contents: write
     uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
     with:
-      publishToBinaries: true  # disabled by default
-      mavenCentralSync: true   # disabled by default
+      publishToBinaries: true
+      mavenCentralSync: true # for OSS projects only
 ```
+
+Available options:
+- publishToBinaries (default: false): enable the publication to binaries
+- binariesS3Bucket (default: downloads-cdn-eu-central-1-prod): target bucket
+- mavenCentralSync (default: false): enable synchronization to Maven Central, **for OSS projects only**
+- slackChannel (default: build): notification Slack channel
+- artifactoryRoleSuffix (default: promoter): Artifactory promoter suffix
 
 ## Versioning
 
@@ -77,6 +80,21 @@ git fetch --tags
 git update-ref -m "reset: update branch v4 to tag 4.2.5" refs/heads/v4 4.2.5
 git push origin v4
 ```
+
+## Requirements
+
+As of version 5.0.0, [the repository needs to be onboarded to the Vault](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/2466316312/HashiCorp+Vault#Onboarding-a-Repository-on-Vault).
+
+The following secrets and permissions are required:
+- development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
+- development/kv/data/slack
+- development/kv/data/repox
+- development/kv/data/burgr
+- development/aws/sts/downloads
+- secrets.GITHUB_TOKEN (provided by the GitHub Action runner)
+
+And if using `mavenCentralSync` option:
+- development/kv/data/ossrh
 
 ## References
 
