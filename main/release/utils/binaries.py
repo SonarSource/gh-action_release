@@ -66,8 +66,7 @@ class Binaries:
         Add the release to the SonarLint Eclipse P2 update site and upload
         """
         now_as_epoch_millis = str(round(datetime.utcnow().timestamp() * 1000))
-        composite_files = ['compositeContent.xml', 'compositeArtifacts.xml']
-        for composite_file in composite_files:
+        for composite_file in ['compositeContent.xml', 'compositeArtifacts.xml']:
             template = resources.read_text(file_resources, composite_file)
             document = parseString(template)
             document.getElementsByTagName('property')[0].setAttribute('value', now_as_epoch_millis)
