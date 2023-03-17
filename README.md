@@ -133,6 +133,7 @@ The following secrets and permissions are required:
 - secrets.GITHUB_TOKEN (provided by the GitHub Action runner)
 
 And if using `mavenCentralSync` option:
+- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 - development/kv/data/ossrh
 
 ## References
