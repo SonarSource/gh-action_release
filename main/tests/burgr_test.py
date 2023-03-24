@@ -1,3 +1,4 @@
+import json
 import os
 
 from unittest.mock import patch, ANY
@@ -16,7 +17,7 @@ def release_request():
 class BurgrResponse:
     def __init__(self, status_code):
         self.status_code = status_code
-        self.text = '{ "message" : "done" }'
+        self.text = json.dumps({'message': 'done'})
         self.raise_for_status = lambda: None
 
 
