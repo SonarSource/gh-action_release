@@ -144,7 +144,6 @@ def test_get_release_request_should_return_fake_release_request_given_dry_run_is
         release_request = github.get_release_request()
 
         fake_release_request = github._GitHub__fake_release_request()
-        print(fake_release_request)
         assert release_request.org == fake_release_request.org
         assert release_request.project == fake_release_request.project
         assert release_request.version == fake_release_request.version
@@ -173,7 +172,6 @@ def test_get_release_request_should_not_return_fake_release_request_given_dry_ru
         release_request = github.get_release_request()
 
         fake_release_request = github._GitHub__fake_release_request()
-        print(fake_release_request)
         assert release_request.version != fake_release_request.version
         assert release_request.buildnumber != fake_release_request.buildnumber
         assert release_request.branch != fake_release_request.branch

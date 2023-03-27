@@ -10,7 +10,7 @@ inputs:
     description: "Channel to post notifications"
     required: false
   dry_run:
-    description: "Don't actually do anything, but still report what would be done (when true)."
+    description: "Don't actually do anything, report what would have been done."
     default: 'false'
     required: false
 outputs:

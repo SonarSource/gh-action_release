@@ -128,7 +128,7 @@ class MainTest(unittest.TestCase):
                 set_output.assert_has_calls([call('releasability', 'done'), call('promote', 'done'), call('publish_to_binaries', 'done')])
 
     @parameterized.expand([
-        "BURGRX_USER", "BURGRX_PASSWORD", "ARTIFACTORY_ACCESS_TOKEN", "BINARIES_AWS_DEPLOY"
+        "BURGRX_USER", "BURGRX_PASSWORD", "ARTIFACTORY_ACCESS_TOKEN"
     ])
     def test_check_params_should_raise_an_exception_given_a_mandatory_env_variable_is_not_provided(self, parameter_not_provided):
         for variable_name in mandatory_env_variables:
@@ -152,12 +152,29 @@ class MainTest(unittest.TestCase):
         with self.assertRaises(InvalidInputParametersException):
             check_params()
 
+    def test_check_params_should_raise_an_exception_given_publish_to_binaries_is_true_and_binaries_aws_is_undefined(self):
+
+        for variable_name in mandatory_env_variables:
+            os.environ[variable_name] = "some value"
+
+        os.environ["INPUT_PUBLISH_TO_BINARIES"] = "true"
+
+        # ensure binaries_aws_deploy is not provided:
+        os.environ["BINARIES_AWS_DEPLOY"] = ""
+        del os.environ["BINARIES_AWS_DEPLOY"]
+
+        with self.assertRaises(InvalidInputParametersException):
+            check_params()
+
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
         for variable_name in mandatory_env_variables:
             os.environ[variable_name] = "some value"
 
         os.environ["INPUT_SLACK_CHANNEL"] = "some channel"
         os.environ["SLACK_API_TOKEN"] = "some channel"
+
+        os.environ["INPUT_PUBLISH_TO_BINARIES"] = "true"
+        os.environ["BINARIES_AWS_DEPLOY"] = "bin"
 
         try:
             check_params()

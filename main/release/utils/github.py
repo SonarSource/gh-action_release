@@ -49,7 +49,7 @@ class GitHub:
                                   branch_name, os.environ.get('GITHUB_SHA'))
 
     def __fake_release_request(self) -> ReleaseRequest:
-        """Provide a dummy release request object, used when given dry_run is enabled"""
+        """Provide a dummy release request object"""
         repo = self._get_repository()["full_name"]
         organisation, project = repo.split("/")
         version = '?.?.?.????'

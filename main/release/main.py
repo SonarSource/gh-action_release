@@ -11,13 +11,12 @@ from release.utils.burgr import Burgr
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
 from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
-from release.vars import burgrx_url, burgrx_user, burgrx_password, slack_client, slack_channel, binaries_bucket_name, project_name
+from release.vars import burgrx_url, burgrx_user, burgrx_password, slack_client, slack_channel, binaries_bucket_name
 
 mandatory_env_variables = [
     "BURGRX_USER",
     "BURGRX_PASSWORD",
-    "ARTIFACTORY_ACCESS_TOKEN",
-    "BINARIES_AWS_DEPLOY"
+    "ARTIFACTORY_ACCESS_TOKEN"
 ]
 
 
@@ -47,7 +46,7 @@ def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, 
 def check_params():
     """A function that prevent further execution when input and output gh-action parameters are not valid"""
 
-    print(f"Checking {project_name} input/output parameters ...")
+    print("Checking gh-action_release input/output parameters ...")
 
     errors = []
     for mandatory_env in mandatory_env_variables:
@@ -57,14 +56,16 @@ def check_params():
     if os.environ.get('INPUT_SLACK_CHANNEL') is not None and os.environ.get('SLACK_API_TOKEN') is None:
         errors.append('env SLACK_API_TOKEN is empty but required as INPUT_SLACK_CHANNEL is defined')
 
+    if os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true" and os.environ.get('BINARIES_AWS_DEPLOY') is None:
+        errors.append('env BINARIES_AWS_DEPLOY is empty but required as INPUT_PUBLISH_TO_BINARIES is true')
+
     if errors:
         new_line = "\n"
-        raise InvalidInputParametersException(f'The execution of {project_name} is aborted due to the following error(s):\n'
+        raise InvalidInputParametersException(f'The execution were aborted due to the following error(s):\n'
                                               f'{new_line.join(errors)}\n\n'
-                                              f'If you are using {project_name} and get this message,\n'
-                                              f' it probably means that the RE-team has to edit the vault policy of the current '
+                                              f'It is likely that the RE-team has to edit the vault policy of the current '
                                               f'repository to provide access to these secrets. \n\n'
-                                              f'Please get in touch with us so we can help you: #ask-release-engineering.'
+                                              f'Please contact #ask-release-engineering or release.engineers@sonarsource.com.'
                                               )
 
 
