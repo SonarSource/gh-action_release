@@ -71,7 +71,7 @@ jobs:
             development/aws/sts/downloads security_token | binaries_aws_security_token;
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@b50e74b676f07064df898257e1b98cfce584a3b7
+        uses: SonarSource/gh-action_release/main@feature/svermeille/BUILD-2509-Dry-run-option-for-gh-action_release
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
@@ -99,8 +99,8 @@ jobs:
   mavenCentral:
     name: Maven Central
     needs: release
-    if: ${{ inputs.mavenCentralSync }}
-    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@v5
+    if: ${{ inputs.mavenCentralSync && inputs.dryRun != true }}
+    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@feature/svermeille/BUILD-2509-Dry-run-option-for-gh-action_release
     with:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}

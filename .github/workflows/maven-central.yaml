@@ -23,7 +23,7 @@ jobs:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release
     timeout-minutes: 30
-    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+    if: github.event_name == 'release' && github.event.action == 'published'
     outputs:
       maven-central: ${{ steps.maven-central-sync.outcome }}
     steps:
@@ -60,7 +60,7 @@ jobs:
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@v5
+        uses: SonarSource/gh-action_release/maven-central-sync@feature/svermeille/BUILD-2509-Dry-run-option-for-gh-action_release # svermeille feature branch
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:
