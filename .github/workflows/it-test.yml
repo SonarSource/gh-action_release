@@ -27,15 +27,3 @@ jobs:
             dry_run: true
             publish_to_binaries: true
             slack_channel: build
-
-  mavenCentral:
-    name: "Maven Central (it-tests)"
-    runs-on: ubuntu-latest
-    needs: release
-    steps:
-      - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 #v3.5.0 (Necessary to access local action)
-      - uses: ./maven-central-sync
-        with:
-          vault-addr: vault.addr
-          artifactory-role-suffix: test
-          dry-run: true
