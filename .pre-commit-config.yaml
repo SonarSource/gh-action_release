@@ -4,14 +4,14 @@ repos:
       - id: check-hooks-apply
       - id: check-useless-excludes
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3298ddab3c13dd77d6ce1fc0baf97691430d84b0  # frozen: v4.3.0
+    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9  # frozen: v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: check-yaml
       - id: check-added-large-files
       - id: check-executables-have-shebangs
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 9ff55b0adf11b603e0e2b4e1d639255278f4316f  # frozen: 0.18.3
+    rev: 20447075e31543a8b125f2df18d75f3b5e7d4d2e  # frozen: 0.22.0
     hooks:
       - id: check-github-actions
         files: .*/action.ya?ml
