@@ -16,3 +16,7 @@ repos:
       - id: check-github-actions
         files: .*/action.ya?ml
       - id: check-github-workflows
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: 5341f388c2a962d3bc66e075f00b80ab45b15f24 # v0.1.20
+    hooks:
+      - id: shellcheck
