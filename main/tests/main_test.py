@@ -6,7 +6,7 @@ import pytest
 from parameterized import parameterized
 
 from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
-from release.main import main, set_output, check_params, mandatory_env_variables
+from release.main import main, set_output, check_params, MANDATORY_ENV_VARIABLES
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
@@ -131,7 +131,7 @@ class MainTest(unittest.TestCase):
         "BURGRX_USER", "BURGRX_PASSWORD", "ARTIFACTORY_ACCESS_TOKEN"
     ])
     def test_check_params_should_raise_an_exception_given_a_mandatory_env_variable_is_not_provided(self, parameter_not_provided):
-        for variable_name in mandatory_env_variables:
+        for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
         del os.environ[parameter_not_provided]
 
@@ -140,7 +140,7 @@ class MainTest(unittest.TestCase):
 
     def test_check_params_should_raise_an_exception_given_slack_channel_is_provided_and_slack_token_is_not(self):
 
-        for variable_name in mandatory_env_variables:
+        for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
 
         os.environ["INPUT_SLACK_CHANNEL"] = "some channel"
@@ -154,7 +154,7 @@ class MainTest(unittest.TestCase):
 
     def test_check_params_should_raise_an_exception_given_publish_to_binaries_is_true_and_binaries_aws_is_undefined(self):
 
-        for variable_name in mandatory_env_variables:
+        for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
 
         os.environ["INPUT_PUBLISH_TO_BINARIES"] = "true"
@@ -167,7 +167,7 @@ class MainTest(unittest.TestCase):
             check_params()
 
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
-        for variable_name in mandatory_env_variables:
+        for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
 
         os.environ["INPUT_SLACK_CHANNEL"] = "some channel"

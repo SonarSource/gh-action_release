@@ -13,7 +13,7 @@ from release.utils.github import GitHub
 from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
 from release.vars import burgrx_url, burgrx_user, burgrx_password, slack_client, slack_channel, binaries_bucket_name
 
-mandatory_env_variables = [
+MANDATORY_ENV_VARIABLES = [
     "BURGRX_USER",
     "BURGRX_PASSWORD",
     "ARTIFACTORY_ACCESS_TOKEN"
@@ -49,7 +49,7 @@ def check_params():
     print("Checking gh-action_release input/output parameters ...")
 
     errors = []
-    for mandatory_env in mandatory_env_variables:
+    for mandatory_env in MANDATORY_ENV_VARIABLES:
         if os.environ.get(mandatory_env) is None:
             errors.append(f"env {mandatory_env} is empty")
 
