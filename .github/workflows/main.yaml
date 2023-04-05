@@ -4,6 +4,11 @@ name: Release
 on:
   workflow_call:
     inputs:
+      dryRun:
+        type: boolean
+        description: Flag to enable the dry-run execution
+        default: false
+        required: false
       publishToBinaries:
         type: boolean
         description: Flag to enable the publication to binaries
@@ -70,6 +75,7 @@ jobs:
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
+          dry_run: ${{ inputs.dryRun }}
         env:
           PYTHONUNBUFFERED: 1
           ARTIFACTORY_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
@@ -93,7 +99,7 @@ jobs:
   mavenCentral:
     name: Maven Central
     needs: release
-    if: ${{ inputs.mavenCentralSync }}
+    if: ${{ inputs.mavenCentralSync && inputs.dryRun != true }}
     uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@v5
     with:
       vaultAddr: ${{ inputs.vaultAddr }}

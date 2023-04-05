@@ -7,6 +7,7 @@ NEXUS_URL="$2"
 STAGING_PROFILE_ID="$3"
 DO_RELEASE="$4"
 
+
 MVN_NEXUS_STAGING_CMD="mvn org.sonatype.plugins:nexus-staging-maven-plugin:1.6.13:"
 DEFAULT_OPTS="-DnexusUrl=$NEXUS_URL -DserverId=ossrh"
 PROFILE_OPT="-DstagingProfileId=$STAGING_PROFILE_ID"

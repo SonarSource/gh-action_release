@@ -12,6 +12,10 @@ requests = "*"
 polling = "*"
 slack_sdk = "*"
 boto3 = "*"
+dryrun = "*"
+dryable = "*"
+parameterized = "*"
+parametrized = "*"
 
 [requires]
 python_version = "3.10"

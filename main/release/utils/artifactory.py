@@ -3,6 +3,7 @@ import urllib
 import requests
 import tempfile
 
+from dryable import Dryable
 from release.utils.buildinfo import BuildInfo
 
 
@@ -15,6 +16,7 @@ class Artifactory:
         self.access_token = access_token
         self.headers['Authorization'] = "Bearer "+access_token
 
+    @Dryable(logging_msg='{function}()')
     def receive_build_info(self, release_request):
         url = f"{self.url}/api/build/{release_request.project}/{release_request.buildnumber}"
         r = requests.get(url, headers=self.headers)
@@ -26,6 +28,7 @@ class Artifactory:
             print(r.content)
             raise Exception('unknown build')
 
+    @Dryable(logging_msg='{function}()')
     def promote(self, release_request, buildinfo, revoke=False):
         status = 'released'
         try:

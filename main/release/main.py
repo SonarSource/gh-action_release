@@ -1,35 +1,78 @@
-from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
+import os
+
+from dryable import Dryable
+from slack_sdk.errors import SlackApiError
+
+from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
 from release.utils.burgr import Burgr
+from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
-from slack_sdk.errors import SlackApiError
-from release.vars import burgrx_url, burgrx_user, burgrx_password, artifactory_access_token, slack_client, slack_channel, binaries_bucket_name
+from release.utils.release import revoke_release, publish_all_artifacts_to_binaries
+from release.vars import burgrx_url, burgrx_user, burgrx_password, slack_client, slack_channel, binaries_bucket_name
+
+MANDATORY_ENV_VARIABLES = [
+    "BURGRX_USER",
+    "BURGRX_PASSWORD",
+    "ARTIFACTORY_ACCESS_TOKEN"
+]
 
 
 def set_output(function, output):
     print(f"::set-output name={function}::{function} {output}")
 
 
+@Dryable(logging_msg='{function}({args}{kwargs})')
 def notify_slack(msg):
     if slack_channel is not None:
         try:
             return slack_client.chat_postMessage(
-                    channel=slack_channel,
-                    text=msg)
+                channel=slack_channel,
+                text=msg)
         except SlackApiError as e:
             print(f"Could not notify slack: {e.response['error']}")
 
 
+@Dryable(logging_msg='{function}()')
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest):
-    print(f"::error Aborting release")
+    print("::error Aborting release")
     github.revoke_release()
     revoke_release(artifactory, binaries, rr)
     set_output("release", f"{rr.project}:{rr.buildnumber} revoked")
 
 
+def check_params():
+    """A function that prevent further execution when input and output gh-action parameters are not valid"""
+
+    print("Checking gh-action_release input/output parameters ...")
+
+    errors = []
+    for mandatory_env in MANDATORY_ENV_VARIABLES:
+        if os.environ.get(mandatory_env) is None:
+            errors.append(f"env {mandatory_env} is empty")
+
+    if os.environ.get('INPUT_SLACK_CHANNEL') is not None and os.environ.get('SLACK_API_TOKEN') is None:
+        errors.append('env SLACK_API_TOKEN is empty but required as INPUT_SLACK_CHANNEL is defined')
+
+    if os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true" and os.environ.get('BINARIES_AWS_DEPLOY') is None:
+        errors.append('env BINARIES_AWS_DEPLOY is empty but required as INPUT_PUBLISH_TO_BINARIES is true')
+
+    if errors:
+        new_line = "\n"
+        raise InvalidInputParametersException(f'The execution were aborted due to the following error(s):\n'
+                                              f'{new_line.join(errors)}\n\n'
+                                              f'It is likely that the RE-team has to edit the vault policy of the current '
+                                              f'repository to provide access to these secrets. \n\n'
+                                              f'Please contact #ask-release-engineering or release.engineers@sonarsource.com.'
+                                              )
+
+
 def main():
+    check_params()
+    DryRunHelper.init()
+
     github = GitHub()
     release_request = github.get_release_request()
 
@@ -43,7 +86,7 @@ def main():
         github.revoke_release()
         raise e
 
-    artifactory = Artifactory(artifactory_access_token)
+    artifactory = Artifactory(os.environ.get('ARTIFACTORY_ACCESS_TOKEN'))
     buildinfo = artifactory.receive_build_info(release_request)
     binaries = None
     try:

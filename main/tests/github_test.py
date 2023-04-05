@@ -6,8 +6,20 @@ from release.utils.github import GitHub, GitHubException
 
 
 @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'push'}, clear=True)
-def test_must_fail_on_non_release_event():
-    with pytest.raises(GitHubException, match='The action was not triggered on release event'):
+def test_must_fail_on_non_release_event_given_dry_run_not_true():
+    with pytest.raises(GitHubException, match='The action was neither triggered on release event, neither with dry_run=true'):
+        GitHub()
+
+
+@patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'push', 'DRY_RUN': 'false'}, clear=True)
+def test_must_not_fail_on_non_release_event_given_dry_run_is_false():
+    with pytest.raises(GitHubException, match='The action was neither triggered on release event, neither with dry_run=true'):
+        GitHub()
+
+
+@patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'push', 'DRY_RUN': ''}, clear=True)
+def test_must_not_fail_on_non_release_event_given_dry_run_is_undefined():
+    with pytest.raises(GitHubException, match='The action was neither triggered on release event, neither with dry_run=true'):
         GitHub()
 
 
@@ -38,7 +50,6 @@ def test_must_fail_if_tag_not_following_version_pattern(mock_release_event):
        })
 def test_must_succeed_with_correct_tag(mock_release_event):
     with patch('release.utils.github.open', mock_open()) as open_mock:
-
         release_request = GitHub().get_release_request()
         assert release_request.org == 'org'
         assert release_request.project == 'project'
@@ -63,7 +74,6 @@ def test_must_succeed_with_correct_tag(mock_release_event):
        })
 def test_must_succeed_with_target_commitish_containing_a_commit(mock_release_event):
     with patch('release.utils.github.open', mock_open()) as open_mock:
-
         release_request = GitHub().get_release_request()
         assert release_request.org == 'org'
         assert release_request.project == 'project'
@@ -111,3 +121,57 @@ def test_do_publish_to_binaries():
 
 def test_do_not_publish_to_binaries():
     assert not GitHub.is_publish_to_binaries()
+
+
+@patch.dict(os.environ, {
+    'GITHUB_EVENT_NAME': 'release',
+    'GITHUB_SHA': 'sha',
+    'INPUT_DRY_RUN': 'true'
+}, clear=True)
+@patch('release.utils.github.json.load',
+       return_value={
+           'repository': {
+               'full_name': 'org/project'
+           },
+           'release': {
+               'tag_name': '1.0.0.42',
+               'target_commitish': 'branch'
+           },
+       })
+def test_get_release_request_should_return_fake_release_request_given_dry_run_is_true(mock_release_event):
+    with patch('release.utils.github.open', mock_open()) as open_mock:
+        github = GitHub()
+        release_request = github.get_release_request()
+
+        fake_release_request = github._GitHub__fake_release_request()
+        assert release_request.org == fake_release_request.org
+        assert release_request.project == fake_release_request.project
+        assert release_request.version == fake_release_request.version
+        assert release_request.buildnumber == fake_release_request.buildnumber
+        assert release_request.branch == fake_release_request.branch
+        assert release_request.sha == fake_release_request.sha
+
+@patch.dict(os.environ, {
+    'GITHUB_EVENT_NAME': 'release',
+    'GITHUB_SHA': 'sha',
+    'INPUT_DRY_RUN': 'false'
+}, clear=True)
+@patch('release.utils.github.json.load',
+       return_value={
+           'repository': {
+               'full_name': 'org/project'
+           },
+           'release': {
+               'tag_name': '1.0.0.42',
+               'target_commitish': 'branch'
+           },
+       })
+def test_get_release_request_should_not_return_fake_release_request_given_dry_run_is_false(mock_release_event):
+    with patch('release.utils.github.open', mock_open()) as open_mock:
+        github = GitHub()
+        release_request = github.get_release_request()
+
+        fake_release_request = github._GitHub__fake_release_request()
+        assert release_request.version != fake_release_request.version
+        assert release_request.buildnumber != fake_release_request.buildnumber
+        assert release_request.branch != fake_release_request.branch

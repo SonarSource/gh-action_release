@@ -1,3 +1,4 @@
+from dryable import Dryable
 from release.utils.artifactory import Artifactory
 from release.steps import ReleaseRequest
 
@@ -26,6 +27,7 @@ def get_action(revoke):
         return "publishing"
 
 
+@Dryable(logging_msg='{function}({args})')
 def publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, revoke=False):
     print(f"{get_action(revoke)} artifacts for {release_request.project}#{release_request.buildnumber}")
     repo = buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO').replace('qa', 'builds')
