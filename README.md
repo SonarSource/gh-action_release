@@ -35,6 +35,31 @@ Available options:
 - artifactoryRoleSuffix (default: promoter): Artifactory promoter suffix
 - dryRun (default: false): perform a dry run execution
 
+### Releasability check
+
+If one wants to perform a releasability check for a given version without
+performing an actual release, the `releasability-check` workflow can be used.
+Here is an example:
+
+``` yaml
+---
+name: my-releasability-check
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version number to check releasability on
+        required: true
+
+jobs:
+  release:
+    permissions:
+      id-token: write
+      contents: write
+    uses: SonarSource/gh-action_release/.github/workflows/releasability-check.yaml@<id>
+```
+
 ## Dry Run
 For testing purpose you may want to use this gh-action without really releasing.
 There comes the dry run.
