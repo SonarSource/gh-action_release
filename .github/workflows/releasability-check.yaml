@@ -1,7 +1,12 @@
 ---
 name: Releasability Check
 on:
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      version:
+        description: Version to check releasability on
+        required: true
+        type: string
 
 jobs:
   releasability_check:
