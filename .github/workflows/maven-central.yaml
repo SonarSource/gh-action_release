@@ -53,14 +53,14 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@v5
+        uses: SonarSource/gh-action_release/download-build@feature/svermeille/BUILD-2699-do-not-use-deprecated-set-output # TODO: remove after merge
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@v5
+        uses: SonarSource/gh-action_release/maven-central-sync@feature/svermeille/BUILD-2699-do-not-use-deprecated-set-output # TODO: remove after merge
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:

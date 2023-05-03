@@ -21,7 +21,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
+    uses: SonarSource/gh-action_release/.github/workflows/main.yaml@feature/svermeille/BUILD-2699-do-not-use-deprecated-set-output # TODO: remove before merge
     with:
       publishToBinaries: true
       mavenCentralSync: true # for OSS projects only
