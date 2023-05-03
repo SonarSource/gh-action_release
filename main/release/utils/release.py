@@ -1,3 +1,5 @@
+import os
+
 from dryable import Dryable
 from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
@@ -75,8 +77,16 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
         binaries.s3_upload(artifact_file, filename, gid, s3_aid, version)
 
 
-def set_output(function, output):
-    print(f"::set-output name={function}::{function} {output}")
+def set_output(output_name, value):
+    """Sets the GitHub Action output.
+
+    Keyword arguments:
+    output_name - The name of the output
+    value - The value of the output
+    """
+    if "GITHUB_OUTPUT" in os.environ:
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output_stream:
+            print(f"{output_name}={value}", file=output_stream)
 
 
 def releasability_checks(github: GitHub, burgr: Burgr, release_request: ReleaseRequest.ReleaseRequest):
