@@ -71,7 +71,7 @@ jobs:
             development/aws/sts/downloads security_token | binaries_aws_security_token;
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@feature/svermeille/BUILD-2699-do-not-use-deprecated-set-output # TODO: remove before merge
+        uses: SonarSource/gh-action_release/main@v5
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
@@ -100,7 +100,7 @@ jobs:
     name: Maven Central
     needs: release
     if: ${{ inputs.mavenCentralSync && inputs.dryRun != true }}
-    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@feature/svermeille/BUILD-2699-do-not-use-deprecated-set-output # TODO: remove before merge
+    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@v5
     with:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
