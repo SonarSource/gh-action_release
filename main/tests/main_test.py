@@ -1,4 +1,5 @@
 import os
+import tempfile
 import unittest
 from unittest.mock import patch, mock_open, ANY, call
 
@@ -13,11 +14,13 @@ from release.utils.burgr import Burgr
 from release.utils.github import GitHub
 
 
-def test_set_output(capfd):
-    set_output('function', 'output')
-    out, err = capfd.readouterr()
-    assert out == "::set-output name=function::function output\n"
-    assert not err
+def test_set_output():
+    with tempfile.NamedTemporaryFile(suffix="", prefix=os.path.basename(__file__)) as temp_file:
+        os.environ['GITHUB_OUTPUT'] = temp_file.name
+
+        set_output('function', 'output')
+
+        assert temp_file.read().decode("utf-8").strip() == "function=output"
 
 
 class MainTest(unittest.TestCase):

@@ -24,7 +24,7 @@ release="$MVN_NEXUS_STAGING_CMD:rc-release $DEFAULT_OPTS"
 # R3P0 is a magic string to ensure that the correct line is grepped
 STAGING_REPO=$($open -DopenedRepositoryMessageFormat="R3P0:%s" | grep "R3P0:" | cut -d: -f2)
 
-echo "::set-output name=repo=${STAGING_REPO}"
+echo "repo=${STAGING_REPO}" >> "$GITHUB_OUTPUT"
 
 $deploy -DstagingRepositoryId="$STAGING_REPO" -DrepositoryDirectory="$LOCAL_REPO_DIR"
 

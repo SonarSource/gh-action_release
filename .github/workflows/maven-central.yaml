@@ -40,7 +40,7 @@ jobs:
         run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@d1c1ab4ca5ad07fd9cdfe1eff038a39673dfca64  # tag=2.4.2-1
+        uses: SonarSource/vault-action-wrapper@f148a1075c1eff1db5ab474f96c206c5587172d3  # tag=2.5.0-3
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
@@ -49,7 +49,7 @@ jobs:
             development/kv/data/ossrh password | ossrh_password;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@eb712d76540e5d1f3756303f30387657fb204e52  # tag=2.4.1-1
+        uses: SonarSource/jfrog-setup-wrapper@92f2e341560f69ccf1763e8efb73f69405545491  # tag=3.2.0-2
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
@@ -68,7 +68,7 @@ jobs:
           OSSRH_PASSWORD: ${{ fromJSON(steps.secrets.outputs.vault).ossrh_password }}
       - name: Notify on failure
         if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
-        uses: 8398a7/action-slack@a189acbf0b7ea434558662ae25a0de71df69a435  # tag=v3.14.0
+        uses: 8398a7/action-slack@fbd6aa58ba854a740e11a35d0df80cb5d12101d8  # tag=v3.15.1
         with:
           status: failure
           fields: repo,author,eventName

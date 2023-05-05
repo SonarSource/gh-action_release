@@ -57,7 +57,7 @@ jobs:
     steps:
       - name: Vault Secrets
         id: secrets
-        uses: SonarSource/vault-action-wrapper@d1c1ab4ca5ad07fd9cdfe1eff038a39673dfca64  # tag=2.4.2-1
+        uses: SonarSource/vault-action-wrapper@f148a1075c1eff1db5ab474f96c206c5587172d3  # tag=2.5.0-3
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
