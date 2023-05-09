@@ -20,9 +20,9 @@ def set_output(output_name, value):
         output_name - The name of the output
         value - The value of the output
         """
-if "GITHUB_OUTPUT" in os.environ:
-    with open(os.environ["GITHUB_OUTPUT"], "a") as output_stream:
-        print(f"{output_name}={value}", file=output_stream)
+    if "GITHUB_OUTPUT" in os.environ:
+        with open(os.environ["GITHUB_OUTPUT"], "a") as output_stream:
+            print(f"{output_name}={value}", file=output_stream)
 
 
 def notify_slack(msg):
