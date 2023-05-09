@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import traceback
@@ -13,8 +14,15 @@ from vars import githup_api_url, github_token, github_event_path, burgrx_url, bu
     artifactory_apikey, repo, ref, actor, publish_to_binaries, slack_client, slack_channel, binaries_bucket_name
 
 
-def set_output(function, output):
-    print(f"::set-output name={function}::{output}")
+def set_output(output_name, value):
+    """Sets the GitHub Action output.
+        Keyword arguments:
+        output_name - The name of the output
+        value - The value of the output
+        """
+if "GITHUB_OUTPUT" in os.environ:
+    with open(os.environ["GITHUB_OUTPUT"], "a") as output_stream:
+        print(f"{output_name}={value}", file=output_stream)
 
 
 def notify_slack(msg):
