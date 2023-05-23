@@ -6,7 +6,7 @@ LOCAL_REPO_DIR="$1"
 NEXUS_URL="$2"
 STAGING_PROFILE_ID="$3"
 DO_RELEASE="$4"
-
+: "${GITHUB_OUTPUT:=/dev/stdout}"
 
 MVN_NEXUS_STAGING_CMD="mvn org.sonatype.plugins:nexus-staging-maven-plugin:1.6.13:"
 DEFAULT_OPTS="-DnexusUrl=$NEXUS_URL -DserverId=ossrh"
@@ -30,6 +30,6 @@ $deploy -DstagingRepositoryId="$STAGING_REPO" -DrepositoryDirectory="$LOCAL_REPO
 
 $close -DstagingRepositoryId="$STAGING_REPO"
 
-if [ $DO_RELEASE = true ]; then
+if [ "$DO_RELEASE" = true ]; then
     $release -DstagingRepositoryId="$STAGING_REPO"
 fi
