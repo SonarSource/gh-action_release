@@ -10,6 +10,7 @@ from xml.dom.minidom import parseString
 
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
+DISTRIBUTION_ID_PROD = 'E2WHX4O0Y6Z6C6'
 
 
 class Binaries:
@@ -46,6 +47,7 @@ class Binaries:
             version_bucket_key = f"{root_bucket_key}/{version}"
             self.upload_sonarlint_unzip(version_bucket_key, artifact_file)
             self.upload_sonarlint_p2_site(root_bucket_key, version_bucket_key)
+            self.update_sonarlint_p2_site(DISTRIBUTION_ID_PROD, version)
 
     def upload_sonarlint_unzip(self, version_bucket_key, zip_file):
         """
@@ -78,6 +80,28 @@ class Binaries:
             composite_bucket_key = f"{root_bucket_key}/{composite_file}"
             self.client.upload_file(temp_file, self.binaries_bucket_name, composite_bucket_key)
             print(f'uploaded {composite_file} to s3://{self.binaries_bucket_name}/{composite_bucket_key}')
+
+    @staticmethod
+    def update_sonarlint_p2_site(distribution_id, version):
+        """
+        Create CloudFront invalidation to update the cache of SonarLint Eclipse P2 update site files
+        """
+        client = boto3.client('cloudfront')
+        response = client.create_invalidation(
+            DistributionId=distribution_id,
+            InvalidationBatch={
+                'Paths': {
+                    'Quantity': 2,
+                    'Items': [
+                        '/SonarLint-for-Eclipse/releases/compositeContent.xml',
+                        '/SonarLint-for-Eclipse/releases/compositeArtifacts.xml'
+                    ]
+                },
+                'CallerReference': f"gh-action_release-SonarLint-{version}"
+            }
+        )
+        invalidation_uri = response['Location']
+        print(f'CloudFront invalidation: {invalidation_uri}')
 
     def s3_delete(self, filename, gid, aid):
         binaries_repo = Binaries.get_binaries_repo(gid)
