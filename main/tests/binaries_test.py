@@ -202,3 +202,15 @@ def test_upload_sonarlint_p2_site(capsys):
             document = parse(os.path.join(tempfile.gettempdir(), composite_file))
             assert document.getElementsByTagName('child')[-1].getAttribute(
                 'location') == "https://binaries.sonarsource.com/SonarLint-for-Eclipse/releases/7.9.0.63244/"
+
+
+def test_update_sonarlint_p2_site(capsys):
+    client = MagicMock()
+    with patch('boto3.client', return_value=client), \
+        patch.object(client, 'create_invalidation') as create_invalidation:
+        create_invalidation.return_value = {'Location': 'URI_123'}
+        binaries = Binaries("test_bucket")
+        binaries.update_sonarlint_p2_site('1234567890', '7.9.0.63244')
+        captured = capsys.readouterr().out.split('\n')
+        assert captured[0] == 'CloudFront invalidation: URI_123'
+        create_invalidation.assert_called()
