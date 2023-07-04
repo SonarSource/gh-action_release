@@ -62,54 +62,55 @@ Resources:
       TopicArn: !Ref ReleasabilityResultTopicArn
       RawMessageDelivery: true
 
-  ReleaseUsers: #' Functional account used by the GitHub release workflows to connect releasability
-    Type: AWS::IAM::User
-    Properties:
-      UserName: release-user
-      Policies:
-        - PolicyName: ReleaseUsersReadSSMPolicy
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: AllowParameterStoreActiveGroupRead
-                Effect: Allow
-                Action:
-                  - ssm:GetParameter
-                  - ssm:GetParameters
-                Resource: arn:aws:ssm:eu-west-1:*:parameter/Burgr/Releasability/*/Releasability*
-        - PolicyName: ReleaseUsersPublishReleasability
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: AllowPublishToReleasabilitySNS
-                Effect: Allow
-                Action:
-                  - sns:Publish
-                Resource: arn:aws:sns:eu-west-1:*:Burgr-Releasability-Service-*-ReleasabilityTrigger-*
-        - PolicyName: ReleaseUsersReadReleasabilityQueue
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: AllowReceiveMessageFromReleasabilityQueue
-                Effect: Allow
-                Action:
-                  - sqs:ReceiveMessage
-                Resource: arn:aws:sqs:eu-west-1:*:Releasability-Result-*
-        - PolicyName: ReleaseUsersListFunctions
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: AllowListFunctions
-                Effect: Allow
-                Action:
-                  - lambda:ListFunctions
-                Resource: '*'
-        - PolicyName: ReleaseUsersListSubscriptionsByTopic
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Sid: AllowListSubscriptionsByTopic
-                Effect: Allow
-                Action:
-                  - SNS:ListSubscriptionsByTopic
-                Resource: arn:aws:sns:eu-west-1:*:Burgr-Releasability-Service-*-ReleasabilityTrigger-*
+  # WARNING: introduced Wiz issue https://sonarsource.atlassian.net/browse/BUILD-3328
+  # ReleaseUsers: #' Functional account used by the GitHub release workflows to connect releasability
+  #   Type: AWS::IAM::User
+  #   Properties:
+  #     UserName: release-user
+  #     Policies:
+  #       - PolicyName: ReleaseUsersReadSSMPolicy
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: AllowParameterStoreActiveGroupRead
+  #               Effect: Allow
+  #               Action:
+  #                 - ssm:GetParameter
+  #                 - ssm:GetParameters
+  #               Resource: arn:aws:ssm:eu-west-1:*:parameter/Burgr/Releasability/*/Releasability*
+  #       - PolicyName: ReleaseUsersPublishReleasability
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: AllowPublishToReleasabilitySNS
+  #               Effect: Allow
+  #               Action:
+  #                 - sns:Publish
+  #               Resource: arn:aws:sns:eu-west-1:*:Burgr-Releasability-Service-*-ReleasabilityTrigger-*
+  #       - PolicyName: ReleaseUsersReadReleasabilityQueue
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: AllowReceiveMessageFromReleasabilityQueue
+  #               Effect: Allow
+  #               Action:
+  #                 - sqs:ReceiveMessage
+  #               Resource: arn:aws:sqs:eu-west-1:*:Releasability-Result-*
+  #       - PolicyName: ReleaseUsersListFunctions
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: AllowListFunctions
+  #               Effect: Allow
+  #               Action:
+  #                 - lambda:ListFunctions
+  #               Resource: '*'
+  #       - PolicyName: ReleaseUsersListSubscriptionsByTopic
+  #         PolicyDocument:
+  #           Version: "2012-10-17"
+  #           Statement:
+  #             - Sid: AllowListSubscriptionsByTopic
+  #               Effect: Allow
+  #               Action:
+  #                 - SNS:ListSubscriptionsByTopic
+  #               Resource: arn:aws:sns:eu-west-1:*:Burgr-Releasability-Service-*-ReleasabilityTrigger-*
