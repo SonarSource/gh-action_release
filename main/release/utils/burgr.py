@@ -9,35 +9,19 @@ from requests.models import Response
 from release.steps.ReleaseRequest import ReleaseRequest
 
 
-def get_corresponding_pipeline(commits_info, version):
-    for commit_info in commits_info:
-        pipelines = commit_info.get('pipelines') or []
-        pipeline = next((x for x in pipelines if x.get('version') == version), None)
-        if pipeline is not None:
-            return pipeline
-
-    return None
-
-
-def is_finished(status: str):
-    return status == 'errored' or status == 'failed' or status == 'passed'
-
-
-def format_ra_check(check):
-    state = check['state']
-    # \u2705 is "white heavy check mark", \u274c is "cross mark"
-    status_char = '\u2705' if state == 'PASSED' else '\u274c'
-    reason = f" - {check.get('message', '')}" if state != 'PASSED' else ''
-    return f"* {status_char} {check['name']}: {state}{reason}"
-
-
-def format_failed_releasability(releasability):
-    metadata = json.loads(releasability['metadata'])
-    return '\n'.join([format_ra_check(check) for check in metadata['checks'] if check['state'] != 'NOT_RELEVANT'])
-
-
 class ReleasabilityFailure(Exception):
     def __init__(self, releasability):
+        def format_failed_releasability(releasability):
+            metadata = json.loads(releasability['metadata'])
+
+            def format_ra_check(check):
+                state = check['state']
+                # \u2705 is "white heavy check mark", \u274c is "cross mark"
+                status_char = '\u2705' if state == 'PASSED' else '\u274c'
+                reason = f" - {check.get('message', '')}" if state != 'PASSED' else ''
+                return f"* {status_char} {check['name']}: {state}{reason}"
+
+            return '\n'.join([format_ra_check(check) for check in metadata['checks'] if check['state'] != 'NOT_RELEVANT'])
         super(Exception, self).__init__(format_failed_releasability(releasability))
 
 
@@ -50,6 +34,11 @@ class Burgr:
         self.url = url
         self.auth_header = HTTPBasicAuth(user, password)
         self.release_request = release_request
+        version = self.release_request.version
+        # SLVSCODE-specific
+        if self.release_request.project == 'sonarlint-vscode':
+            version = version.split('+')[0]
+        self.version = version
 
     # This will only work for a branch build, not a PR build
     # because a PR build notification needs `"pr_number": NUMBER` instead of `'branch': NAME`
@@ -78,20 +67,15 @@ class Burgr:
 
     @Dryable(logging_msg='{function}()')
     def start_releasability_checks(self):
-        version = self.release_request.version
-        print(f"Starting releasability check: {self.release_request.project}#{version}")
+        print(f"Starting releasability check: {self.release_request.project}#{self.version}")
 
-        # SLVSCODE-specific
-        if self.release_request.project == 'sonarlint-vscode':
-            version = version.split('+')[0]
-
-        url = f"{self.url}/api/project/SonarSource/{self.release_request.project}/releasability/start/{version}"
+        url = f"{self.url}/api/project/SonarSource/{self.release_request.project}/releasability/start/{self.version}"
         response = requests.post(url, auth=self.auth_header)
         # Throw proper exception on 4xx or 5xx before attempting to consume response body.
         response.raise_for_status()
         message = json.loads(response.text).get('message', '')
         if response.status_code == 200 and message == "done":
-            print(f"Releasability checks started successfully for {version} {self.release_request.branch}")
+            print(f"Releasability checks started successfully for {self.version} {self.release_request.branch}")
         else:
             print(f"Releasability checks failed to start: {response} '{message}'")
             raise Exception(f"Releasability checks failed to start: '{message}'")
@@ -120,9 +104,10 @@ class Burgr:
         }
         try:
             releasability = polling.poll(
-                lambda: self.get_latest_releasability_stage(requests.get(url, params=url_params, auth=self.auth_header),
-                                                            self.release_request.version,
-                                                            check_releasable),
+                lambda: self._get_latest_releasability_stage(
+                    requests.get(url, params=url_params, auth=self.auth_header),
+                    check_releasable
+                ),
                 step=step,
                 timeout=timeout)
             status = releasability['status']
@@ -137,7 +122,7 @@ class Burgr:
             print(f"Cannot complete releasability checks:", e)
             raise e
 
-    def get_latest_releasability_stage(self, response: Response, version: str, check_releasable: bool = True) -> bool:
+    def _get_latest_releasability_stage(self, response: Response, check_releasable: bool = True) -> bool:
         print(f"Polling releasability status... {response.url}")
 
         if response.status_code != 200:
@@ -148,16 +133,28 @@ class Burgr:
         if len(commits_info) == 0:
             raise Exception(f"No commit information found in burgrx for this branch")
 
-        pipeline = get_corresponding_pipeline(commits_info, version)
+        def get_corresponding_pipeline():
+            for commit_info in commits_info:
+                pipelines = commit_info.get('pipelines') or []
+                it = next((x for x in pipelines if x.get('version') == self.version), None)
+                if it is not None:
+                    return it
+            return None
+        pipeline = get_corresponding_pipeline()
         if not pipeline:
-            raise Exception(f"No pipeline info found for version '{version}'")
+            raise Exception(f"No pipeline info found for version '{self.version}'")
 
         if check_releasable and not pipeline.get('releasable'):
             raise Exception(f"Pipeline '{pipeline}' is not releasable")
 
         stages = pipeline.get('stages') or []
-        latest_releasability_stage = next((stage for stage in reversed(stages) if stage.get('type') == 'releasability'),
-                                          None)
+        latest_releasability_stage = next(
+            (stage for stage in reversed(stages) if stage.get('type') == 'releasability'),
+            None
+        )
+
+        def is_finished(status: str):
+            return status == 'errored' or status == 'failed' or status == 'passed'
         if latest_releasability_stage and is_finished(latest_releasability_stage['status']):
             return latest_releasability_stage
 
