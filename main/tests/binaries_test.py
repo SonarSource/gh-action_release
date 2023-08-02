@@ -3,6 +3,8 @@ import tempfile
 from unittest.mock import patch, MagicMock, call
 from xml.dom.minidom import parse
 
+import pytest
+
 from release.utils.binaries import Binaries
 
 
@@ -35,3 +37,30 @@ def test_update_sonarlint_p2_site(capsys):
         captured = capsys.readouterr().out.split('\n')
         assert captured[0] == 'CloudFront invalidation: URI_123'
         create_invalidation.assert_called()
+
+
+def test_s3_delete_sonarlint_eclipse():
+    client = MagicMock()
+    with patch('boto3.client', return_value=client):
+        resource = MagicMock()
+        with patch('boto3.resource', return_value=resource):
+            bucket = MagicMock()
+            with patch.object(resource, 'Bucket', return_value=bucket):
+                Binaries('bucket').s3_delete('filename', 'whatever', "org.sonarlint.eclipse.site", 'version')
+    client.delete_object.assert_called_once_with(Bucket='bucket', Key='SonarLint-for-Eclipse/releases/filename')
+    bucket.objects.filter.assert_called_once_with(Prefix='SonarLint-for-Eclipse/releases/version/')
+    bucket.objects.filter.return_value.delete.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    'group_id, root_bucket_key',
+    [
+        ('org.whatever', 'Distribution'),
+        ('com.whatever', 'CommercialDistribution')
+    ]
+)
+def test_s3_delete_common_case(group_id, root_bucket_key):
+    client = MagicMock()
+    with patch('boto3.client', return_value=client):
+        Binaries('bucket').s3_delete('filename', group_id, "aid", 'version')
+    client.delete_object.assert_called_once_with(Bucket='bucket', Key=f'{root_bucket_key}/aid/filename')
