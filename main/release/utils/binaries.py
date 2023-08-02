@@ -28,14 +28,9 @@ class Binaries:
             return OSS_REPO
 
     def s3_upload(self, artifact_file, filename, gid, aid, version):
-        # SonarLint Eclipse is uploaded to a special directory
-        if aid == "org.sonarlint.eclipse.site":
-            root_bucket_key = "SonarLint-for-Eclipse/releases"
-        else:
-            binaries_repo = Binaries.get_binaries_repo(gid)
-            root_bucket_key = f"{binaries_repo}/{aid}"
-
+        root_bucket_key = self.get_file_bucket_key(aid, gid)
         file_bucket_key = f"{root_bucket_key}/{filename}"
+
         self.client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
         print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
         for checksum in self.upload_checksums:
@@ -48,6 +43,13 @@ class Binaries:
             self.upload_sonarlint_unzip(version_bucket_key, artifact_file)
             self.upload_sonarlint_p2_site(root_bucket_key, version_bucket_key)
             self.update_sonarlint_p2_site(DISTRIBUTION_ID_PROD, version)
+
+    def get_file_bucket_key(self, aid, gid):
+        # SonarLint Eclipse is uploaded to a special directory
+        if aid == "org.sonarlint.eclipse.site":
+            return "SonarLint-for-Eclipse/releases"
+        binaries_repo = Binaries.get_binaries_repo(gid)
+        return f"{binaries_repo}/{aid}"
 
     def upload_sonarlint_unzip(self, version_bucket_key, zip_file):
         """
@@ -103,13 +105,17 @@ class Binaries:
         invalidation_uri = response['Location']
         print(f'CloudFront invalidation: {invalidation_uri}')
 
-    def s3_delete(self, filename, gid, aid):
-        binaries_repo = Binaries.get_binaries_repo(gid)
-        bucket_key = f"{binaries_repo}/{aid}/{filename}"
+    def s3_delete(self, filename, gid, aid, version):
+        root_bucket_key = self.get_file_bucket_key(aid, gid)
+        bucket_key = f"{root_bucket_key}/{filename}"
 
         self.client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
-        s3 = boto3.resource('s3')
-        bucket = s3.Bucket(self.binaries_bucket_name)
-        objects = bucket.objects.filter(Prefix=f'{bucket_key}.')
-        objects.delete()
-        print(f'deleted {bucket_key}*')
+        print(f'deleted {bucket_key}')
+
+        if aid == "org.sonarlint.eclipse.site":
+            version_bucket_key = f"{root_bucket_key}/{version}/"
+            s3 = boto3.resource('s3')
+            bucket = s3.Bucket(self.binaries_bucket_name)
+            objects = bucket.objects.filter(Prefix=f'{version_bucket_key}')
+            objects.delete()
+            print(f'deleted {version_bucket_key}')

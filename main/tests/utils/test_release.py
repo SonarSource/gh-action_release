@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, call
 
 from _pytest.fixtures import fixture
 
@@ -178,3 +178,11 @@ def test_publish_artifact_upload_file_sonarlint(buildinfo_sonarlint, capsys):
             mock_upload_sonarlint_unzip.assert_called_with('SonarLint-for-Eclipse/releases/7.9.0.63244',
                                                            '/tmp/org.sonarlint.eclipse.site-7.9.0.63244.zip')
             mock_upload_sonarlint_p2_site.assert_called_with('SonarLint-for-Eclipse/releases', 'SonarLint-for-Eclipse/releases/7.9.0.63244')
+
+
+def test_revoke_publish_artifact():
+    artifactory = MagicMock()
+    binaries = MagicMock()
+    publish_artifact(artifactory, binaries, "groupId:artefactId:ext", "version", "repo", True)
+    artifactory.assert_not_called()
+    binaries.s3_delete.assert_called_once_with('artefactId-version.ext', 'groupId', 'artefactId', 'version')
