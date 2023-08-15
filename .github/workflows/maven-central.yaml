@@ -74,3 +74,6 @@ jobs:
           fields: repo,author,eventName
         env:
           SLACK_WEBHOOK_URL: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+      - name: Exit with error
+        if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
+        run: exit 1
