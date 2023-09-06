@@ -23,7 +23,7 @@ jobs:
           secrets: |
             development/kv/data/burgr github_username | burgrx_username;
             development/kv/data/burgr github_password | burgrx_password;
-      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3.0.2
+      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
         with:
           # This will be called from other repositories, so we need to ensure we
           # are cloning this one instead of the one of the caller.
