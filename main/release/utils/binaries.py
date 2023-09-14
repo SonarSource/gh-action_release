@@ -11,6 +11,7 @@ from xml.dom.minidom import parseString
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
 DISTRIBUTION_ID_PROD = 'E2WHX4O0Y6Z6C6'
+SONARLINT_AID = "org.sonarlint.eclipse.site"
 
 
 class Binaries:
@@ -38,7 +39,7 @@ class Binaries:
             print(f'uploaded {artifact_file}.{checksum} to s3://{self.binaries_bucket_name}/{file_bucket_key}.{checksum}')
 
         # SonarLint
-        if aid == "org.sonarlint.eclipse.site":
+        if aid == SONARLINT_AID:
             version_bucket_key = f"{root_bucket_key}/{version}"
             self.upload_sonarlint_unzip(version_bucket_key, artifact_file)
             self.upload_sonarlint_p2_site(root_bucket_key, version_bucket_key)
@@ -46,7 +47,7 @@ class Binaries:
 
     def get_file_bucket_key(self, aid, gid):
         # SonarLint Eclipse is uploaded to a special directory
-        if aid == "org.sonarlint.eclipse.site":
+        if aid == SONARLINT_AID:
             return "SonarLint-for-Eclipse/releases"
         binaries_repo = Binaries.get_binaries_repo(gid)
         return f"{binaries_repo}/{aid}"
@@ -112,7 +113,7 @@ class Binaries:
         self.client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
         print(f'deleted {bucket_key}')
 
-        if aid == "org.sonarlint.eclipse.site":
+        if aid == SONARLINT_AID:
             version_bucket_key = f"{root_bucket_key}/{version}/"
             s3 = boto3.resource('s3')
             bucket = s3.Bucket(self.binaries_bucket_name)
