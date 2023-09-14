@@ -6,8 +6,9 @@ RUN pip install pipenv
 RUN pipenv requirements > requirements.txt
 RUN pip install --target=/app -r requirements.txt
 
-FROM gcr.io/distroless/python3-debian10
+FROM python:3.10-slim
 COPY --from=build-env /app /app
 
 ENV PYTHONPATH=/app
+ENTRYPOINT ["/usr/local/bin/python"]
 CMD ["/app/release/main.py"]
