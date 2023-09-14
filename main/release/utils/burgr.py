@@ -9,7 +9,10 @@ from requests.models import Response
 from release.steps.ReleaseRequest import ReleaseRequest
 
 
-class ReleasabilityFailure(Exception):
+class BurgrException(Exception):
+    pass
+
+class ReleasabilityFailure(BurgrException):
     def __init__(self, releasability):
         def format_failed_releasability(releasability):
             metadata = json.loads(releasability['metadata'])
@@ -78,7 +81,7 @@ class Burgr:
             print(f"Releasability checks started successfully for {self.version} {self.release_request.branch}")
         else:
             print(f"Releasability checks failed to start: {response} '{message}'")
-            raise Exception(f"Releasability checks failed to start: '{message}'")
+            raise BurgrException(f"Releasability checks failed to start: '{message}'")
 
     @Dryable(logging_msg='{function}()')
     def get_releasability_status(self,
@@ -117,7 +120,7 @@ class Burgr:
             return releasability.get('metadata')
         except TimeoutException:
             print("Releasability timed out")
-            raise Exception("Releasability timed out")
+            raise BurgrException("Releasability timed out")
         except Exception as e:
             print(f"Cannot complete releasability checks:", e)
             raise e
@@ -126,12 +129,12 @@ class Burgr:
         print(f"Polling releasability status... {response.url}")
 
         if response.status_code != 200:
-            raise Exception(f"Error occurred while trying to retrieve current releasability status: "
+            raise BurgrException(f"Error occurred while trying to retrieve current releasability status: "
                             f"({response.status_code}) {response.text}")
 
         commits_info = response.json()
         if len(commits_info) == 0:
-            raise Exception(f"No commit information found in burgrx for this branch")
+            raise BurgrException("No commit information found in burgrx for this branch")
 
         def get_corresponding_pipeline():
             for commit_info in commits_info:
@@ -142,10 +145,10 @@ class Burgr:
             return None
         pipeline = get_corresponding_pipeline()
         if not pipeline:
-            raise Exception(f"No pipeline info found for version '{self.version}'")
+            raise BurgrException(f"No pipeline info found for version '{self.version}'")
 
         if check_releasable and not pipeline.get('releasable'):
-            raise Exception(f"Pipeline '{pipeline}' is not releasable")
+            raise BurgrException(f"Pipeline '{pipeline}' is not releasable")
 
         stages = pipeline.get('stages') or []
         latest_releasability_stage = next(

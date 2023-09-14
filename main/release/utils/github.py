@@ -89,7 +89,7 @@ class GitHub:
     def is_publish_to_binaries():
         return os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true"
 
-    def _get_release(self) -> Union[dict, None]:
+    def _get_release(self) -> dict | None:
         return self.event.get("release", None)
 
     def _get_repository(self) -> {}:

@@ -5,7 +5,7 @@ from xml.dom.minidom import parse
 
 import pytest
 
-from release.utils.binaries import Binaries
+from release.utils.binaries import Binaries, SONARLINT_AID
 
 
 def test_upload_sonarlint_p2_site(capsys):
@@ -46,7 +46,7 @@ def test_s3_delete_sonarlint_eclipse():
         with patch('boto3.resource', return_value=resource):
             bucket = MagicMock()
             with patch.object(resource, 'Bucket', return_value=bucket):
-                Binaries('bucket').s3_delete('filename', 'whatever', "org.sonarlint.eclipse.site", 'version')
+                Binaries('bucket').s3_delete('filename', 'whatever', SONARLINT_AID, 'version')
     client.delete_object.assert_called_once_with(Bucket='bucket', Key='SonarLint-for-Eclipse/releases/filename')
     bucket.objects.filter.assert_called_once_with(Prefix='SonarLint-for-Eclipse/releases/version/')
     bucket.objects.filter.return_value.delete.assert_called_once()
