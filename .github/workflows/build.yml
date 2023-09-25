@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Vault Secrets
         id: secrets
-        uses: hashicorp/vault-action@7d98524254c38dc6892804f991526ff30905f643 # tag=v2.4.2
+        uses: hashicorp/vault-action@cb841f2c86fb6d07cff94fda240828c1abc5ba43 # v2.7.3
         with:
           url: ${{ env.VAULT_ADDR }}
           method: jwt
@@ -25,11 +25,11 @@ jobs:
           role: github-sonarsource-gh-action_release
           secrets: |
             development/kv/data/sonarcloud token | SONAR_TOKEN;
-      - uses: actions/checkout@3df4ab11eba7bda6032a0b82a6bb43b11571feac # v4.0.0
+      - uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up Python
-        uses: actions/setup-python@d09bd5e6005b175076f227b13d9730d56e9dcfcb # tag=v4.0.0
+        uses: actions/setup-python@61a6322f88396a6271a6ee3565807d608ecaddd1 # v4.7.0
         with:
           python-version: "3.10"
       - name: Build
