@@ -1,3 +1,4 @@
+---
 name: 'Download build'
 description: 'Download all artifacts and checksums of a build'
 inputs:
@@ -11,14 +12,33 @@ inputs:
   build-number:
     description: 'Build number'
     required: true
+  exclusions:
+    description: 'Exclude pattern from downloaded files'
+    required: false
+    default: ''
 runs:
   using: 'composite'
   steps:
     - name: Download artifacts
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
-      run: jfrog rt download --fail-no-op --build "${{ github.event.repository.name }}/${{ inputs.build-number }}" ${{ inputs.remote-repo }}/
+      env:
+        JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
+        JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
+        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
+      run: jfrog rt download
+        --fail-no-op
+        --build "${JFROG_DL_BUILD}"
+        "${JFROG_DL_EXCLUSIONS/?*/--exclusions="${JFROG_DL_EXCLUSIONS}"}"
+        "${JFROG_DL_REMOTE_REPO}/"
     - name: Download checksums
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
-      run: find . -type f -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \) -exec jfrog rt curl "${{ inputs.remote-repo }}/{{}}.{md5,sha1,sha256}" --output "#1.#2" \;
+      env:
+        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
+      run: find .
+        -type f
+        -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \)
+        -exec jfrog rt curl
+          "${JFROG_DL_REMOTE_REPO}/{{}}.{md5,sha1,sha256}"
+          --output "#1.#2" \;

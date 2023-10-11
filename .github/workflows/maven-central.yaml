@@ -1,7 +1,7 @@
 # yamllint disable rule:line-length
 ---
 name: maven Central
-on:
+"on":
   workflow_call:
     inputs:
       vaultAddr:
@@ -13,6 +13,11 @@ on:
         type: string
         description: artifactory reader suffix specified in vault repo config
         default: private-reader
+        required: false
+      downloadExclusions:
+        type: string
+        description: exclusions for the jfrog build download
+        default: ""
         required: false
 
 jobs:
@@ -57,6 +62,7 @@ jobs:
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
+          exclusions: ${{ inputs.downloadExclusions }}
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
