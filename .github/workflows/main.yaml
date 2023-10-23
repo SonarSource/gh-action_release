@@ -39,6 +39,11 @@ on:
         description: Enable synchronization to Maven Central
         default: false
         required: false
+      mavenCentralSyncExclusions:
+        type: string
+        description: exclusions for the jfrog build download
+        default: ""
+        required: false
 
 jobs:
   release:
@@ -104,3 +109,4 @@ jobs:
     with:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
+      downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
