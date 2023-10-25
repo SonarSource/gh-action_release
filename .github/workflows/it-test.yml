@@ -27,3 +27,13 @@ jobs:
             dry_run: true
             publish_to_binaries: true
             slack_channel: build
+
+  release-reusable_workflow:
+    name: Release (reusable-workflow)
+    uses: ./.github/workflows/main.yaml
+    with:
+      dryRun: true
+      publishToBinaries: false
+      binariesS3Bucket: test-bucket
+      slackChannel: ""
+      mavenCentralSync: false
