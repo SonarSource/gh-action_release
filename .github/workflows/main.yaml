@@ -76,7 +76,7 @@ jobs:
             development/aws/sts/downloads security_token | binaries_aws_security_token;
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@4a1fa0da71c305600d72d3dba5e2ef840b9dde77 # 5.0.14
+        uses: SonarSource/gh-action_release/main@c08ed43ac288fd9850a07521e63157b53cad9296 # 5.1.1
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
@@ -105,7 +105,7 @@ jobs:
     name: Maven Central
     needs: release
     if: ${{ inputs.mavenCentralSync && inputs.dryRun != true }}
-    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@4a1fa0da71c305600d72d3dba5e2ef840b9dde77 # 5.0.14
+    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@c08ed43ac288fd9850a07521e63157b53cad9296 # 5.1.1
     with:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
