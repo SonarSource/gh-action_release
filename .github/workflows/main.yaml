@@ -105,7 +105,7 @@ jobs:
     name: Maven Central
     needs: release
     if: ${{ inputs.mavenCentralSync && inputs.dryRun != true }}
-    uses: SonarSource/gh-action_release/.github/workflows/maven-central.yaml@c08ed43ac288fd9850a07521e63157b53cad9296 # 5.1.1
+    uses: ./.github/workflows/maven-central.yaml
     with:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
