@@ -93,7 +93,7 @@ jobs:
             } >> "${GITHUB_OUTPUT}"
             exit 0
           fi
-          echo "${ACTION_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "=" + (.value | @sh))' >> "${GITHUB_OUTPUT}"
+          echo "${ACTION_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
       - name: Release
         id: release
         uses: SonarSource/gh-action_release/main@c08ed43ac288fd9850a07521e63157b53cad9296 # 5.1.1
