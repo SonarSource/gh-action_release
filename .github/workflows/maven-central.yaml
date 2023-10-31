@@ -58,7 +58,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@c08ed43ac288fd9850a07521e63157b53cad9296 # 5.1.1
+        uses: SonarSource/gh-action_release/download-build@188e9e3a66205559a26593bfbdbd7a743f9071ea
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
