@@ -17,7 +17,7 @@ name: maven Central
       downloadExclusions:
         type: string
         description: exclusions for the jfrog build download
-        default: ""
+        default: "-"
         required: false
 
 jobs:
