@@ -5,8 +5,11 @@
   <properties size="1">
     <property name="p2.timestamp" value="NOW"/>
   </properties>
-  <children size="2">
+  <children size="3">
+    <!-- last version compatible with java8 -->
     <child location="https://binaries.sonarsource.com/SonarLint-for-Eclipse/releases/6.2.0.37299/"/>
+    <!-- last version compatible with java11 -->
+    <child location="https://binaries.sonarsource.com/SonarLint-for-Eclipse/releases/8.1.0.80220/"/>
     <child location="https://binaries.sonarsource.com/SonarLint-for-Eclipse/releases/RELEASE"/>
   </children>
 </repository>
