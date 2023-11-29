@@ -25,10 +25,10 @@ jobs:
             development/kv/data/burgr github_password | burgrx_password;
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
-          # This will be called from other repositories, so we need to ensure we
-          # are cloning this one instead of the one of the caller.
+          # This will be called from other repositories, so we need to ensure we are cloning this one instead of the one of the caller.
           repository: SonarSource/gh-action_release
           fetch-depth: 0
+          ref: $GITHUB_WORKFLOW_SHA
       - name: Set up Python
         uses: actions/setup-python@65d7f2d534ac1bc67fcd62888c5f4f3d2cb2b236 # v4.7.1
         with:

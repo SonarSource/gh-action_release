@@ -94,9 +94,16 @@ jobs:
             exit 0
           fi
           echo "${ACTION_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          # This will be called from other repositories, so we need to ensure we are cloning this one instead of the one of the caller.
+          repository: SonarSource/gh-action_release
+          fetch-depth: 0
+          ref: $GITHUB_WORKFLOW_SHA
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@d78b7975dff4a9e4673579b5d5563cb6ac0c2184 # 5.1.2
+#        uses: SonarSource/gh-action_release/main@d78b7975dff4a9e4673579b5d5563cb6ac0c2184 # 5.1.2
+        uses: ./main
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}

@@ -57,8 +57,15 @@ jobs:
         uses: SonarSource/jfrog-setup-wrapper@92f2e341560f69ccf1763e8efb73f69405545491  # tag=3.2.0-2
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          # This will be called from other repositories, so we need to ensure we are cloning this one instead of the one of the caller.
+          repository: SonarSource/gh-action_release
+          fetch-depth: 0
+          ref: $GITHUB_WORKFLOW_SHA
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@696216b8ec3a2d5248dc2edf6250bc1509708422
+#        uses: SonarSource/gh-action_release/download-build@696216b8ec3a2d5248dc2edf6250bc1509708422
+        uses: ./download-build
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -66,7 +73,8 @@ jobs:
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@d78b7975dff4a9e4673579b5d5563cb6ac0c2184 # 5.1.2
+#        uses: SonarSource/gh-action_release/maven-central-sync@d78b7975dff4a9e4673579b5d5563cb6ac0c2184 # 5.1.2
+        uses: ./maven-central-sync
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:
