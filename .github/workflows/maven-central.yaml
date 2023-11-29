@@ -62,7 +62,7 @@ jobs:
           # This will be called from other repositories, so we need to ensure we are cloning this one instead of the one of the caller.
           repository: SonarSource/gh-action_release
           fetch-depth: 0
-          ref: $GITHUB_WORKFLOW_SHA
+          ref: ${{ github.workflow_sha }}
       - name: Download Artifacts
 #        uses: SonarSource/gh-action_release/download-build@696216b8ec3a2d5248dc2edf6250bc1509708422
         uses: ./download-build

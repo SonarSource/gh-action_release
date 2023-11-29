@@ -21,7 +21,7 @@ jobs:
           repository: SonarSource/gh-action_release
           fetch-depth: 0
 #          GITHUB_WORKFLOW_REF
-          ref: $GITHUB_WORKFLOW_SHA
+          ref: ${{ github.workflow_sha }}
       - uses: ./main
         env:
           BURGRX_USER: "bob user"
