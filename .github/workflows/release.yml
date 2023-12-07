@@ -1,0 +1,26 @@
+---
+name: Release
+run-name: Release ${{ github.event.release.tag_name }}
+"on":
+  release:
+    types:
+      - published
+      - prereleased
+
+jobs:
+  update-release-branch:
+    name: Update release branch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+        with:
+          ref: ${{ github.event.release.target_commitish }}
+      - name: update release branch
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PRE_RELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          GIT_OPTS=$([[ "${PRE_RELEASE}" == "true" ]] && echo "--dry-run")
+          git push "${GIT_OPTS}" origin HEAD:"refs/heads/v${TAG%%.*}"
