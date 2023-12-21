@@ -66,7 +66,7 @@ jobs:
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@58a637bfcbf268064ff8bb619a2702a8b6fcaee4 # 5.1.5
+        uses: SonarSource/gh-action_release/maven-central-sync@8a2bb1c4078a722583be6358c904ee2d4c2ca93d # 5.1.3
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:
