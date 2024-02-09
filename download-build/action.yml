@@ -16,6 +16,10 @@ inputs:
     description: 'Exclude pattern from downloaded files'
     required: false
     default: '-'
+  flat-download:
+    description: 'Set to true if you do not wish to have the Artifactory respository path structure created locally for your downloaded files'
+    required: false
+    default: 'false'
 runs:
   using: 'composite'
   steps:
@@ -26,10 +30,12 @@ runs:
         JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
+        JFROG_DL_OPTIONS: $([[ "${{ inputs.flat-download }}" == "true" ]] && echo "--flat" || echo "")
       run: jfrog rt download
         --fail-no-op
         --build "${JFROG_DL_BUILD}"
-        --exclusions "${JFROG_DL_EXCLUSIONS}"
+        --exclusions "${JFROG_DL_EXCLUSIONS}" \
+        "${JFROG_DL_OPTIONS}"
         "${JFROG_DL_REMOTE_REPO}/"
     - name: Download checksums
       shell: bash
