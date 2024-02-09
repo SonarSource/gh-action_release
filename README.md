@@ -29,6 +29,8 @@ jobs:
 
 Available options:
 - publishToBinaries (default: false): enable the publication to binaries
+- publishJavadoc (default: false): enable the publication of the javadoc to https://javadocs.sonarsource.org/
+- javadocDestinationDirectory (required when publishJavadoc is true): define the subdir to use in https://javadocs.sonarsource.org/
 - binariesS3Bucket (default: downloads-cdn-eu-central-1-prod): target bucket
 - mavenCentralSync (default: false): enable synchronization to Maven Central, **for OSS projects only**
 - slackChannel (default: build): notification Slack channel
