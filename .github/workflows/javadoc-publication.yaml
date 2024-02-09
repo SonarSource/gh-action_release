@@ -1,0 +1,104 @@
+# yamllint disable rule:line-length
+---
+name: Javadoc publication
+"on":
+  workflow_call:
+    inputs:
+      dryRun:
+        type: boolean
+        description: Flag to enable the dry-run execution
+        default: false
+        required: false
+      javadocDestinationDirectory:
+        type: string
+        description: Name of the directory to use at https://javadocs.sonarsource.org/
+        required: true
+      vaultAddr:
+        type: string
+        description: Custom vault installation
+        default: https://vault.sonar.build:8200
+        required: false
+      artifactoryRoleSuffix:
+        type: string
+        description: artifactory reader suffix specified in vault repo config
+        default: private-reader
+        required: false
+
+jobs:
+  javadoc-publication:
+    name: Publish javadoc
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # to authenticate via OIDC
+      contents: read  # to revert a github release
+    timeout-minutes: 5
+    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+    outputs:
+      javadoc-publication: ${{ steps.javadoc-publication-output.outcome }}
+    steps:
+      - name: Create local repository directory
+        id: local_repo
+        run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
+      - name: Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@f148a1075c1eff1db5ab474f96c206c5587172d3  # tag=2.5.0-3
+        with:
+          url: ${{ inputs.vaultAddr }}
+          secrets:
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token  | artifactory_access_token;
+            development/kv/data/slack webhook | slack_webhook;
+            development/aws/sts/javadocs access_key | javadoc_aws_access_key_id;
+            development/aws/sts/javadocs secret_key | javadoc_aws_secret_access_key;
+            development/aws/sts/javadocs security_token | javadoc_aws_security_token;
+      - name: Setup JFrog
+        uses: SonarSource/jfrog-setup-wrapper@92f2e341560f69ccf1763e8efb73f69405545491  # tag=3.2.0-2
+        with:
+          jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+      - name: Download Artifacts
+        uses: SonarSource/gh-action_release/download-build@feature/svermeille/BUILD-4036-Automate-javadoc-deployment
+        with:
+          flat-download: true
+          build-number: ${{ steps.get_version.outputs.build }}
+          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
+      - name: Keep only javadoc.jar
+        run: find ${{ steps.local_repo.outputs.dir }} -type f ! -name "*-javadoc.jar" -delete
+      - name: List artifacts
+        run: ls ${{ steps.local_repo.outputs.dir }}
+      - name: Create javadoc dir
+        run: mkdir -p ${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}
+      - name: Extract javadoc.jar
+        run: cd ${{ steps.local_repo.outputs.dir }} && mv *javadoc.jar javadoc.zip && unzip javadoc.zip -d javadoc/${{ github.event.release.tag_name }}
+      - name: List javadoc files
+        run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}"
+      - name: Publish javadoc files to S3
+        uses: SonarSource/gh-action_release/aws-s3@feature/svermeille/BUILD-4036-Automate-javadoc-deployment
+        with:
+          command: cp
+          flags: --recursive
+          source: ${{ steps.local_repo.outputs.dir }}/javadoc
+          destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory }}
+          aws_access_key_id: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_access_key_id }}
+          aws_secret_access_key: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_secret_access_key }}
+          aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
+          aws_region: eu-central-1
+      - name: Delete dir named latest in S3
+        uses: SonarSource/gh-action_release/aws-s3@feature/svermeille/BUILD-4036-Automate-javadoc-deployment
+        with:
+          command: rm
+          destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory }}/latest
+          aws_access_key_id: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_access_key_id }}
+          aws_secret_access_key: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_secret_access_key }}
+          aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
+          aws_region: eu-central-1
+        continue-on-error: true # the first time a project publish javadoc, there is no latest dir available
+      - name: Upload to dir named latest in S3
+        uses: SonarSource/gh-action_release/aws-s3@feature/svermeille/BUILD-4036-Automate-javadoc-deployment
+        with:
+          command: cp
+          flags: --recursive
+          source: ${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}/
+          destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory }}/latest
+          aws_access_key_id: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_access_key_id }}
+          aws_secret_access_key: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_secret_access_key }}
+          aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
+          aws_region: eu-central-1
