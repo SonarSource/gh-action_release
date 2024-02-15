@@ -11,8 +11,8 @@ name: Javadoc publication
         required: false
       javadocDestinationDirectory:
         type: string
-        description: Name of the directory to use at https://javadocs.sonarsource.org/
-        required: true
+        description: Name of the directory to use at https://javadocs.sonarsource.org/ (if not provided, use repository name)
+        required: false
       vaultAddr:
         type: string
         description: Custom vault installation
@@ -76,7 +76,7 @@ jobs:
           command: cp
           flags: --recursive
           source: ${{ steps.local_repo.outputs.dir }}/javadoc
-          destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory }}
+          destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory || github.event.repository.name }}
           aws_access_key_id: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_access_key_id }}
           aws_secret_access_key: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_secret_access_key }}
           aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
