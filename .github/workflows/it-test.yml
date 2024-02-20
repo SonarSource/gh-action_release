@@ -37,3 +37,4 @@ jobs:
       binariesS3Bucket: test-bucket
       slackChannel: ""
       mavenCentralSync: false
+      publishJavadoc: false

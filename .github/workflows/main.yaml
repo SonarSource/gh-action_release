@@ -14,6 +14,15 @@ on:
         description: Flag to enable the publication to binaries
         default: false
         required: false
+      publishJavadoc:
+        type: boolean
+        description: Flag to enable the javadoc publication
+        default: false
+        required: false
+      javadocDestinationDirectory:
+        type: string
+        description: Name of the directory to use at https://javadocs.sonarsource.org/ when publishJavadoc is set to true
+        required: false
       binariesS3Bucket:
         type: string
         description: Target bucket
@@ -130,3 +139,14 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
+
+  javadocPublication:
+    name: Javadoc publication
+    needs: release
+    if: ${{ inputs.publishJavadoc && inputs.dryRun != true }}
+    uses: ./.github/workflows/javadoc-publication.yaml
+    with:
+      dryRun: ${{ inputs.dryRun }}
+      vaultAddr: ${{ inputs.vaultAddr }}
+      artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
+      javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
