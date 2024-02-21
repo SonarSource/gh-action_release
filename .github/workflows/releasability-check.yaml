@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Vault Secrets
         id: secrets
-        uses: SonarSource/vault-action-wrapper@f148a1075c1eff1db5ab474f96c206c5587172d3  # tag=2.5.0-3
+        uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
         with:
           secrets: |
             development/kv/data/burgr github_username | burgrx_username;
