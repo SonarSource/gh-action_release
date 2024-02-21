@@ -36,6 +36,14 @@ jobs:
     outputs:
       javadoc-publication: ${{ steps.javadoc-publication-output.outcome }}
     steps:
+      - name: Get the version
+        id: get_version
+        run: |
+          IFS=. read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
+          echo "build=${build}" >> $GITHUB_OUTPUT
+          echo "patch=${patch}" >> $GITHUB_OUTPUT
+          echo "minor=${minor}" >> $GITHUB_OUTPUT
+          echo "major=${major}" >> $GITHUB_OUTPUT
       - name: Create local repository directory
         id: local_repo
         run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
