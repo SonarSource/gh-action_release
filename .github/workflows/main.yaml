@@ -105,7 +105,7 @@ jobs:
           echo "${ACTION_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@190f4e73401c364ed0f7210c4f593dec7d2c4e95
+        uses: SonarSource/gh-action_release/main@7faa6f9f1b8593c7e1a116155646523a7df554c6
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
