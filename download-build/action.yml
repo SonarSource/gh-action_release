@@ -36,7 +36,7 @@ runs:
         --build "${JFROG_DL_BUILD}"
         --exclusions "${JFROG_DL_EXCLUSIONS}"
         "${JFROG_DL_OPTIONS}"
-        "${JFROG_DL_REMOTE_REPO}/"
+        "${JFROG_DL_REMOTE_REPO}"
     - name: Download checksums
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
