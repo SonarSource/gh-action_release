@@ -93,7 +93,7 @@ jobs:
         uses: SonarSource/gh-action_release/aws-s3@0ec30fe51c5d369993ce97bfc56e1029289c779c
         with:
           command: rm
-          destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory }}/latest
+          source: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory }}/latest
           aws_access_key_id: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_access_key_id }}
           aws_secret_access_key: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_secret_access_key }}
           aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
