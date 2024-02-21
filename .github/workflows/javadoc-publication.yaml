@@ -55,7 +55,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@4e4f0c1c813b5fee2db2a21ce2c13f7e61ab28ab
+        uses: SonarSource/gh-action_release/download-build@190f4e73401c364ed0f7210c4f593dec7d2c4e95
         with:
           flat-download: true
           build-number: ${{ steps.get_version.outputs.build }}
@@ -71,7 +71,7 @@ jobs:
       - name: List javadoc files
         run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
-        uses: SonarSource/gh-action_release/aws-s3@4e4f0c1c813b5fee2db2a21ce2c13f7e61ab28ab
+        uses: SonarSource/gh-action_release/aws-s3@190f4e73401c364ed0f7210c4f593dec7d2c4e95
         with:
           command: cp
           flags: --recursive
@@ -82,7 +82,7 @@ jobs:
           aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
           aws_region: eu-central-1
       - name: Delete dir named latest in S3
-        uses: SonarSource/gh-action_release/aws-s3@4e4f0c1c813b5fee2db2a21ce2c13f7e61ab28ab
+        uses: SonarSource/gh-action_release/aws-s3@190f4e73401c364ed0f7210c4f593dec7d2c4e95
         with:
           command: rm
           destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory }}/latest
@@ -92,7 +92,7 @@ jobs:
           aws_region: eu-central-1
         continue-on-error: true # the first time a project publish javadoc, there is no latest dir available
       - name: Upload to dir named latest in S3
-        uses: SonarSource/gh-action_release/aws-s3@4e4f0c1c813b5fee2db2a21ce2c13f7e61ab28ab
+        uses: SonarSource/gh-action_release/aws-s3@190f4e73401c364ed0f7210c4f593dec7d2c4e95
         with:
           command: cp
           flags: --recursive
