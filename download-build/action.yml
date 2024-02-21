@@ -34,7 +34,7 @@ runs:
       run: jfrog rt download
         --fail-no-op
         --build "${JFROG_DL_BUILD}"
-        --exclusions "${JFROG_DL_EXCLUSIONS}" \
+        --exclusions "${JFROG_DL_EXCLUSIONS}"
         "${JFROG_DL_OPTIONS}"
         "${JFROG_DL_REMOTE_REPO}/"
     - name: Download checksums
