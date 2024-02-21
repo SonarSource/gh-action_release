@@ -30,7 +30,7 @@ runs:
         JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
-        JFROG_DL_OPTIONS: ${{ inputs.flat-download == "true" && "--flat" || "" }}
+        JFROG_DL_OPTIONS: ${{ inputs.flat-download == 'true' && '--flat' || '' }}
       run: jfrog rt download
         --fail-no-op
         --build "${JFROG_DL_BUILD}"
