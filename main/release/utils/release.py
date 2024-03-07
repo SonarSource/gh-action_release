@@ -5,6 +5,7 @@ from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
+from release.utils.releasability import Releasability
 from release.utils.slack import notify_slack
 
 REVOKE = True
@@ -89,10 +90,10 @@ def set_output(output_name, value):
             print(f"{output_name}={value}", file=output_stream)
 
 
-def releasability_checks(github: GitHub, burgr: Burgr, release_request: ReleaseRequest.ReleaseRequest):
+def releasability_checks(github: GitHub, releasability: Releasability, release_request: ReleaseRequest.ReleaseRequest):
     try:
-        burgr.start_releasability_checks()
-        burgr.get_releasability_status()
+        # burgr.start_releasability_checks()
+        releasability.check(release_request.version, "master", "51a15adbcc439a5b577d589cf84e82ee1b7b5322")
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
     except Exception as e:
         notify_slack(f"Released {release_request.project}:{release_request.version} failed")

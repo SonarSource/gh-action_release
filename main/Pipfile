@@ -12,13 +12,11 @@ requests = "*"
 polling = "*"
 slack_sdk = "*"
 boto3 = "*"
-dryrun = "*"
 dryable = "*"
 parameterized = "*"
-parametrized = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "^3.10"
 
 [scripts]
 releasability_check = "python release/releasability_check.py"

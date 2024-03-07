@@ -65,12 +65,12 @@ class GitHub:
         """Provide a dummy release request object"""
         repo = self._get_repository()["full_name"]
         organisation, project = repo.split("/")
-        version = '?.?.?.????'
+        version = '12.0.2.3428'
         branch_name = 'master'
         if re.compile("^([a-f0-9]{40})$").match(branch_name):
             branch_name = 'master'
         return ReleaseRequest(organisation, project,
-                              version, "????",
+                              version, 3428,
                               branch_name, os.environ.get('GITHUB_SHA'))
 
     @Dryable(logging_msg='{function}()')
