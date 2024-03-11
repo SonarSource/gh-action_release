@@ -8,7 +8,9 @@ from release.vars import burgrx_url, burgrx_user, burgrx_password
 def do_releasability_checks():
     github = GitHub()
     release_request = github.get_release_request()
-    releasability_checks(github, Burgr(burgrx_url, burgrx_user, burgrx_password, release_request), Releasability(release_request), release_request)
+    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request)
+    releasability = Releasability(release_request)
+    releasability_checks(github, burgr, releasability, release_request)
 
 
 if __name__ == "__main__":
