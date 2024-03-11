@@ -12,6 +12,7 @@ from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
+from release.utils.releasability import Releasability
 
 
 def test_set_output():
@@ -31,7 +32,7 @@ class MainTest(unittest.TestCase):
     @patch.object(Burgr, 'start_releasability_checks', side_effect=Exception('exception'))
     @patch('release.main.notify_slack')
     @patch.object(GitHub, 'revoke_release')
-    def test_releasability_failure(self,
+    def test_releasability_failure_burgr(self,
                                    github_revoke_release,
                                    notify_slack,
                                    check_params,
@@ -46,6 +47,34 @@ class MainTest(unittest.TestCase):
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
                     github_release_request.assert_called_once()
+                    burgr_start_releasability_checks.assert_called_once()
+                    notify_slack.assert_called_once_with('"Released project:version failed')
+                    github_revoke_release.assert_called_once()
+
+    @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release'}, clear=True)
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Burgr, 'start_releasability_checks')
+    @patch.object(Releasability, 'start_releasability_checks', side_effect=Exception('exception'))
+    @patch('release.main.notify_slack')
+    @patch.object(GitHub, 'revoke_release')
+    def test_releasability_failure(self,
+                                   github_revoke_release,
+                                   notify_slack,
+                                   check_params,
+                                   burgr_start_releasability_checks,
+                                   relesability_start_releasability_checks,
+                                   github_event):
+        with patch('release.utils.github.open', mock_open()) as open_mock:
+            release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+            with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
+                with pytest.raises(Exception, match='exception'):
+                    main()
+                    check_params.assert_called_once()
+                    open_mock.assert_called_once()
+                    github_event.assert_called_once()
+                    github_release_request.assert_called_once()
+                    relesability_start_releasability_checks.assert_called_once()
                     burgr_start_releasability_checks.assert_called_once()
                     notify_slack.assert_called_once_with('"Released project:version failed')
                     github_revoke_release.assert_called_once()
@@ -92,6 +121,7 @@ class MainTest(unittest.TestCase):
         'ARTIFACTORY_ACCESS_TOKEN': 'mockAccessTokenValue',
     }, clear=True)
     @patch('release.utils.github.json.load')
+    @patch.object(Releasability, 'start_releasability_checks')
     @patch.object(Burgr, 'start_releasability_checks')
     @patch.object(Burgr, 'get_releasability_status')
     @patch.object(Artifactory, 'receive_build_info')
@@ -111,6 +141,7 @@ class MainTest(unittest.TestCase):
                              artifactory_receive_build_info,
                              burgr_start_releasability_checks,
                              burgr_get_releasability_status,
+                             releasability_start_releasability_checks,
                              github_event):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
@@ -121,6 +152,7 @@ class MainTest(unittest.TestCase):
                 github_event.assert_called_once()
                 github_release_request.assert_called_once()
                 burgr_start_releasability_checks.assert_called_once()
+                releasability_start_releasability_checks.assert_called_once()
                 burgr_get_releasability_status.assert_called_once()
                 artifactory_receive_build_info.assert_called_once_with(release_request)
                 artifactory_promote.assert_called_once_with(release_request, ANY)
