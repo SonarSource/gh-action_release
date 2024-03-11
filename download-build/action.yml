@@ -2,6 +2,11 @@
 name: 'Download build'
 description: 'Download all artifacts and checksums of a build'
 inputs:
+  dryRun:
+    type: boolean
+    description: Flag to enable the dry-run execution
+    default: false
+    required: false
   local-repo-dir:
     description: 'Empty directory to store the artifacts'
     required: true
@@ -17,27 +22,48 @@ inputs:
     required: false
     default: '-'
   flat-download:
-    description: 'Set to true if you do not wish to have the Artifactory respository path structure created locally for your downloaded files'
+    description: 'Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files'
     required: false
     default: 'false'
+outputs:
+  jfrog_dl_options:
+    description: Indicate which extra command is passed to jfrog for download
+    value: ${{ steps.define-download-options.outputs.jfrog_dl_options }}
 runs:
   using: 'composite'
   steps:
+    - name: Define download options
+      id: define-download-options
+      shell: bash
+      run: |
+        ARGS="--exclusions ${{ inputs.exclusions }}"
+        
+        if [ ${{ inputs.dryRun }} = 'true' ]; then
+            ARGS="$ARGS --dry-run=true"
+        fi
+        
+        if [ ${{ inputs.flat-download }} = 'true' ]; then
+            ARGS="$ARGS --flat"
+        fi
+        echo "jfrog_dl_options=$(echo $ARGS)" >> "$GITHUB_OUTPUT"
+    - name: Print download options
+      run: |
+        echo "JFrog download options: ${{ steps.define-download-options.outputs.jfrog_dl_options }}"
+      shell: bash
     - name: Download artifacts
+      if: ${{ inputs.dryRun != 'true' }}
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
       env:
         JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
-        JFROG_DL_OPTIONS: ${{ inputs.flat-download == 'true' && '--flat' || '' }}
       run: jfrog rt download
-        --fail-no-op
+        --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }}
         --build "${JFROG_DL_BUILD}"
-        --exclusions "${JFROG_DL_EXCLUSIONS}"
-        "${JFROG_DL_OPTIONS}"
         "${JFROG_DL_REMOTE_REPO}"
     - name: Download checksums
+      if: ${{ inputs.dryRun != 'true' }}
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
       env:

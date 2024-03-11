@@ -1,0 +1,76 @@
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  it-tests-default-values:
+    name: IT Test - use default inputs values should generate expected output"
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Setup JFrog
+        uses: SonarSource/jfrog-setup-wrapper@5712613f9a6c0379b2f46b936b77f16fc0a56d79  # tag=3.2.2
+        with:
+          artifactoryRoleSuffix: "private-reader"
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1 (Necessary to access local action)
+      - uses: ./download-build/
+        name: Given download-build is used with default values and dryRun enabled
+        id: test-data
+        with:
+          dryRun: true
+          build-number: '5432'
+          local-repo-dir: '.'
+          # use default values for the following:
+          #flat-download:
+          #exclusions:
+      - uses: nick-fields/assert-action@aa0067e01f0f6545c31755d6ca128c5a3a14f6bf # v2.0.0
+        name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
+        with:
+          expected: '--exclusions - --dry-run=true'
+          actual: ${{ steps.test-data.outputs.jfrog_dl_options }}
+          comparison: exact
+
+  it-tests-use-flat-download-true:
+    name: IT Test - use flat-download=true should generate expected output"
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - name: Setup JFrog
+        uses: SonarSource/jfrog-setup-wrapper@5712613f9a6c0379b2f46b936b77f16fc0a56d79  # tag=3.2.2
+        with:
+          artifactoryRoleSuffix: "private-reader"
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1 (Necessary to access local action)
+      - uses: ./download-build/
+        name: Given download-build is used with flat-download=true, exclusions and dryRun enabled
+        id: test-data
+        with:
+          dryRun: true
+          build-number: '5432'
+          flat-download: 'true'
+          exclusions: '-'
+          local-repo-dir: '.'
+      - uses: nick-fields/assert-action@aa0067e01f0f6545c31755d6ca128c5a3a14f6bf # v2.0.0
+        name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
+        with:
+          expected: '--exclusions - --dry-run=true --flat'
+          actual: ${{ steps.test-data.outputs.jfrog_dl_options }}
+          comparison: exact
+
+  it-tests:
+      name: "All IT Tests have to pass (download-build)"
+      runs-on: ubuntu-latest
+      if: always()
+      needs:
+        # Add your tests here so that they prevent the merge of broken changes
+        - it-tests-default-values
+        - it-tests-use-flat-download-true
+      steps:
+        - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+          with:
+            jobs: ${{ toJSON(needs) }}
