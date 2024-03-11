@@ -8,6 +8,8 @@ from importlib import resources
 from release import resources as file_resources
 from xml.dom.minidom import parseString
 
+from release.vars import binaries_aws_region_name, binaries_aws_session_token, binaries_aws_secret_access_key, binaries_aws_access_key_id
+
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
 DISTRIBUTION_ID_PROD = 'E2WHX4O0Y6Z6C6'
@@ -19,7 +21,13 @@ class Binaries:
 
     def __init__(self, binaries_bucket_name: str):
         self.binaries_bucket_name = binaries_bucket_name
-        self.client = boto3.client('s3')
+        binaries_session = boto3.Session(
+            aws_access_key_id=binaries_aws_access_key_id,
+            aws_secret_access_key=binaries_aws_secret_access_key,
+            aws_session_token=binaries_aws_session_token,
+            region_name=binaries_aws_region_name
+        )
+        self.client = binaries_session.client('s3')
 
     @staticmethod
     def get_binaries_repo(gid):

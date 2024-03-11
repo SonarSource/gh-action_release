@@ -11,6 +11,8 @@ from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.burgr import Burgr, ReleasabilityFailure
 from unittest.mock import mock_open
 
+from release.utils.releasability import Releasability
+
 
 class BurgrResponse:
     def __init__(self, status_code):
@@ -153,12 +155,14 @@ def test_get_latest_releasability_stage(response, result):
 )
 @patch.object(Burgr, "start_releasability_checks")
 @patch.object(Burgr, "get_releasability_status")
+@patch.object(Releasability, 'start_releasability_checks')
 def test_releasability_checks_script(
-    json_load_mock, burgr_start_releasability_checks, burgr_get_releasability_status
+    json_load_mock, burgr_start_releasability_checks, burgr_get_releasability_status, releasability_start_releasability_checks
 ):
     with patch("release.utils.github.open", mock_open()) as open_mock:
         do_releasability_checks()
         open_mock.assert_called_once()
         json_load_mock.assert_called_once()
+        releasability_start_releasability_checks.assert_called_once()
         burgr_start_releasability_checks.assert_called_once()
         burgr_get_releasability_status.assert_called_once()
