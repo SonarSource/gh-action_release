@@ -3,7 +3,7 @@ import tempfile
 import zipfile
 
 import boto3
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import resources
 from release import resources as file_resources
 from xml.dom.minidom import parseString
@@ -70,7 +70,7 @@ class Binaries:
         """
         Add the release to the SonarLint Eclipse P2 update site and upload
         """
-        now_as_epoch_millis = str(round(datetime.utcnow().timestamp() * 1000))
+        now_as_epoch_millis = str(round(datetime.now(timezone.utc).timestamp() * 1000))
         for composite_file in ['compositeContent.xml', 'compositeArtifacts.xml']:
             template = resources.read_text(file_resources, composite_file)
             document = parseString(template)
