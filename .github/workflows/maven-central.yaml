@@ -58,7 +58,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@fix/svermeille/BUILD-4644-gh-action_release-5.2.0-do-not-download-all-files-anymore
+        uses: SonarSource/gh-action_release/download-build@v5
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
