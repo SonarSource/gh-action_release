@@ -37,8 +37,6 @@ jobs:
       contents: read  # to revert a github release
     timeout-minutes: 30
     if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
-    outputs:
-      pypi: ${{ steps.pypi.outcome }}
     steps:
       - name: Get the version
         id: get_version
