@@ -72,7 +72,7 @@ What the dry run will do and not do:
 * Will not push binaries
 * Will not publish to slack
 
-Instead, it will actually print the sequence of operations that would have 
+Instead, it will actually print the sequence of operations that would have
 been performed based on the provided inputs defined in `with:` section.
 
 ## Versioning
