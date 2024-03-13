@@ -171,6 +171,7 @@ jobs:
       vaultTokenKey: pypi-test
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       pypiRepoUrl: "https://test.pypi.org/legacy/"
+      slackChannel: ${{ inputs.slackChannel }}
 
   pypi:
     name: PyPi
@@ -180,3 +181,4 @@ jobs:
     with:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
+      slackChannel: ${{ inputs.slackChannel }}

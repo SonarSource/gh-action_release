@@ -27,6 +27,11 @@ name: PyPI
         description: PyPI Repository URL for publishing the package
         default: https://upload.pypi.org/legacy/
         required: false
+      slackChannel:
+        type: string
+        description: Slack channel to post notifications
+        default: build
+        required: false
 
 jobs:
   pypi:
@@ -84,6 +89,7 @@ jobs:
         with:
           status: failure
           fields: repo,author,eventName
+          channel: ${{ inputs.slackChannel }}
         env:
           SLACK_WEBHOOK_URL: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
       - name: Exit with error
