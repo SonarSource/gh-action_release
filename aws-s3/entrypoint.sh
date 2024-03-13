@@ -56,7 +56,7 @@ function get_command {
   if [ -z "$INPUT_COMMAND" ]
   then
     echo "Command not set using cp"
-  elif [[ ! ${VALID_COMMANDS[*]} =~ "$INPUT_COMMAND" ]]
+  elif [[ ! ${VALID_COMMANDS[*]} =~ $INPUT_COMMAND ]]
   then
     echo ""
     echo "Invalid command provided :: [$INPUT_COMMAND]"
@@ -117,11 +117,11 @@ function main {
 
   if [ "$COMMAND" == "cp" ] || [ "$COMMAND" == "mv" ] || [ "$COMMAND" == "sync" ]
   then
-    echo aws s3 $COMMAND "$INPUT_SOURCE" "$INPUT_DESTINATION" $INPUT_FLAGS
-    aws s3 "$COMMAND" "$INPUT_SOURCE" "$INPUT_DESTINATION" $INPUT_FLAGS
+    echo aws s3 "$COMMAND" "$INPUT_SOURCE" "$INPUT_DESTINATION" "$INPUT_FLAGS"
+    aws s3 "$COMMAND" "$INPUT_SOURCE" "$INPUT_DESTINATION" "$INPUT_FLAGS"
   else
-    echo aws s3 $COMMAND "$INPUT_SOURCE" $INPUT_FLAGS
-    aws s3 "$COMMAND" "$INPUT_SOURCE" $INPUT_FLAGS
+    echo aws s3 "$COMMAND" "$INPUT_SOURCE" "$INPUT_FLAGS"
+    aws s3 "$COMMAND" "$INPUT_SOURCE" "$INPUT_FLAGS"
   fi
 }
 

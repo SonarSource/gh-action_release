@@ -23,7 +23,7 @@ def buildinfo_multi():
             "timestampDate": 1662735041770
             }]
         }
-    })    
+    })
 
 
 @fixture
@@ -38,7 +38,7 @@ def buildinfo():
             "timestampDate": 1662735041770
             }]
         }
-    })    
+    })
 
 
 class RepoxResponse:
@@ -59,7 +59,7 @@ def test_notify(release_request):
         )
 
 
-def test_promote(release_request,buildinfo):    
+def test_promote(release_request,buildinfo):
     with patch('release.utils.artifactory.requests.post', return_value=RepoxResponse(200)) as request:
         Artifactory("token").promote(release_request,buildinfo)
         request.assert_called_once_with(
@@ -69,7 +69,7 @@ def test_promote(release_request,buildinfo):
         )
 
 
-def test_promote_revoke(release_request,buildinfo):    
+def test_promote_revoke(release_request,buildinfo):
     with patch('release.utils.artifactory.requests.post', return_value=RepoxResponse(200)) as request:
         Artifactory("token").promote(release_request,buildinfo,True)
         request.assert_called_once_with(
@@ -80,7 +80,7 @@ def test_promote_revoke(release_request,buildinfo):
 
 
 def test_multi_promote(release_request,buildinfo_multi):
-    with patch('release.utils.artifactory.requests.get', return_value=RepoxResponse(200)) as request:        
+    with patch('release.utils.artifactory.requests.get', return_value=RepoxResponse(200)) as request:
         Artifactory("token").promote(release_request,buildinfo_multi)
         request.assert_called_once_with(
             f"{Artifactory.url}/api/plugins/execute/multiRepoPromote?params="+
@@ -96,7 +96,7 @@ def test_multi_promote(release_request,buildinfo_multi):
 
 
 def test_multi_promote_revoke(release_request,buildinfo_multi):
-    with patch('release.utils.artifactory.requests.get', return_value=RepoxResponse(200)) as request:        
+    with patch('release.utils.artifactory.requests.get', return_value=RepoxResponse(200)) as request:
         Artifactory("token").promote(release_request,buildinfo_multi,True)
         request.assert_called_once_with(
             f"{Artifactory.url}/api/plugins/execute/multiRepoPromote?params="+
@@ -106,15 +106,15 @@ def test_multi_promote_revoke(release_request,buildinfo_multi):
                 "src1=sonarsource-private-releases;"+
                 "target1=sonarsource-private-builds;"+
                 "src2=sonarsource-public-releases;"+
-                "target2=sonarsource-public-builds", 
+                "target2=sonarsource-public-builds",
             headers={'content-type': 'application/json', 'Authorization': 'Bearer token'}
         )
 
 
 def test_download():
-    with patch('release.utils.artifactory.urllib.request.urlretrieve') as request:        
+    with patch('release.utils.artifactory.urllib.request.urlretrieve') as request:
         Artifactory("token").download('repo','gid','aid','qual','ext','version')
         request.assert_called_once_with(
-            f"{Artifactory.url}/repo/gid/aid/version/aid-version-qual.ext", 
+            f"{Artifactory.url}/repo/gid/aid/version/aid-version-qual.ext",
             f'{tempfile.gettempdir()}/aid-version-qual.ext'
         )
