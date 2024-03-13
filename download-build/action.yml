@@ -3,9 +3,8 @@ name: 'Download build'
 description: 'Download all artifacts and checksums of a build'
 inputs:
   dryRun:
-    type: boolean
     description: Flag to enable the dry-run execution
-    default: false
+    default: 'false'
     required: false
   local-repo-dir:
     description: 'Empty directory to store the artifacts'
@@ -37,11 +36,11 @@ runs:
       shell: bash
       run: |
         ARGS="--exclusions ${{ inputs.exclusions }}"
-        
+
         if [ ${{ inputs.dryRun }} = 'true' ]; then
             ARGS="$ARGS --dry-run=true"
         fi
-        
+
         if [ ${{ inputs.flat-download }} = 'true' ]; then
             ARGS="$ARGS --flat"
         fi
