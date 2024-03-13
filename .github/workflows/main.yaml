@@ -55,12 +55,12 @@ on:
         required: false
       publishToPyPI:
         type: boolean
-        description: Publish python artifacts to pypi.org
+        description: Publish Python artifacts to https://pypi.org
         default: false
         required: false
       publishToTestPyPI:
         type: boolean
-        description: Publish python artifacts to test.pypi.org
+        description: Publish Python artifacts to https://test.pypi.org
         default: false
         required: false
 
@@ -162,7 +162,7 @@ jobs:
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
 
   testPypi:
-    name: Publish to TestPyPI
+    name: TestPyPI
     needs: release
     if: ${{ inputs.publishToTestPyPI && inputs.dryRun != true }}
     uses: ./.github/workflows/pypi.yaml

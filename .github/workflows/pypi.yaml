@@ -4,7 +4,7 @@ name: PyPI
     inputs:
       vaultAddr:
         type: string
-        description: Custom vault installation
+        description: Custom Vault installation
         default: https://vault.sonar.build:8200
         required: false
       vaultTokenKey:
@@ -14,12 +14,12 @@ name: PyPI
         required: false
       artifactoryRoleSuffix:
         type: string
-        description: artifactory reader suffix specified in vault repo config
+        description: Artifactory reader suffix specified in vault repo config
         default: private-reader
         required: false
       downloadExclusions:
         type: string
-        description: exclusions for the jfrog build download
+        description: exclusions for the JFrog build download
         default: "-"
         required: false
       pypiRepoUrl:
@@ -30,7 +30,7 @@ name: PyPI
 
 jobs:
   pypi:
-    name: Push to PyPI
+    name: Publish to PyPI
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # to authenticate via OIDC

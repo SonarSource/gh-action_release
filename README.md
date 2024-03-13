@@ -33,8 +33,8 @@ Available options:
 - javadocDestinationDirectory (default: use repository name): define the subdir to use in https://javadocs.sonarsource.org/
 - binariesS3Bucket (default: downloads-cdn-eu-central-1-prod): target bucket
 - mavenCentralSync (default: false): enable synchronization to Maven Central, **for OSS projects only**
-- publishToPyPI (default: false): Publish pypi artifacts to https://pypi.org/ **for OSS projects only**
-- publishToTestPyPI (default: false): Publish pypi artifacts to https://test.pypi.org/ **for OSS projects only**
+- publishToPyPI (default: false): Publish pypi artifacts to https://pypi.org/, **for OSS projects only**
+- publishToTestPyPI (default: false): Publish pypi artifacts to https://test.pypi.org/, **for OSS projects only**
 - slackChannel (default: build): notification Slack channel
 - artifactoryRoleSuffix (default: promoter): Artifactory promoter suffix
 - dryRun (default: false): perform a dry run execution
