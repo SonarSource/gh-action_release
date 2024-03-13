@@ -53,6 +53,16 @@ on:
         description: exclusions for the jfrog build download
         default: "-"
         required: false
+      publishToPyPI:
+        type: boolean
+        description: Publish python artifacts to pypi.org
+        default: false
+        required: false
+      publishToTestPyPI:
+        type: boolean
+        description: Publish python artifacts to test.pypi.org
+        default: false
+        required: false
 
 jobs:
   release:
@@ -150,3 +160,23 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
+
+  testPypi:
+    name: Publish to TestPyPI
+    needs: release
+    if: ${{ inputs.publishToTestPyPI && inputs.dryRun != true }}
+    uses: ./.github/workflows/pypi.yaml
+    with:
+      vaultAddr: ${{ inputs.vaultAddr }}
+      vaultTokenKey: pypi-test
+      artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
+      pypiRepoUrl: "https://test.pypi.org/legacy/"
+
+  pypi:
+    name: PyPi
+    needs: release
+    if: ${{ inputs.publishToPyPI && inputs.dryRun != true }}
+    uses: ./.github/workflows/pypi.yaml
+    with:
+      vaultAddr: ${{ inputs.vaultAddr }}
+      artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
