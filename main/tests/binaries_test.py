@@ -9,17 +9,21 @@ from release.utils.binaries import Binaries, SONARLINT_AID
 
 
 def test_upload_sonarlint_p2_site(capsys):
+    binaries_session = MagicMock()
     client = MagicMock()
-    with patch('boto3.client', return_value=client), \
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session), \
         patch.object(client, 'upload_file') as upload_file:
         binaries = Binaries("test_bucket")
         binaries.upload_sonarlint_p2_site('SonarLint-for-Eclipse/releases', 'SonarLint-for-Eclipse/releases/7.9.0.63244')
         captured = capsys.readouterr().out.split('\n')
         assert captured[0] == 'uploaded compositeContent.xml to s3://test_bucket/SonarLint-for-Eclipse/releases/compositeContent.xml'
-        assert captured[1] == 'uploaded compositeArtifacts.xml to s3://test_bucket/SonarLint-for-Eclipse/releases/compositeArtifacts.xml'
+        assert captured[
+                   1] == 'uploaded compositeArtifacts.xml to s3://test_bucket/SonarLint-for-Eclipse/releases/compositeArtifacts.xml'
         upload_file.assert_has_calls([
             call(f'{tempfile.gettempdir()}/compositeContent.xml', 'test_bucket', 'SonarLint-for-Eclipse/releases/compositeContent.xml'),
-            call(f'{tempfile.gettempdir()}/compositeArtifacts.xml', 'test_bucket', 'SonarLint-for-Eclipse/releases/compositeArtifacts.xml')
+            call(f'{tempfile.gettempdir()}/compositeArtifacts.xml', 'test_bucket',
+                 'SonarLint-for-Eclipse/releases/compositeArtifacts.xml')
         ])
         for composite_file in ['compositeContent.xml', 'compositeArtifacts.xml']:
             document = parse(os.path.join(tempfile.gettempdir(), composite_file))
@@ -28,20 +32,24 @@ def test_upload_sonarlint_p2_site(capsys):
 
 
 def test_update_sonarlint_p2_site(capsys):
+    binaries_session = MagicMock()
     client = MagicMock()
-    with patch('boto3.client', return_value=client), \
-        patch.object(client, 'create_invalidation') as create_invalidation:
-        create_invalidation.return_value = {'Location': 'URI_123'}
-        binaries = Binaries("test_bucket")
-        binaries.update_sonarlint_p2_site('1234567890', '7.9.0.63244')
-        captured = capsys.readouterr().out.split('\n')
-        assert captured[0] == 'CloudFront invalidation: URI_123'
-        create_invalidation.assert_called()
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
+        with patch.object(client, 'create_invalidation') as create_invalidation:
+            create_invalidation.return_value = {'Location': 'URI_123'}
+            binaries = Binaries("test_bucket")
+            binaries.update_sonarlint_p2_site('1234567890', '7.9.0.63244')
+            captured = capsys.readouterr().out.split('\n')
+            assert captured[0] == 'CloudFront invalidation: URI_123'
+            create_invalidation.assert_called()
 
 
 def test_s3_delete_sonarlint_eclipse():
+    binaries_session = MagicMock()
     client = MagicMock()
-    with patch('boto3.client', return_value=client):
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
         resource = MagicMock()
         with patch('boto3.resource', return_value=resource):
             bucket = MagicMock()
@@ -60,7 +68,9 @@ def test_s3_delete_sonarlint_eclipse():
     ]
 )
 def test_s3_delete_common_case(group_id, root_bucket_key):
+    binaries_session = MagicMock()
     client = MagicMock()
-    with patch('boto3.client', return_value=client):
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
         Binaries('bucket').s3_delete('filename', group_id, "aid", 'version')
     client.delete_object.assert_called_once_with(Bucket='bucket', Key=f'{root_bucket_key}/aid/filename')
