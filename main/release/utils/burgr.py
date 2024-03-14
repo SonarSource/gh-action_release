@@ -7,6 +7,7 @@ from polling import TimeoutException
 from requests.auth import HTTPBasicAuth
 from requests.models import Response
 from release.steps.ReleaseRequest import ReleaseRequest
+from release.utils.version_helper import VersionHelper
 
 
 class BurgrException(Exception):
@@ -37,11 +38,7 @@ class Burgr:
         self.url = url
         self.auth_header = HTTPBasicAuth(user, password)
         self.release_request = release_request
-        version = self.release_request.version
-        # SLVSCODE-specific
-        if self.release_request.project == 'sonarlint-vscode':
-            version = version.split('+')[0]
-        self.version = version
+        self.version = VersionHelper.as_standardized_version(release_request)
 
     # This will only work for a branch build, not a PR build
     # because a PR build notification needs `"pr_number": NUMBER` instead of `'branch': NAME`
