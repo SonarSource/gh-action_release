@@ -1,36 +1,37 @@
 import uuid
 import boto3
+from boto3 import Session
 from dryable import Dryable
 from release.steps.ReleaseRequest import ReleaseRequest
+from release.utils.aws_ssm_parameter_helper import AwsSsmParameterHelper
 from release.utils.version_helper import VersionHelper
 from release.vars import releasability_aws_region, releasability_env_type
+
+RELEASABILITY_ARN_PARAMETER_NAME_PREFIX = "/Burgr/Releasability/"
+RELEASABILITY_ARN_PARAMETER_NAME_INPUT_SUFFIX = "/ReleasabilityTriggerArn"
+RELEASABILITY_ARN_PARAMETER_NAME_OUTPUT_SUFFIX = "/ReleasabilityResultArn"
 
 
 class Releasability:
     release_request: ReleaseRequest
+    session: Session
 
     def __init__(self, release_request):
         self.release_request = release_request
-
-        arn_topics = {
-            "Dev": {
-                "INPUT_TOPIC": "arn:aws:sns:eu-west-1:597611216173:Releasability-Dev-MessagingReleasabilityTrigger41B5D077-ytFNCS6b5yFa",
-                "OUTPUT_TOPIC": "arn:aws:sns:eu-west-1:597611216173:Releasability-Dev-MessagingReleasabilityResult1BF0D6BB-uVEUpOrhfpcm"
-            },
-            "Staging": {
-                "INPUT_TOPIC":
-                    "arn:aws:sns:eu-west-1:308147251410:Releasability-Staging-MessagingReleasabilityTrigger41B5D077-iSdypIfYu4x5",
-                "OUTPUT_TOPIC": "arn:aws:sns:eu-west-1:308147251410:Releasability-Staging-MessagingReleasabilityResult1BF0D6BB-99BdgYmfNHCp"
-            },
-            "Prod": {
-                "INPUT_TOPIC": "arn:aws:sns:eu-west-1:064493320159:Releasability-Prod-MessagingReleasabilityTrigger41B5D077-EjmsAMpmaj72",
-                "OUTPUT_TOPIC": "arn:aws:sns:eu-west-1:064493320159:Releasability-Prod-MessagingReleasabilityResult1BF0D6BB-Sv8YMUXuc4bh"
-            },
-        }
-
-        self.INPUT_TOPIC_ARN = arn_topics[releasability_env_type]["INPUT_TOPIC"]
-        self.OUTPUT_TOPIC_ARN = arn_topics[releasability_env_type]["OUTPUT_TOPIC"]
         self.session = boto3.Session(region_name=releasability_aws_region)
+
+        self.INPUT_TOPIC_ARN = self._get_input_topic_arn(releasability_env_type)
+        self.OUTPUT_TOPIC_ARN = self._get_output_topic_arn(releasability_env_type)
+
+    @Dryable(logging_msg='{function}()')
+    def _get_input_topic_arn(self, env_type: str):
+        sns_input_arn_parameter_name = f'{RELEASABILITY_ARN_PARAMETER_NAME_PREFIX}{env_type}{RELEASABILITY_ARN_PARAMETER_NAME_INPUT_SUFFIX}'
+        return AwsSsmParameterHelper.get_ssm_parameter_value(self.session, sns_input_arn_parameter_name)
+
+    @Dryable(logging_msg='{function}()')
+    def _get_output_topic_arn(self, env_type: str):
+        sns_output_arn_parameter_name = f'{RELEASABILITY_ARN_PARAMETER_NAME_PREFIX}{env_type}{RELEASABILITY_ARN_PARAMETER_NAME_OUTPUT_SUFFIX}'
+        return AwsSsmParameterHelper.get_ssm_parameter_value(self.session, sns_output_arn_parameter_name)
 
     @Dryable(logging_msg='{function}()')
     def start_releasability_checks(self):
