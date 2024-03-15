@@ -121,7 +121,9 @@ jobs:
             exit 0
           fi
           echo "${SECRET_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
-          echo "${SECRET_AWS_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
+          if [[ "${SECRET_AWS_OUTPUTS}" != "{}" ]]; then
+            echo "${SECRET_AWS_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
+          fi
       - name: Release
         id: release
         uses: SonarSource/gh-action_release/main@95eaa42a649490e6236043bbacbe5e90fccc054f
