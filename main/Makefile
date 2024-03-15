@@ -11,4 +11,4 @@ test:
 
 releasability-check:
 	pipenv install
-    pipenv run releasability_check
+	pipenv run releasability_check
