@@ -92,11 +92,12 @@ def set_output(output_name, value):
 
 def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasability, release_request: ReleaseRequest.ReleaseRequest):
     try:
-        releasability.start_releasability_checks()
+        correlation_id = releasability.start_releasability_checks()
         burgr.start_releasability_checks()
         burgr.get_releasability_status()
+        releasability.get_releasability_status(correlation_id)
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
     except Exception as e:
-        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
+        notify_slack(f"The release of {release_request.project}:{release_request.version} failed")
         github.revoke_release()
         raise e
