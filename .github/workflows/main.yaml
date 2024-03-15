@@ -91,8 +91,8 @@ jobs:
             development/kv/data/repox url | artifactory_url;
             development/kv/data/burgr github_username | burgrx_username;
             development/kv/data/burgr github_password | burgrx_password;
-      - name: Vault AWS Secrets
-        id: secrets-aws
+      - name: Vault Binaries AWS Secrets
+        id: secrets-binaries-aws
         if: ${{ inputs.dryRun != true && inputs.publishToBinaries }}
         uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
         with:
@@ -106,7 +106,7 @@ jobs:
         env:
           DUMMY_VALUES: ${{ inputs.dryRun }}
           SECRET_OUTPUTS: ${{ toJson(steps.secrets.outputs) }}
-          SECRET_AWS_OUTPUTS: ${{ toJson(steps.secrets-aws.outputs) }}
+          SECRET_AWS_OUTPUTS: ${{ toJson(steps.secrets-binaries-aws.outputs) }}
         run: |
           if [[ "${DUMMY_VALUES}" == "true" ]]; then
             {
