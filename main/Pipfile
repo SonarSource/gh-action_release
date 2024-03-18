@@ -8,14 +8,12 @@ pytest = "*"
 pytest-cov = "*"
 
 [packages]
-requests = "*"
-polling = "*"
-slack_sdk = "*"
 boto3 = "*"
-dryrun = "*"
 dryable = "*"
 parameterized = "*"
-parametrized = "*"
+polling = "*"
+requests = "*"
+slack_sdk = "*"
 
 [requires]
 python_version = "3.10"
