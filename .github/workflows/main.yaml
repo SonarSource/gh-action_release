@@ -83,7 +83,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-region: eu-central-1
-          role-to-assume: "arn:aws:iam::064493320159:role/ReleasbilityChecksCICDRole"
+          role-to-assume: "arn:aws:iam::597611216173:role/ReleasbilityChecksCICDRole" # TODO: change back to prod
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
@@ -127,7 +127,7 @@ jobs:
           slack_channel: ${{ inputs.slackChannel }}
           dry_run: ${{ inputs.dryRun }}
         env:
-          RELEASABILITY_ENV_TYPE: "Dev"
+          RELEASABILITY_ENV_TYPE: "Dev" # TODO: change back to prod
           PYTHONUNBUFFERED: 1
           ARTIFACTORY_ACCESS_TOKEN: ${{ steps.parse_vault.outputs.artifactory_access_token }}
           BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
