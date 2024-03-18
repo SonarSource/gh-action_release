@@ -24,6 +24,10 @@ inputs:
     description: 'Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files'
     required: false
     default: 'false'
+  download-checksums:
+    description: 'Set to false if you want to skip downloading the checksums'
+    required: false
+    default: 'true'
 outputs:
   jfrog_dl_options:
     description: Indicate which extra command is passed to jfrog for download
@@ -62,7 +66,7 @@ runs:
         --build "${JFROG_DL_BUILD}"
         "${JFROG_DL_REMOTE_REPO}"
     - name: Download checksums
-      if: ${{ inputs.dryRun != 'true' }}
+      if: ${{ inputs.dryRun != 'true' && inputs.download-checksums == 'true' }}
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
       env:

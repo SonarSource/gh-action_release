@@ -1,22 +1,22 @@
 # yamllint disable rule:line-length
 ---
-name: maven Central
+name: Maven Central
 "on":
   workflow_call:
     inputs:
       vaultAddr:
         type: string
-        description: Custom vault installation
+        description: Custom Vault installation
         default: https://vault.sonar.build:8200
         required: false
       artifactoryRoleSuffix:
         type: string
-        description: artifactory reader suffix specified in vault repo config
+        description: Artifactory reader suffix specified in vault repo config
         default: private-reader
         required: false
       downloadExclusions:
         type: string
-        description: exclusions for the jfrog build download
+        description: exclusions for the JFrog build download
         default: "-"
         required: false
 
@@ -58,7 +58,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@34b70fd193819eef88d223c324acfb54fcce8396
+        uses: SonarSource/gh-action_release/download-build@master
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -66,7 +66,7 @@ jobs:
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@95eaa42a649490e6236043bbacbe5e90fccc054f
+        uses: SonarSource/gh-action_release/maven-central-sync@master
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
         env:

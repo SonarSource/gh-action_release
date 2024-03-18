@@ -50,7 +50,7 @@ on:
         required: false
       mavenCentralSyncExclusions:
         type: string
-        description: exclusions for the jfrog build download
+        description: exclusions for the JFrog build download
         default: "-"
         required: false
       publishToPyPI:
@@ -61,6 +61,13 @@ on:
       publishToTestPyPI:
         type: boolean
         description: Publish Python artifacts to https://test.pypi.org
+        default: false
+        required: false
+      # Releasability checks are not fully implemented for Python projects
+      # This flag allows to skip releasability checks and allow releasing the artifacts. It is ignored for non-python projects
+      skipPythonReleasabilityChecks:
+        type: boolean
+        description: Skip releasability checks for Python projects
         default: false
         required: false
 
@@ -79,6 +86,10 @@ jobs:
       publish_to_binaries: ${{ steps.release.outputs.publish_to_binaries }}
       release: ${{ steps.release.outputs.release }}
     steps:
+      # Clone the repo; Only required for checking releasability prerequisites
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
@@ -124,9 +135,22 @@ jobs:
           if [[ "${SECRET_AWS_OUTPUTS}" != "{}" ]]; then
             echo "${SECRET_AWS_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
           fi
+
+      - name: Releasability check prerequisites
+        id: releasability_prerequisites
+        env:
+          SKIP_PYTHON_RELEASABILITY_CHECKS: ${{ inputs.skipPythonReleasabilityChecks }}
+        run: |
+          # Skip releasability checks if the project contains pyproject.toml file
+          if test -f "pyproject.toml" && "$SKIP_PYTHON_RELEASABILITY_CHECKS" == "true"  ; then
+            echo "skip_releasability_checks=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@95eaa42a649490e6236043bbacbe5e90fccc054f
+        uses: SonarSource/gh-action_release/main@master
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
@@ -143,6 +167,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ steps.parse_vault.outputs.binaries_aws_secret_access_key }}
           AWS_SESSION_TOKEN: ${{ steps.parse_vault.outputs.binaries_aws_security_token }}
           AWS_DEFAULT_REGION: eu-central-1
+          SKIP_RELEASABILITY_CHECKS: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks }}
       - name: Release action results
         if: always()
         run: |
