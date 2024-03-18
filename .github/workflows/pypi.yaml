@@ -61,7 +61,7 @@ jobs:
           url: ${{ inputs.vaultAddr }}
           secrets:
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token  | artifactory_access_token;
-            development/kv/data/{{ inputs.vaultTokenKey }} token | pypi_token;
+            development/kv/data/${{ inputs.vaultTokenKey }} token | pypi_token;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
         uses: SonarSource/jfrog-setup-wrapper@5712613f9a6c0379b2f46b936b77f16fc0a56d79  # tag=3.2.2
