@@ -19,7 +19,7 @@ jobs:
     name: "pre-commit"
     runs-on: ubuntu-latest
     steps:
-      - uses: SonarSource/gh-action_release/download-build@0.0.1 <--- replace with last tag
+      - uses: SonarSource/gh-action_release/download-build@v5
         with:
           exclusions: '-'
 ```
@@ -36,18 +36,19 @@ jobs:
     name: "pre-commit"
     runs-on: ubuntu-latest
     steps:
-      - uses: SonarSource/gh-action_release/download-build@0.0.1 <--- replace with last tag
+      - uses: SonarSource/gh-action_release/download-build@v5
         with:
           flat-download: true
 ```
 
 ## Options
 
-| Option name      | Description                                                                                                                | Default                       |
-|------------------|----------------------------------------------------------------------------------------------------------------------------|-------------------------------|
-| `dryRun`         | Used to simulate a run of the action without effectively doing anything.                                                   | `false`                       |
-| `local-repo-dir` | Empty directory to store the artifacts                                                                                     | (required)                    |
-| `remote-repo`    | REPOX Repository to download from                                                                                          | `sonarsource-public-releases` |
-| `build-number`   | Build number                                                                                                               | (required)                    |
-| `exclusions`     | Exclude pattern from downloaded files                                                                                      | `-`                           |
-| `flat-download`  | Set to true if you do not wish to have the artifactory repository path structure created locally for your downloaded files | `false`                       |
+| Option name          | Description                                                                                                                | Default                       |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------|-------------------------------|
+| `dryRun`             | Used to simulate a run of the action without effectively doing anything.                                                   | `false`                       |
+| `local-repo-dir`     | Empty directory to store the artifacts                                                                                     | (required)                    |
+| `remote-repo`        | REPOX Repository to download from                                                                                          | `sonarsource-public-releases` |
+| `build-number`       | Build number                                                                                                               | (required)                    |
+| `exclusions`         | Exclude pattern from downloaded files                                                                                      | `-`                           |
+| `flat-download`      | Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files | `false`                       |
+| `download-checksums` | Set to false if you want to skip downloading the checksums                                                                 | `true`                        |

@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # to authenticate via OIDC
-      contents: read  # to revert a github release
+      contents: read  # to revert a GitHub release
     timeout-minutes: 30
     if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
     steps:
@@ -68,16 +68,18 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@34b70fd193819eef88d223c324acfb54fcce8396
+        uses: SonarSource/gh-action_release/download-build@master
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
           exclusions: ${{ inputs.downloadExclusions }}
           remote-repo: sonarsource-pypi-public-releases
+          flat-download: true
+          download-checksums: false
       - name: Publish to PyPI
         id: publish-pypi
         continue-on-error: true
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # tag=v1.8.14
         with:
           packages-dir: ${{ steps.local_repo.outputs.dir }}
           password: ${{ fromJSON(steps.secrets.outputs.vault).pypi_token }}
