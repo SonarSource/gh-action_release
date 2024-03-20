@@ -94,7 +94,6 @@ def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasabil
     try:
         correlation_id = releasability.start_releasability_checks()
         burgr.start_releasability_checks()
-        # burgr.get_releasability_status() # Disabled since we are using the releasaability module
         releasability.get_releasability_status(correlation_id)
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
     except Exception as e:
