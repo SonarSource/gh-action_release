@@ -57,12 +57,16 @@ class Releasability:
     def __init__(self, release_request):
         self.release_request = release_request
         self.session = boto3.Session(region_name=releasability_aws_region)
-        account_id = boto3.client('sts').get_caller_identity().get('Account')
+        account_id = self._get_aws_account_id
+        self._define_arn_constants(releasability_aws_region, account_id)
 
-        self.TRIGGER_TOPIC_ARN = f"arn:aws:sns:{releasability_aws_region}:{account_id}:ReleasabilityTriggerTopic"
-        self.RESULT_TOPIC_ARN = f"arn:aws:sns:{releasability_aws_region}:{account_id}:ReleasabilityResultTopic"
-        self.RESULT_QUEUE_ARN = f"arn:aws:sqs:{releasability_aws_region}:{account_id}:ReleasabilityResultQueue"
+    def _get_aws_account_id(self) -> str:
+        return boto3.client('sts').get_caller_identity().get('Account')
 
+    def _define_arn_constants(self, aws_region: str, aws_account_id: str):
+        self.TRIGGER_TOPIC_ARN = f"arn:aws:sns:{aws_region}:{aws_account_id}:ReleasabilityTriggerTopic"
+        self.RESULT_TOPIC_ARN = f"arn:aws:sns:{aws_region}:{aws_account_id}:ReleasabilityResultTopic"
+        self.RESULT_QUEUE_ARN = f"arn:aws:sqs:{aws_region}:{aws_account_id}:ReleasabilityResultQueue"
 
     def start_releasability_checks(self):
         standardized_version = VersionHelper.as_standardized_version(self.release_request)
