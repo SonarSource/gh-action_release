@@ -4,7 +4,7 @@ from unittest.mock import patch, mock_open
 
 from release.releasability_check import do_releasability_checks
 from release.utils.burgr import Burgr
-from release.utils.releasability import Releasability
+from release.releasability import Releasability
 
 
 class ReleasabilityCheckTest(unittest.TestCase):

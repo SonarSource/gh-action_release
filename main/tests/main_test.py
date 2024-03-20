@@ -12,7 +12,7 @@ from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
-from release.utils.releasability import Releasability
+from release.releasability import Releasability
 
 
 def test_set_output():

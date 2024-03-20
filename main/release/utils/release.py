@@ -4,7 +4,7 @@ from dryable import Dryable
 from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
-from release.utils.releasability import Releasability
+from release.releasability import Releasability
 from release.utils.github import GitHub
 from release.utils.slack import notify_slack
 

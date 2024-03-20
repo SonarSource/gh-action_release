@@ -3,7 +3,7 @@ import unittest
 
 from unittest.mock import patch, MagicMock
 from release.steps.ReleaseRequest import ReleaseRequest
-from release.utils.releasability import Releasability
+from release.releasability.releasability import Releasability
 
 
 class ReleasabilityTest(unittest.TestCase):

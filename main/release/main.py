@@ -8,7 +8,7 @@ from release.utils.binaries import Binaries
 from release.utils.burgr import Burgr
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
-from release.utils.releasability import Releasability
+from release.releasability import Releasability
 from release.utils.release import publish_all_artifacts_to_binaries, releasability_checks, revoke_release, set_output
 from release.utils.slack import notify_slack
 from release.vars import binaries_bucket_name, burgrx_password, burgrx_url, burgrx_user
