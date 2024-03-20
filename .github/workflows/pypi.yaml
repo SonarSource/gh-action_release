@@ -64,7 +64,7 @@ jobs:
             development/kv/data/${{ inputs.vaultTokenKey }} token | pypi_token;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@5712613f9a6c0379b2f46b936b77f16fc0a56d79  # tag=3.2.2
+        uses: SonarSource/jfrog-setup-wrapper@907e87c3d2081a98d2ab8cb03284ee6711f1ee83 # 3.2.3
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
