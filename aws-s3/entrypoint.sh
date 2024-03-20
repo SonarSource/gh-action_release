@@ -2,7 +2,7 @@
 
 function usage_docs {
   echo ""
-  echo "- uses: SonarSource/gh-action_release/aws-s3@v2"
+  echo "- uses: SonarSource/gh-action_release/aws-s3@v5"
   echo "  with:"
   echo "    command: cp"
   echo "    source: ./local_file.txt"

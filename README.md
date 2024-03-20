@@ -28,6 +28,7 @@ jobs:
 ```
 
 Available options:
+
 - publishToBinaries (default: false): enable the publication to binaries
 - publishJavadoc (default: false): enable the publication of the javadoc to https://javadocs.sonarsource.org/
 - javadocDestinationDirectory (default: use repository name): define the subdir to use in https://javadocs.sonarsource.org/
@@ -67,10 +68,12 @@ jobs:
 ```
 
 ## Dry Run
+
 For testing purpose you may want to use this gh-action without really releasing.
 There comes the dry run.
 
 What the dry run will do and not do:
+
 * Will not communicate with burger
 * Will not promote any artifacts in repox
 * Will not push binaries
@@ -118,7 +121,31 @@ The development is done on `master` and the `branch-*` maintenance branches.
 
 ### Release
 
-Create a release from a maintained branches, then update the `v*` shortcut:
+Create a release from a maintained branches, then update the `v*` shortcut.
+
+Prepare a pull-request with the self-references updated to the current changeset:
+
+```shell
+next_version=5.3.1
+git checkout master
+git pull
+git checkout -b release/update-self-references
+git grep -Hl SonarSource/gh-action_release | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)master,\1${next_version},g"
+git commit -m "chore: update self-references to ${next_version}" -a
+next_ref=$(git show -s --pretty=format:'%H')
+git grep -Hl SonarSource/gh-action_release | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${next_version},\1${next_ref},g"
+git commit -m "chore: update self-references to $next_ref" -a
+git tag "$next_version"
+git checkout -f master
+git commit -m "chore: update self-references to master" -a
+gh pr create # TO BE MERGED ON MASTER BEFORE ANY OTHER PR
+```
+
+Browse to the [releases](https://github.com/SonarSource/gh-action_release/releases) page and create a new release from the new tag created
+above.
+
+The `v-` branch update is now automated by the [release.yml](.github/workflows/release.yml) workflow.
+The following manual steps are not required anymore:
 
 ```shell
 git fetch --tags
@@ -128,9 +155,11 @@ git push origin v4
 
 ## Requirements
 
-As of version 5.0.0, [the repository needs to be onboarded to the Vault](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/2466316312/HashiCorp+Vault#Onboarding-a-Repository-on-Vault).
+As of version 5.0.0,
+[the repository needs to be onboarded to the Vault](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/2466316312/HashiCorp+Vault#Onboarding-a-Repository-on-Vault).
 
 The following secrets and permissions are required:
+
 - development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
 - development/kv/data/slack
 - development/kv/data/repox
@@ -140,17 +169,21 @@ The following secrets and permissions are required:
 Additionally,
 
 If using `publishToBinaries` option:
+
 - development/aws/sts/downloads
 
 If using `mavenCentralSync` option:
+
 - development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 - development/kv/data/ossrh
 
 If using `publishToPyPI` option:
+
 - development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 - development/kv/data/pypi
 
 If using `publishToTestPyPI` option:
+
 - development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 - development/kv/data/pypi-test
 

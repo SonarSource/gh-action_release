@@ -17,10 +17,13 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
         with:
           ref: ${{ github.event.release.target_commitish }}
+          fetch-tags: true
       - name: update release branch
         env:
           TAG: ${{ github.event.release.tag_name }}
           PRE_RELEASE: ${{ github.event.release.prerelease }}
         run: |
           GIT_OPTS=$([[ "${PRE_RELEASE}" == "true" ]] && echo "--dry-run")
-          git push "${GIT_OPTS}" origin HEAD:"refs/heads/v${TAG%%.*}"
+          branch="v${TAG%%.*}"
+          git update-ref -m "reset: update branch $branch to tag $TAG" "refs/heads/$branch" "$TAG"
+          git push "${GIT_OPTS}" origin HEAD:"refs/heads/$branch"
