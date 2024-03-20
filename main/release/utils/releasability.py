@@ -6,8 +6,10 @@ from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.version_helper import VersionHelper
 from release.vars import releasability_aws_region
 
+
 class ReleasabilityException(Exception):
     pass
+
 
 class CheckResult:
     check_name: str
@@ -49,6 +51,7 @@ class CheckResults:
             check_result += f' - {error_message}' if error_message else ''
             formatted_result.append(check_result)
         return '\n'.join(formatted_result)
+
 
 class Releasability:
     release_request: ReleaseRequest
