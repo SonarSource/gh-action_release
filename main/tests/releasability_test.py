@@ -3,18 +3,14 @@ import unittest
 
 from unittest.mock import patch, MagicMock
 from release.steps.ReleaseRequest import ReleaseRequest
-from release.utils.aws_ssm_parameter_helper import AwsSsmParameterHelper
 from release.utils.releasability import Releasability
 
 
 class ReleasabilityTest(unittest.TestCase):
 
-    @patch.object(AwsSsmParameterHelper, 'get_ssm_parameter_value')
-    def test_build_sns_request_should_assign_correctly_properties(self, get_ssm_parameter_value_mock):
+    def test_build_sns_request_should_assign_correctly_properties(self):
         session = MagicMock()
         with patch('boto3.Session', return_value=session):
-            get_ssm_parameter_value_mock.return_value = "arn:aws:some"
-
             organization = "sonar"
             project_name = "sonar-dummy"
             version = "5.4.3"
@@ -45,15 +41,12 @@ class ReleasabilityTest(unittest.TestCase):
             assert request['artifactoryBuildNumber'] == build_number
             assert request['branchName'] == branch_name
 
-    @patch.object(AwsSsmParameterHelper, 'get_ssm_parameter_value')
-    def test_start_releasability_checks_should_invoke_publish(self, get_ssm_parameter_value_mock):
+    def test_start_releasability_checks_should_invoke_publish(self):
         session = MagicMock()
         mocked_sns_client = MagicMock()
         session.client.return_value = mocked_sns_client
 
         with patch('boto3.Session', return_value=session):
-            get_ssm_parameter_value_mock.return_value = "arn:aws:some:some"
-
             organization = "sonar"
             project_name = "sonar-dummy"
             version = "5.4.3"
@@ -64,7 +57,6 @@ class ReleasabilityTest(unittest.TestCase):
             release_request = ReleaseRequest(organization, project_name, version, build_number, branch_name, sha)
             releasability = Releasability(release_request)
 
-
             releasability.start_releasability_checks()
 
             assert mocked_sns_client.publish.call_count == 1
@@ -72,15 +64,12 @@ class ReleasabilityTest(unittest.TestCase):
             assert sns_query_content['responseToARN'] is not None
             assert sns_query_content['vcsRevision'] == sha
 
-    @patch.object(AwsSsmParameterHelper, 'get_ssm_parameter_value')
-    def test_start_releasability_checks_should_return_a_correlation_id_after_invokation(self, get_ssm_parameter_value_mock):
+    def test_start_releasability_checks_should_return_a_correlation_id_after_invokation(self):
         session = MagicMock()
         mocked_sns_client = MagicMock()
         session.client.return_value = mocked_sns_client
 
         with patch('boto3.Session', return_value=session):
-            get_ssm_parameter_value_mock.return_value = "arn:aws:some:some"
-
             organization = "sonar"
             project_name = "sonar-dummy"
             version = "5.4.3"
