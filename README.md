@@ -136,9 +136,10 @@ next_ref=$(git show -s --pretty=format:'%H')
 git grep -Hl SonarSource/gh-action_release | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${next_version},\1${next_ref},g"
 git commit -m "chore: update self-references to $next_ref" -a
 git tag "$next_version"
-git checkout -f master
+git checkout master -- .
 git commit -m "chore: update self-references to master" -a
 gh pr create # TO BE MERGED ON MASTER BEFORE ANY OTHER PR
+git push origin "$next_version"
 ```
 
 Browse to the [releases](https://github.com/SonarSource/gh-action_release/releases) page and create a new release from the new tag created
