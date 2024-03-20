@@ -51,10 +51,9 @@ class MainTest(unittest.TestCase):
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
                     github_release_request.assert_called_once()
-                    releasability_get_trigger_topic_arn.assert_called_once()
-                    releasability_get_result_topic_arn.assert_called_once()
-                    releasability_start_releasability_checks.assert_called_once()
                     burgr_start_releasability_checks.assert_called_once()
+                    releasability_start_releasability_checks.assert_called_once()
+                    releasability_get_releasability_status.assert_called_once()
                     notify_slack.assert_called_once_with('"Released project:version failed')
                     github_revoke_release.assert_called_once()
 
