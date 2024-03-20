@@ -11,4 +11,4 @@ test:
 
 releasability-check:
 	pipenv install
-	pipenv run releasability_check
+	PYTHONPATH=${PWD} pipenv run releasability_check
