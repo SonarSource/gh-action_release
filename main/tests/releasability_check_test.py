@@ -21,7 +21,7 @@ class ReleasabilityCheckTest(unittest.TestCase):
     @patch.object(Releasability, 'start_releasability_checks')
     @patch.object(Releasability, "get_releasability_status")
     def test_releasability_checks_script(
-        os_environ,
+        self,
         json_load_mock,
         burgr_start_releasability_checks,
         releasability_start_releasability_checks,
