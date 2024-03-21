@@ -17,6 +17,7 @@ class ReleasabilityException(Exception):
 
 class Releasability:
     SQS_MAX_POLLED_MESSAGES_AT_A_TIME = 10
+    SQS_POLL_WAIT_TIME = 5
 
     ARN_SNS = 'arn:aws:sns'
     ARN_SQS = 'arn:aws:sqs'
@@ -106,7 +107,7 @@ class Releasability:
 
         remaining_messages, remaining_time = self._get_checks_count_and_max_timeout()  # TODO: what is that ? looks weird
         while remaining_messages > 0 and remaining_time > 0: # TODO: use a timeout
-            messages = self._poll_releasability_queue(sqs_queue_url, Releasability.SQS_MAX_POLLED_MESSAGES_AT_A_TIME)
+            messages = self._poll_releasability_queue(sqs_queue_url, Releasability.SQS_MAX_POLLED_MESSAGES_AT_A_TIME, Releasability.SQS_POLL_WAIT_TIME)
 
             def match_correlation_id(msg): return msg['requestUUID'] == correlation_id
             def not_an_ack_message(msg): return msg['type'] != 'ACK'
@@ -126,13 +127,13 @@ class Releasability:
 
         return report
 
-    def _poll_releasability_queue(self, queue_url: str, max_results: int) -> list:
+    def _poll_releasability_queue(self, queue_url: str, max_results: int, wait_time: int) -> list:
         sqs_client = self.session.client('sqs')
 
         sqs_queue_messages = sqs_client.receive_message(
             QueueUrl=queue_url,
             MaxNumberOfMessages=max_results,
-            WaitTimeSeconds=1,  # TODO: move to constant - magical number
+            WaitTimeSeconds=wait_time,
         )
 
         result = []
