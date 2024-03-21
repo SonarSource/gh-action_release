@@ -136,7 +136,6 @@ jobs:
           slack_channel: ${{ inputs.slackChannel }}
           dry_run: ${{ inputs.dryRun }}
         env:
-          RELEASABILITY_ENV_TYPE: "Dev" # TODO: change back to prod
           PYTHONUNBUFFERED: 1
           ARTIFACTORY_ACCESS_TOKEN: ${{ steps.parse_vault.outputs.artifactory_access_token }}
           BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
