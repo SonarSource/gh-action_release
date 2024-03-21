@@ -16,6 +16,10 @@ class ReleasabilityException(Exception):
 
 
 class Releasability:
+
+    ARN_SNS = 'arn:aws:sns'
+    ARN_SQS = 'arn:aws:sqs'
+
     release_request: ReleaseRequest
     session: Session
 
@@ -25,14 +29,13 @@ class Releasability:
         account_id = self._get_aws_account_id
         self._define_arn_constants(releasability_aws_region, account_id)
 
-
     def _get_aws_account_id(self) -> str:
         return boto3.client('sts').get_caller_identity().get('Account')
 
     def _define_arn_constants(self, aws_region: str, aws_account_id: str):
-        self.TRIGGER_TOPIC_ARN = f"arn:aws:sns:{aws_region}:{aws_account_id}:ReleasabilityTriggerTopic"  # TODO: use constants?
-        self.RESULT_TOPIC_ARN = f"arn:aws:sns:{aws_region}:{aws_account_id}:ReleasabilityResultTopic"  # TODO: use constants?
-        self.RESULT_QUEUE_ARN = f"arn:aws:sqs:{aws_region}:{aws_account_id}:ReleasabilityResultQueue"  # TODO: use constants?
+        self.TRIGGER_TOPIC_ARN = f"{Releasability.ARN_SNS}:{aws_region}:{aws_account_id}:ReleasabilityTriggerTopic"
+        self.RESULT_TOPIC_ARN = f"{Releasability.ARN_SNS}:{aws_region}:{aws_account_id}:ReleasabilityResultTopic"
+        self.RESULT_QUEUE_ARN = f"{Releasability.ARN_SQS}:{aws_region}:{aws_account_id}:ReleasabilityResultQueue"
 
     @Dryable(logging_msg='{function}({args}{kwargs})')
     def start_releasability_checks(self):
@@ -77,15 +80,29 @@ class Releasability:
         }
         return sns_request
 
-    def _arn_to_url(self, arn):
+    """
+    This method is responsible to return an SQS queue url based on an arn.
+    More details about SQS urls can be found here: 
+    https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-message-identifiers.html
+    """
+    @staticmethod
+    def _arn_to_sqs_url(arn):
         parts = arn.split(':')
-        return 'https://sqs.' + parts[3] + '.amazonaws.com/' + parts[4] + '/' + parts[5]  # TODO: use constants?
+        service = parts[2]
+
+        if service != "sqs":
+            raise ValueError(f"Invalid sqs ARN: {arn}")
+
+        region = parts[3]
+        account_number = parts[4]
+        queue_name = parts[5]
+        return f'https://sqs.{region}.amazonaws.com/{account_number}/{queue_name}'
 
     def get_releasability_report(self, correlation_id: str) -> ReleasabilityChecksReport:
         report = ReleasabilityChecksReport()
         remaining_messages, remaining_time = self._get_checks_count_and_max_timeout()
         sqs = self.session.client('sqs')
-        queue_url = self._arn_to_url(self.RESULT_QUEUE_ARN)
+        queue_url = self._arn_to_sqs_url(self.RESULT_QUEUE_ARN)
         while remaining_messages > 0 and remaining_time > 0:
             remaining_time -= 1
             messages = sqs.receive_message(

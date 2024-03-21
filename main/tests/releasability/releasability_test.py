@@ -2,6 +2,7 @@ import ast
 import unittest
 
 from unittest.mock import patch, MagicMock
+
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.releasability.releasability import Releasability
 
@@ -83,3 +84,21 @@ class ReleasabilityTest(unittest.TestCase):
             correlation_id = releasability.start_releasability_checks()
 
             assert correlation_id is not None
+
+    def test_arn_to_sqs_url_should_return_expected_url_given_a_valid_sqs_arn(self):
+        region = "us-east-1"
+        account_number = "123456789012"
+        queue_name = "great-project/great"
+        arn = f"arn:aws:sqs:{region}:{account_number}:{queue_name}"
+
+        sqs_url = Releasability._arn_to_sqs_url(arn)
+
+        self.assertEquals(sqs_url, f"https://sqs.{region}.amazonaws.com/{account_number}/{queue_name}")
+
+    def test_arn_to_sqs_url_should_return_expected_url_given_an_invalid_arn(self):
+        region = "us-east-1"
+        account_number = "123456789012"
+        queue_name = "great-project/great"
+        arn = f"arn:aws:invalid:{region}:{account_number}:{queue_name}"
+
+        self.assertRaises(ValueError, lambda: Releasability._arn_to_sqs_url(arn))
