@@ -8,11 +8,11 @@ from parameterized import parameterized
 
 from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
 from release.main import main, set_output, check_params, MANDATORY_ENV_VARIABLES
+from release.releasability.releasability import Releasability
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
-from release.releasability import Releasability
 
 
 def test_set_output():
