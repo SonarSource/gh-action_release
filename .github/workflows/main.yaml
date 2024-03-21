@@ -130,7 +130,7 @@ jobs:
       - name: Release
         id: release
         #TODO: use a hash target when ready for merge
-        uses: SonarSource/gh-action_release/main@feat/mm/build-4609-check-releasability
+        uses: SonarSource/gh-action_release/main@feat/svermeille/BUILD-4609-check-releasability-unit-tests-and-refacto
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
