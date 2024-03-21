@@ -2,6 +2,7 @@ import uuid
 import boto3
 import json
 from boto3 import Session
+from dryable import Dryable
 
 from release.releasability.releasability_check_result import ReleasabilityCheckResult
 from release.releasability.releasability_checks_report import ReleasabilityChecksReport
@@ -33,6 +34,7 @@ class Releasability:
         self.RESULT_TOPIC_ARN = f"arn:aws:sns:{aws_region}:{aws_account_id}:ReleasabilityResultTopic"  # TODO: use constants?
         self.RESULT_QUEUE_ARN = f"arn:aws:sqs:{aws_region}:{aws_account_id}:ReleasabilityResultQueue"  # TODO: use constants?
 
+    @Dryable(logging_msg='{function}({args}{kwargs})')
     def start_releasability_checks(self):
         standardized_version = VersionHelper.as_standardized_version(self.release_request)
 
