@@ -79,6 +79,15 @@ jobs:
       publish_to_binaries: ${{ steps.release.outputs.publish_to_binaries }}
       release: ${{ steps.release.outputs.release }}
     steps:
+      # TODO: remove
+      - name: Print GitHub Event
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+        run: |
+          echo "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}"
+          echo "GITHUB_EVENT_PATH=${GITHUB_EVENT_PATH}"
+          cat $GITHUB_EVENT_PATH
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
