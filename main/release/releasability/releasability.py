@@ -16,6 +16,7 @@ class ReleasabilityException(Exception):
 
 
 class Releasability:
+    SQS_MAX_POLLED_MESSAGES_AT_A_TIME = 10
 
     ARN_SNS = 'arn:aws:sns'
     ARN_SQS = 'arn:aws:sqs'
@@ -100,35 +101,50 @@ class Releasability:
 
     def get_releasability_report(self, correlation_id: str) -> ReleasabilityChecksReport:
         report = ReleasabilityChecksReport()
-        remaining_messages, remaining_time = self._get_checks_count_and_max_timeout()
-        sqs = self.session.client('sqs')
-        queue_url = self._arn_to_sqs_url(self.RESULT_QUEUE_ARN)
-        while remaining_messages > 0 and remaining_time > 0:
-            remaining_time -= 1
-            messages = sqs.receive_message(
-                QueueUrl=queue_url,
-                MaxNumberOfMessages=10,
-                WaitTimeSeconds=1,
-            )
-            if 'Messages' in messages:
-                for message in messages['Messages']:
-                    body = json.loads(message['Body'])
-                    content = json.loads(body['Message'])
-                    # Filter relevant messages to this correlation_id
-                    if content["requestUUID"] == correlation_id:
-                        check_result = content["type"]
-                        # Skip check acknowledgement messages
-                        if check_result != "ACK":  # TODO: constant ?
-                            remaining_messages -= 1
-                            message = ""
-                            passed = True
-                            if "message" in content:
-                                passed = False
-                                message = content["message"]
-                            report.add_check(ReleasabilityCheckResult(content["checkName"], check_result, passed, message))
+
+        sqs_queue_url = self._arn_to_sqs_url(self.RESULT_QUEUE_ARN)
+
+        remaining_messages, remaining_time = self._get_checks_count_and_max_timeout()  # TODO: what is that ? looks weird
+        while remaining_messages > 0 and remaining_time > 0: # TODO: use a timeout
+            messages = self._poll_releasability_queue(sqs_queue_url, Releasability.SQS_MAX_POLLED_MESSAGES_AT_A_TIME)
+
+            def match_correlation_id(msg): return msg['requestUUID'] == correlation_id
+            def not_an_ack_message(msg): return msg['type'] != 'ACK'
+            filters = (match_correlation_id, not_an_ack_message)
+            filtered_messages = filter(lambda msg: all(f(msg) for f in filters), messages)
+
+            for message_content in filtered_messages:
+                remaining_messages -= 1
+
+                report.add_check(
+                    ReleasabilityCheckResult(
+                        message_content["checkName"],
+                        message_content["type"],
+                        message_content["message"] or None
+                    )
+                )
+
         return report
 
-    def _get_checks_count_and_max_timeout(self) -> tuple[int, int]:
+    def _poll_releasability_queue(self, queue_url: str, max_results: int) -> list:
+        sqs_client = self.session.client('sqs')
+
+        sqs_queue_messages = sqs_client.receive_message(
+            QueueUrl=queue_url,
+            MaxNumberOfMessages=max_results,
+            WaitTimeSeconds=1,  # TODO: move to constant - magical number
+        )
+
+        result = []
+
+        for json_message in sqs_queue_messages['Messages']:
+            body = json.loads(json_message['Body'])
+            content = json.loads(body['Message'])
+            result.append(content)
+
+        return result
+
+    def _get_checks_count_and_max_timeout(self) -> tuple[int, int]:  # TODO: looks weird, is that really the "clean way" of doing that in python ?
         # Get lambdas
         lambda_client = self.session.client('lambda')
         function_response = lambda_client.list_functions()
@@ -138,11 +154,11 @@ class Releasability:
             functions += function_response['Functions']
 
         # Get all subscriptions to the input SNS topic
-        sns = self.session.client('sns')
-        sns_response = sns.list_subscriptions_by_topic(TopicArn=self.TRIGGER_TOPIC_ARN)
+        sns_client = self.session.client('sns')
+        sns_response = sns_client.list_subscriptions_by_topic(TopicArn=self.TRIGGER_TOPIC_ARN)
         subscriptions = sns_response['Subscriptions']
         while 'NextToken' in sns_response:
-            sns_response = sns.list_subscriptions_by_topic(TopicArn=self.TRIGGER_TOPIC_ARN, NextToken=sns_response['Subscriptions'])
+            sns_response = sns_client.list_subscriptions_by_topic(TopicArn=self.TRIGGER_TOPIC_ARN, NextToken=sns_response['Subscriptions'])
             subscriptions += sns_response['Subscriptions']
         subscriptions_endpoint_arn = [d['Endpoint'] for d in subscriptions]
 

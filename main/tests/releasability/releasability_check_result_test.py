@@ -9,8 +9,7 @@ class ReleasabilityCheckResultTest(unittest.TestCase):
         successful_check = ReleasabilityCheckResult(
             name="license is valid",
             message="use Sonar license",
-            passed=True,
-            state="PASSED"
+            state=ReleasabilityCheckResult.CHECK_PASSED
         )
 
         output = str(successful_check)
@@ -21,8 +20,7 @@ class ReleasabilityCheckResultTest(unittest.TestCase):
         failed_check = ReleasabilityCheckResult(
             name="license is not valid",
             message="use BSD license",
-            passed=False,
-            state="ERROR"
+            state=ReleasabilityCheckResult.CHECK_FAILED
         )
 
         output = str(failed_check)
@@ -33,8 +31,7 @@ class ReleasabilityCheckResultTest(unittest.TestCase):
         failed_check = ReleasabilityCheckResult(
             name="emacs vs vim",
             message="choose your battle",
-            passed=True,
-            state="NOT_RELEVANT"
+            state=ReleasabilityCheckResult.CHECK_NOT_RELEVANT
         )
 
         output = str(failed_check)

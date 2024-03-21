@@ -52,13 +52,13 @@ class ReleasabilityCheckReportTest(unittest.TestCase):
     def _build_failed_check(self, name: str) -> ReleasabilityCheckResult:
         return ReleasabilityCheckResult(
             name=name,
-            passed=False,
-            state="failure"
+            message='',
+            state=ReleasabilityCheckResult.CHECK_FAILED
         )
 
     def _build_successful_check(self, name: str) -> ReleasabilityCheckResult:
         return ReleasabilityCheckResult(
             name=name,
-            passed=True,
+            message='',
             state=ReleasabilityCheckResult.CHECK_PASSED
         )
