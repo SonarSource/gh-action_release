@@ -1,6 +1,6 @@
+from release.releasability.releasability import Releasability
 from release.utils.burgr import Burgr
 from release.utils.github import GitHub
-from release.releasability import Releasability
 from release.utils.release import releasability_checks
 from release.vars import burgrx_url, burgrx_user, burgrx_password
 
