@@ -1,23 +1,25 @@
 
 
 class ReleasabilityCheckResult:
-    CHECK_PREFIX = "\u2713"  # TODO: this name is not explicit, should find a better replacement
+    CHECK_OPTIONAL_PREFIX = "\u2713"
     SUCCESS_PREFIX = "\u2705"
     FAILURE_PREFIX = "\u274c"
+    UNKNOWN_PREFIX = "\u2753"
 
     CHECK_PASSED = 'PASSED'
     CHECK_NOT_RELEVANT = 'NOT_RELEVANT'
+    CHECK_FAILED = 'ERROR'
 
-    passed: bool  # TODO: passed is not really clear :/ maybe passedOrIgnored or mandatory ?
     name: str
     state: str
+    passed: bool
     message: str
 
-    def __init__(self, name: str, state: str, passed: bool, message: str = None):
+    def __init__(self, name: str, state: str, message: str = None):
         self.name = name
         self.state = state
-        self.passed = passed
         self.message = message
+        self.passed = self.has_passed(state)
 
     def __str__(self):
         prefix = self._get_prefix()
@@ -33,6 +35,17 @@ class ReleasabilityCheckResult:
             case self.CHECK_PASSED:
                 return self.SUCCESS_PREFIX
             case self.CHECK_NOT_RELEVANT:
-                return self.CHECK_PREFIX
-            case _:
+                return self.CHECK_OPTIONAL_PREFIX
+            case self.CHECK_FAILED:
                 return self.FAILURE_PREFIX
+            case _:
+                return self.UNKNOWN_PREFIX
+
+    def has_passed(self, state: str) -> bool:
+        match state:
+            case self.CHECK_PASSED:
+                return True
+            case self.CHECK_NOT_RELEVANT:
+                return True
+            case _:
+                return False
