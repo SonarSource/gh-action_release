@@ -19,7 +19,7 @@ class ReleasabilityCheckTest(unittest.TestCase):
     )
     @patch.object(Burgr, "start_releasability_checks")
     @patch.object(Releasability, 'start_releasability_checks')
-    @patch.object(Releasability, "get_releasability_status")
+    @patch.object(Releasability, "get_releasability_report")
     def test_releasability_checks_script(
         self,
         json_load_mock,

@@ -1,10 +1,11 @@
 import os
 
 from dryable import Dryable
+
+from release.releasability.releasability import Releasability
 from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
-from release.releasability import Releasability
 from release.utils.github import GitHub
 from release.utils.slack import notify_slack
 
@@ -94,7 +95,8 @@ def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasabil
     try:
         correlation_id = releasability.start_releasability_checks()
         burgr.start_releasability_checks()
-        releasability.get_releasability_status(correlation_id)
+        report = releasability.get_releasability_report(correlation_id)
+        print(report)
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
     except Exception as e:
         notify_slack(f"The release of {release_request.project}:{release_request.version} failed")
