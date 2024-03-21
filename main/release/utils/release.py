@@ -91,6 +91,7 @@ def set_output(output_name, value):
             print(f"{output_name}={value}", file=output_stream)
 
 
+@Dryable(logging_msg='{function}({args}{kwargs})')
 def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasability, release_request: ReleaseRequest.ReleaseRequest):
     try:
         correlation_id = releasability.start_releasability_checks()
