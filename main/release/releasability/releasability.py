@@ -24,7 +24,7 @@ class CouldNotRetrieveReleasabilityCheckResultsException(ReleasabilityException)
 
 class Releasability:
     SQS_MAX_POLLED_MESSAGES_AT_A_TIME = 10
-    SQS_POLL_WAIT_TIME = 5
+    SQS_POLL_WAIT_TIME = 10
     FETCH_CHECK_RESULT_TIMEOUT_SECONDS = 60 * 5
     FETCH_SLEEP_TIME_SECONDS = 2
 
@@ -37,7 +37,7 @@ class Releasability:
     def __init__(self, release_request):
         self.release_request = release_request
         self.session = boto3.Session(region_name=releasability_aws_region)
-        account_id = self._get_aws_account_id
+        account_id = self._get_aws_account_id()
         self._define_arn_constants(releasability_aws_region, account_id)
 
     def _get_aws_account_id(self) -> str:
@@ -128,7 +128,7 @@ class Releasability:
                     ReleasabilityCheckResult(
                         message_payload["checkName"],
                         message_payload["type"],
-                        message_payload["message"] or None
+                        message_payload["message"] if "message" in message_payload else None
                     )
                 )
 

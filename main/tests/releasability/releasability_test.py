@@ -94,7 +94,7 @@ class ReleasabilityTest(unittest.TestCase):
 
         sqs_url = Releasability._arn_to_sqs_url(arn)
 
-        self.assertEquals(sqs_url, f"https://sqs.{region}.amazonaws.com/{account_number}/{queue_name}")
+        self.assertEqual(sqs_url, f"https://sqs.{region}.amazonaws.com/{account_number}/{queue_name}")
 
     def test_arn_to_sqs_url_should_return_expected_url_given_an_invalid_arn(self):
         region = "us-east-1"
