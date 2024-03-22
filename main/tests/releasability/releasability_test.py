@@ -233,3 +233,50 @@ class ReleasabilityTest(unittest.TestCase):
         filtered_messages = releasability._fetch_filtered_check_results(filters)
 
         self.assertEqual(len(filtered_messages), 2)
+
+    @mock.patch('boto3.Session.client')
+    def test_get_check_names(self, mock_client):
+        sns_response = {
+            "Subscriptions": [
+                {
+                    "SubscriptionArn": "arn:aws:sns:eu-west-1:597611216173:ReleasabilityTriggerTopic:8826ce92-6ebf-4c8c-96dc-832be94218db",
+                    "Owner": "597611216173",
+                    "Protocol": "lambda",
+                    "Endpoint": "arn:aws:lambda:eu-west-1:597611216173:function:CheckWhiteSource",
+                    "TopicArn": "arn:aws:sns:eu-west-1:597611216173:ReleasabilityTriggerTopic",
+                },
+                {
+                    "SubscriptionArn": "arn:aws:sns:eu-west-1:597611216173:ReleasabilityTriggerTopic:53a1e6c7-a967-40b6-8d4d-61f8b50f0314",
+                    "Owner": "597611216173",
+                    "Protocol": "lambda",
+                    "Endpoint": "arn:aws:lambda:eu-west-1:597611216173:function:CheckQualityGate",
+                    "TopicArn": "arn:aws:sns:eu-west-1:597611216173:ReleasabilityTriggerTopic",
+                },
+                {
+                    "SubscriptionArn": "arn:aws:sns:eu-west-1:597611216173:ReleasabilityTriggerTopic:439f2173-bcdb-4da6-acbe-121600093d8f",
+                    "Owner": "597611216173",
+                    "Protocol": "lambda",
+                    "Endpoint": "arn:aws:lambda:eu-west-1:597611216173:function:CheckDependencies",
+                    "TopicArn": "arn:aws:sns:eu-west-1:597611216173:ReleasabilityTriggerTopic",
+                },
+            ],
+            "ResponseMetadata": {
+                "RequestId": "2a7cdef4-75de-5568-81bb-80831b58a9f5",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {
+                    "x-amzn-requestid": "2a7cdef4-75de-5568-81bb-80831b58a9f5",
+                    "date": "Fri, 22 Mar 2024 11:32:22 GMT",
+                    "content-type": "text/xml",
+                    "content-length": "4194",
+                    "connection": "keep-alive",
+                },
+                "RetryAttempts": 0,
+            },
+        }
+        mock_sns_client = mock_client.return_value
+        mock_sns_client.list_subscriptions_by_topic.return_value = sns_response
+        release_request = MagicMock()
+        releasability = Releasability(release_request)
+
+        check_names = releasability._get_checks()
+        self.assertEqual(check_names, ["CheckWhiteSource", "CheckQualityGate", "CheckDependencies"])
