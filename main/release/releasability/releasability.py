@@ -93,7 +93,7 @@ class Releasability:
 
     """
     This method is responsible to return an SQS queue url based on an arn.
-    More details about SQS urls can be found here: 
+    More details about SQS urls can be found here:
     https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-message-identifiers.html
     """
 
