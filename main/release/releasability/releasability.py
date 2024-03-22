@@ -1,4 +1,6 @@
 import uuid
+import time
+
 import boto3
 import json
 from boto3 import Session
@@ -7,6 +9,7 @@ from dryable import Dryable
 from release.releasability.releasability_check_result import ReleasabilityCheckResult
 from release.releasability.releasability_checks_report import ReleasabilityChecksReport
 from release.steps.ReleaseRequest import ReleaseRequest
+from release.utils.timeout import has_exceeded_timeout
 from release.utils.version_helper import VersionHelper
 from release.vars import releasability_aws_region
 
@@ -15,9 +18,15 @@ class ReleasabilityException(Exception):
     pass
 
 
+class CouldNotRetrieveReleasabilityCheckResultsException(ReleasabilityException):
+    pass
+
+
 class Releasability:
     SQS_MAX_POLLED_MESSAGES_AT_A_TIME = 10
     SQS_POLL_WAIT_TIME = 5
+    FETCH_CHECK_RESULT_TIMEOUT_SECONDS = 60 * 5
+    FETCH_SLEEP_TIME_SECONDS = 2
 
     ARN_SNS = 'arn:aws:sns'
     ARN_SQS = 'arn:aws:sqs'
@@ -87,6 +96,7 @@ class Releasability:
     More details about SQS urls can be found here: 
     https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-message-identifiers.html
     """
+
     @staticmethod
     def _arn_to_sqs_url(arn):
         parts = arn.split(':')
@@ -103,37 +113,54 @@ class Releasability:
     def get_releasability_report(self, correlation_id: str) -> ReleasabilityChecksReport:
         report = ReleasabilityChecksReport()
 
-        sqs_queue_url = self._arn_to_sqs_url(self.RESULT_QUEUE_ARN)
+        def match_correlation_id(msg):
+            return msg['requestUUID'] == correlation_id
 
-        remaining_messages, remaining_time = self._get_checks_count_and_max_timeout()  # TODO: what is that ? looks weird
-        while remaining_messages > 0 and remaining_time > 0: # TODO: use a timeout
-            messages = self._poll_releasability_queue(sqs_queue_url, Releasability.SQS_MAX_POLLED_MESSAGES_AT_A_TIME, Releasability.SQS_POLL_WAIT_TIME)
+        def not_an_ack_message(msg):
+            return msg['type'] != 'ACK'
 
-            def match_correlation_id(msg): return msg['requestUUID'] == correlation_id
-            def not_an_ack_message(msg): return msg['type'] != 'ACK'
-            filters = (match_correlation_id, not_an_ack_message)
-            filtered_messages = filter(lambda msg: all(f(msg) for f in filters), messages)
+        filters = (match_correlation_id, not_an_ack_message)
 
-            for message_content in filtered_messages:
-                remaining_messages -= 1
+        expected_message_count = self._get_checks_count()
+        received_message_count = 0
 
+        now = time.time()
+        while (received_message_count < expected_message_count
+               and not has_exceeded_timeout(now, Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS)):
+            filtered_messages = self._fetch_filtered_check_results(filters)
+
+            for message_payload in filtered_messages:
+                received_message_count += 1
                 report.add_check(
                     ReleasabilityCheckResult(
-                        message_content["checkName"],
-                        message_content["type"],
-                        message_content["message"] or None
+                        message_payload["checkName"],
+                        message_payload["type"],
+                        message_payload["message"] or None
                     )
                 )
 
-        return report
+            time.sleep(Releasability.FETCH_SLEEP_TIME_SECONDS)
 
-    def _poll_releasability_queue(self, queue_url: str, max_results: int, wait_time: int) -> list:
+        if expected_message_count == received_message_count:
+            return report
+        else:
+            raise CouldNotRetrieveReleasabilityCheckResultsException(
+                f'Received {received_message_count}/{expected_message_count} check result messages within '
+                f'allowed time ({Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS} seconds)')
+
+    def _fetch_filtered_check_results(self, filters) -> list:
+        unfiltered_messages = self._fetch_check_results()
+        return list(filter(lambda msg: all(f(msg) for f in filters), unfiltered_messages))
+
+    def _fetch_check_results(self) -> list:
+
         sqs_client = self.session.client('sqs')
+        sqs_queue_url = self._arn_to_sqs_url(self.RESULT_QUEUE_ARN)
 
         sqs_queue_messages = sqs_client.receive_message(
-            QueueUrl=queue_url,
-            MaxNumberOfMessages=max_results,
-            WaitTimeSeconds=wait_time,
+            QueueUrl=sqs_queue_url,
+            MaxNumberOfMessages=Releasability.SQS_MAX_POLLED_MESSAGES_AT_A_TIME,
+            WaitTimeSeconds=Releasability.SQS_POLL_WAIT_TIME,
         )
 
         result = []
@@ -145,7 +172,8 @@ class Releasability:
 
         return result
 
-    def _get_checks_count_and_max_timeout(self) -> tuple[int, int]:  # TODO: looks weird, is that really the "clean way" of doing that in python ?
+    def _get_checks_count(
+        self) -> int:  # TODO: this algo is weak, counting does not ensure we receive what we are expecting. Instead we should have a set of checks we expect to receive response for and ensure we receive them.
         # Get lambdas
         lambda_client = self.session.client('lambda')
         function_response = lambda_client.list_functions()
@@ -167,8 +195,4 @@ class Releasability:
         checks = [check for check in functions if check['FunctionArn'] in subscriptions_endpoint_arn]
         checks_count = len(checks)
 
-        # Get the timeout of the lambdas
-        functions_timeout = [check['Timeout'] for check in functions]
-        max_function_timeout = max(functions_timeout)
-
-        return checks_count, max_function_timeout
+        return checks_count

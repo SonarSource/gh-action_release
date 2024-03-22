@@ -2,7 +2,7 @@ import os
 
 from dryable import Dryable
 
-from release.releasability.releasability import Releasability
+from release.releasability.releasability import Releasability, CouldNotRetrieveReleasabilityCheckResultsException
 from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
@@ -99,7 +99,16 @@ def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasabil
         report = releasability.get_releasability_report(correlation_id)
         print(report)
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
-    except Exception as e:
-        notify_slack(f"The release of {release_request.project}:{release_request.version} failed")
-        github.revoke_release()
-        raise e
+    except CouldNotRetrieveReleasabilityCheckResultsException as ex:
+        print(f'Unable to retrieve all the requested releasability check results {ex}')
+        _fail_release(github, release_request)
+
+    except Exception as ex:
+        print(f'Something weird happened: {ex}')
+        _fail_release(github, release_request)
+        raise ex  # TODO: either catch either rethrow dont do both
+
+
+def _fail_release(github: GitHub, release_request: ReleaseRequest):
+    notify_slack(f"The release of {release_request.project}:{release_request.version} failed")
+    github.revoke_release()
