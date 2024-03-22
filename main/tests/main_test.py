@@ -30,6 +30,7 @@ class MainTest(unittest.TestCase):
     @patch('release.main.check_params')
     @patch('release.utils.github.json.load')
     @patch.object(Burgr, 'start_releasability_checks', side_effect=Exception('exception'))
+    @patch.object(Releasability, '_get_aws_account_id')
     @patch.object(Releasability, 'start_releasability_checks')
     @patch.object(Releasability, 'get_releasability_report')
     @patch('release.main.notify_slack')
@@ -37,6 +38,7 @@ class MainTest(unittest.TestCase):
     def test_releasability_failure_burgr(self,
                                    github_revoke_release,
                                    notify_slack,
+                                   _get_aws_account_id,
                                    check_params,
                                    burgr_start_releasability_checks,
                                    releasability_start_releasability_checks,
@@ -47,6 +49,7 @@ class MainTest(unittest.TestCase):
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
                 with pytest.raises(Exception, match='exception'):
                     main()
+                    _get_aws_account_id.assert_called_once()
                     check_params.assert_called_once()
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
@@ -60,6 +63,7 @@ class MainTest(unittest.TestCase):
     @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release'}, clear=True)
     @patch('release.main.check_params')
     @patch('release.utils.github.json.load')
+    @patch.object(Releasability, '_get_aws_account_id')
     @patch.object(Burgr, 'start_releasability_checks')
     @patch.object(Releasability, 'start_releasability_checks', side_effect=Exception('exception'))
     @patch.object(Releasability, 'get_releasability_report', side_effect=Exception('exception'))
@@ -68,6 +72,7 @@ class MainTest(unittest.TestCase):
     def test_releasability_failure(self,
                                    github_revoke_release,
                                    notify_slack,
+                                   _get_aws_account_id,
                                    check_params,
                                    burgr_start_releasability_checks,
                                    releasability_start_releasability_checks,
@@ -78,6 +83,7 @@ class MainTest(unittest.TestCase):
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
                 with pytest.raises(Exception, match='exception'):
                     main()
+                    _get_aws_account_id.assert_called_once()
                     check_params.assert_called_once()
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
@@ -93,6 +99,7 @@ class MainTest(unittest.TestCase):
         'ARTIFACTORY_ACCESS_TOKEN': 'mockAccessTokenValue',
     }, clear=True)
     @patch('release.utils.github.json.load')
+    @patch.object(Releasability, '_get_aws_account_id')
     @patch.object(Burgr, 'start_releasability_checks')
     @patch.object(Releasability, 'start_releasability_checks')
     @patch.object(Releasability, 'get_releasability_report')
@@ -113,12 +120,14 @@ class MainTest(unittest.TestCase):
                              artifactory_receive_build_info,
                              releasability_get_releasability_status,
                              releasability_start_releasability_checks,
+                            _get_aws_account_id,
                              burgr_start_releasability_checks,
                              github_event):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
                 main()
+                _get_aws_account_id.assert_called_once()
                 check_params.assert_called_once()
                 open_mock.assert_called_once()
                 github_event.assert_called_once()
@@ -138,6 +147,7 @@ class MainTest(unittest.TestCase):
         'GITHUB_EVENT_NAME': 'release',
         'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken'
     }, clear=True)
+    @patch.object(Releasability, '_get_aws_account_id')
     @patch('release.main.check_params')
     @patch('release.utils.github.json.load')
     @patch.object(Releasability, 'get_releasability_report')
@@ -150,6 +160,7 @@ class MainTest(unittest.TestCase):
     def test_promotion_failure(self,
                                abort_release,
                                notify_slack,
+                               _get_aws_account_id,
                                check_params,
                                artifactory_promote,
                                artifactory_receive_build_info,
@@ -162,6 +173,7 @@ class MainTest(unittest.TestCase):
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
                 with pytest.raises(Exception, match='exception'):
                     main()
+                    _get_aws_account_id.assert_called_once()
                     check_params.assert_called_once()
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
