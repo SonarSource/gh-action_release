@@ -40,6 +40,7 @@ class Releasability:
         account_id = self._get_aws_account_id()
         self._define_arn_constants(releasability_aws_region, account_id)
 
+    @Dryable(logging_msg='{function}({args}{kwargs})')
     def _get_aws_account_id(self) -> str:
         return boto3.client('sts').get_caller_identity().get('Account')
 
