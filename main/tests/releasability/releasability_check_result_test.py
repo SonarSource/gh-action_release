@@ -14,7 +14,7 @@ class ReleasabilityCheckResultTest(unittest.TestCase):
 
         output = str(successful_check)
 
-        self.assertEquals(output, "✅ license is valid  - use Sonar license")
+        self.assertEqual(output, "✅ license is valid  - use Sonar license")
 
     def test_to_string_method_of_failed_check_should_print_expected_output(self):
         failed_check = ReleasabilityCheckResult(
@@ -25,7 +25,7 @@ class ReleasabilityCheckResultTest(unittest.TestCase):
 
         output = str(failed_check)
 
-        self.assertEquals(output, "❌ license is not valid  - use BSD license")
+        self.assertEqual(output, "❌ license is not valid  - use BSD license")
 
     def test_to_string_method_of_not_relevant_check_should_print_expected_output(self):
         failed_check = ReleasabilityCheckResult(
@@ -36,4 +36,4 @@ class ReleasabilityCheckResultTest(unittest.TestCase):
 
         output = str(failed_check)
 
-        self.assertEquals(output, "✓ emacs vs vim  - choose your battle")
+        self.assertEqual(output, "✓ emacs vs vim  - choose your battle")

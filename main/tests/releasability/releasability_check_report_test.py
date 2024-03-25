@@ -32,7 +32,7 @@ class ReleasabilityCheckReportTest(unittest.TestCase):
             check_c
         ])
 
-        self.assertEquals(3, len(report.get_checks()))
+        self.assertEqual(3, len(report.get_checks()))
         self.assertIn(check_a, report.get_checks())
         self.assertIn(check_b, report.get_checks())
         self.assertIn(check_c, report.get_checks())
