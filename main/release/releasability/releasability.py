@@ -141,7 +141,7 @@ class Releasability:
 
             time.sleep(Releasability.FETCH_SLEEP_TIME_SECONDS)
 
-        #  TODO: The code should not relay on amount of results but check 1:1 between check name and received response.
+        #  TODO: The code should not relies on amount of results but check 1:1 between check name and received response.
         #  A ticket has been created for that: https://sonarsource.atlassian.net/browse/BUILD-4703
         if expected_message_count == received_message_count:
             return received_check_results
