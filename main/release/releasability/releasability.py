@@ -24,7 +24,7 @@ class CouldNotRetrieveReleasabilityCheckResultsException(ReleasabilityException)
 
 class Releasability:
     SQS_MAX_POLLED_MESSAGES_AT_A_TIME = 10
-    SQS_POLL_WAIT_TIME = 5
+    SQS_POLL_WAIT_TIME = 10
     FETCH_CHECK_RESULT_TIMEOUT_SECONDS = 60 * 5
     FETCH_SLEEP_TIME_SECONDS = 2
 
@@ -37,9 +37,10 @@ class Releasability:
     def __init__(self, release_request):
         self.release_request = release_request
         self.session = boto3.Session(region_name=releasability_aws_region)
-        account_id = self._get_aws_account_id
+        account_id = self._get_aws_account_id()
         self._define_arn_constants(releasability_aws_region, account_id)
 
+    @Dryable(logging_msg='{function}({args}{kwargs})')
     def _get_aws_account_id(self) -> str:
         return boto3.client('sts').get_caller_identity().get('Account')
 
@@ -114,7 +115,7 @@ class Releasability:
         report = ReleasabilityChecksReport()
         filters = self._build_filters(correlation_id)
 
-        expected_message_count = self._get_checks_count()
+        expected_message_count = len(self._get_checks())
         received_message_count = 0
 
         now = time.time()
@@ -128,7 +129,7 @@ class Releasability:
                     ReleasabilityCheckResult(
                         message_payload["checkName"],
                         message_payload["type"],
-                        message_payload["message"] or None
+                        message_payload["message"] if "message" in message_payload else None
                     )
                 )
 
@@ -174,27 +175,11 @@ class Releasability:
 
         return result
 
-    def _get_checks_count(
-        self) -> int:  # TODO: this algo is weak, counting does not ensure we receive what we are expecting. Instead we should have a set of checks we expect to receive response for and ensure we receive them.
-        # Get lambdas
-        lambda_client = self.session.client('lambda')
-        function_response = lambda_client.list_functions()
-        functions = function_response['Functions']
-        while 'NextMarker' in function_response:
-            function_response = lambda_client.list_functions(Marker=function_response['NextMarker'])
-            functions += function_response['Functions']
-
-        # Get all subscriptions to the input SNS topic
+    def _get_checks(self) -> list[str]:
         sns_client = self.session.client('sns')
         sns_response = sns_client.list_subscriptions_by_topic(TopicArn=self.TRIGGER_TOPIC_ARN)
-        subscriptions = sns_response['Subscriptions']
-        while 'NextToken' in sns_response:
-            sns_response = sns_client.list_subscriptions_by_topic(TopicArn=self.TRIGGER_TOPIC_ARN, NextToken=sns_response['Subscriptions'])
-            subscriptions += sns_response['Subscriptions']
-        subscriptions_endpoint_arn = [d['Endpoint'] for d in subscriptions]
+        subscriptions = sns_response['Subscriptions'] # Caveat: maximum number of subscriptions returned by AWS in a single call is 100
 
-        # Get all checks that are subscribed to the input SNS topic
-        checks = [check for check in functions if check['FunctionArn'] in subscriptions_endpoint_arn]
-        checks_count = len(checks)
+        checks = [subscription['Endpoint'].split(':')[-1] for subscription in subscriptions]
 
-        return checks_count
+        return checks

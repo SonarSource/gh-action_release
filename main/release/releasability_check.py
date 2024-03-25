@@ -4,7 +4,6 @@ from release.utils.github import GitHub
 from release.utils.release import releasability_checks
 from release.vars import burgrx_url, burgrx_user, burgrx_password
 
-
 def do_releasability_checks():
     github = GitHub()
     release_request = github.get_release_request()
