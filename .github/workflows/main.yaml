@@ -90,6 +90,11 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-region: eu-central-1
+          role-to-assume: "arn:aws:iam::064493320159:role/ReleasbilityChecksCICDRole"
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
@@ -150,7 +155,7 @@ jobs:
 
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@master
+        uses: SonarSource/gh-action_release/main@feat/svermeille/BUILD-4608-Trigger-releasability-checks-from-Github-action-by-sending-SNS-message
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
@@ -163,10 +168,10 @@ jobs:
           BURGRX_PASSWORD: ${{ steps.parse_vault.outputs.burgrx_password }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_API_TOKEN: ${{ steps.parse_vault.outputs.slack_api_token }}
-          AWS_ACCESS_KEY_ID: ${{ steps.parse_vault.outputs.binaries_aws_access_key_id }}
-          AWS_SECRET_ACCESS_KEY: ${{ steps.parse_vault.outputs.binaries_aws_secret_access_key }}
-          AWS_SESSION_TOKEN: ${{ steps.parse_vault.outputs.binaries_aws_security_token }}
-          AWS_DEFAULT_REGION: eu-central-1
+          BINARIES_AWS_ACCESS_KEY_ID: ${{ steps.parse_vault.outputs.binaries_aws_access_key_id }}
+          BINARIES_AWS_SECRET_ACCESS_KEY: ${{ steps.parse_vault.outputs.binaries_aws_secret_access_key }}
+          BINARIES_AWS_SESSION_TOKEN: ${{ steps.parse_vault.outputs.binaries_aws_security_token }}
+          BINARIES_AWS_DEFAULT_REGION: eu-central-1
           SKIP_RELEASABILITY_CHECKS: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks }}
       - name: Release action results
         if: always()
