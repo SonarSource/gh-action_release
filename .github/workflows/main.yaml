@@ -130,13 +130,12 @@ jobs:
       - name: Release
         id: release
         #TODO: use a hash target when ready for merge
-        uses: SonarSource/gh-action_release/main@feat/mm/build-4609-check-releasability
+        uses: SonarSource/gh-action_release/main@feat/svermeille/BUILD-4609-check-releasability-unit-tests-and-refacto
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
           dry_run: ${{ inputs.dryRun }}
         env:
-          RELEASABILITY_ENV_TYPE: "Dev" # TODO: change back to prod
           PYTHONUNBUFFERED: 1
           ARTIFACTORY_ACCESS_TOKEN: ${{ steps.parse_vault.outputs.artifactory_access_token }}
           BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
