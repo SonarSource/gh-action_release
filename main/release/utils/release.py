@@ -106,7 +106,6 @@ def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasabil
     except Exception as ex:
         print(f'Something weird happened: {ex}')
         _fail_release(github, release_request)
-        raise ex  # TODO: either catch either rethrow dont do both
 
 
 def _fail_release(github: GitHub, release_request: ReleaseRequest):
