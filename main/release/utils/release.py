@@ -1,10 +1,11 @@
 import os
 
 from dryable import Dryable
+
+from release.releasability.releasability import Releasability, CouldNotRetrieveReleasabilityCheckResultsException
 from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.burgr import Burgr
-from release.utils.releasability import Releasability
 from release.utils.github import GitHub
 from release.utils.slack import notify_slack
 
@@ -90,13 +91,23 @@ def set_output(output_name, value):
             print(f"{output_name}={value}", file=output_stream)
 
 
+@Dryable(logging_msg='{function}({args}{kwargs})')
 def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasability, release_request: ReleaseRequest.ReleaseRequest):
     try:
-        releasability.start_releasability_checks()
+        correlation_id = releasability.start_releasability_checks()
         burgr.start_releasability_checks()
-        burgr.get_releasability_status()
+        report = releasability.get_releasability_report(correlation_id)
+        print(report)
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
-    except Exception as e:
-        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
-        github.revoke_release()
-        raise e
+    except CouldNotRetrieveReleasabilityCheckResultsException as ex:
+        print(f'Unable to retrieve all the requested releasability check results {ex}')
+        _fail_release(github, release_request)
+
+    except Exception as ex:
+        _fail_release(github, release_request)
+        raise ex
+
+
+def _fail_release(github: GitHub, release_request: ReleaseRequest):
+    notify_slack(f"The release of {release_request.project}:{release_request.version} failed")
+    github.revoke_release()
