@@ -112,11 +112,16 @@ class Releasability:
         return f'https://sqs.{region}.amazonaws.com/{account_number}/{queue_name}'
 
     def get_releasability_report(self, correlation_id: str) -> ReleasabilityChecksReport:
-        report = ReleasabilityChecksReport()
+
+        check_results = self._get_check_results(correlation_id)
+        return ReleasabilityChecksReport(check_results)
+
+    def _get_check_results(self, correlation_id: str):
         filters = self._build_filters(correlation_id)
 
-        expected_message_count = len(self._get_checks())
+        expected_message_count = self._get_checks_count()
         received_message_count = 0
+        received_check_results = list[ReleasabilityCheckResult]()
 
         now = time.time()
         while (received_message_count < expected_message_count
@@ -125,7 +130,8 @@ class Releasability:
 
             for message_payload in filtered_messages:
                 received_message_count += 1
-                report.add_check(
+
+                received_check_results.append(
                     ReleasabilityCheckResult(
                         message_payload["checkName"],
                         message_payload["type"],
@@ -136,7 +142,7 @@ class Releasability:
             time.sleep(Releasability.FETCH_SLEEP_TIME_SECONDS)
 
         if expected_message_count == received_message_count:
-            return report
+            return received_check_results
         else:
             raise CouldNotRetrieveReleasabilityCheckResultsException(
                 f'Received {received_message_count}/{expected_message_count} check result messages within '
@@ -183,3 +189,6 @@ class Releasability:
         checks = [subscription['Endpoint'].split(':')[-1] for subscription in subscriptions]
 
         return checks
+
+    def _get_checks_count(self):
+        return len(self._get_checks())

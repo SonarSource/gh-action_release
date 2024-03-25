@@ -7,14 +7,11 @@ class ReleasabilityChecksReport:
 
     NEW_LINE = "\n"
 
-    def __init__(self):
-        self.__checks = list[ReleasabilityCheckResult]()
+    def __init__(self, release_check_results: List[ReleasabilityCheckResult]):
+        self.__checks = release_check_results
 
     def __str__(self):
         return self.NEW_LINE.join(str(check) for check in self.__checks)
-
-    def add_check(self, check: ReleasabilityCheckResult):
-        self.__checks.append(check)
 
     def get_checks(self) -> List[ReleasabilityCheckResult]:
         return self.__checks

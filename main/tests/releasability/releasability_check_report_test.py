@@ -7,15 +7,17 @@ from release.releasability.releasability_checks_report import ReleasabilityCheck
 class ReleasabilityCheckReportTest(unittest.TestCase):
 
     def test_contains_error_should_return_true_given_there_is_a_failing_check(self):
-        report = ReleasabilityChecksReport()
-        report.add_check(self._build_failed_check("failed check"))
-        report.add_check(self._build_successful_check("success check"))
+        report = ReleasabilityChecksReport([
+                self._build_failed_check("failed check"),
+                self._build_successful_check("success check")
+        ])
 
         self.assertTrue(report.contains_error())
 
     def test_contains_error_should_return_false_given_there_is_no_failing_check(self):
-        report = ReleasabilityChecksReport()
-        report.add_check(self._build_successful_check("success check"))
+        report = ReleasabilityChecksReport([
+            self._build_successful_check("success check")
+        ])
 
         self.assertFalse(report.contains_error())
 
@@ -24,10 +26,11 @@ class ReleasabilityCheckReportTest(unittest.TestCase):
         check_b = self._build_successful_check("check B")
         check_c = self._build_successful_check("check C")
 
-        report = ReleasabilityChecksReport()
-        report.add_check(check_a)
-        report.add_check(check_b)
-        report.add_check(check_c)
+        report = ReleasabilityChecksReport([
+            check_a,
+            check_b,
+            check_c
+        ])
 
         self.assertEquals(3, len(report.get_checks()))
         self.assertIn(check_a, report.get_checks())
@@ -38,9 +41,10 @@ class ReleasabilityCheckReportTest(unittest.TestCase):
         failed_check = self._build_failed_check("failed check")
         success_check = self._build_successful_check("success check")
 
-        report = ReleasabilityChecksReport()
-        report.add_check(failed_check)
-        report.add_check(success_check)
+        report = ReleasabilityChecksReport([
+            failed_check,
+            success_check
+        ])
 
         print(report)
 
@@ -49,14 +53,17 @@ class ReleasabilityCheckReportTest(unittest.TestCase):
             str(report)
         )
 
-    def _build_failed_check(self, name: str) -> ReleasabilityCheckResult:
+    @staticmethod
+    def _build_failed_check(name: str) -> ReleasabilityCheckResult:
         return ReleasabilityCheckResult(
             name=name,
             message='',
             state=ReleasabilityCheckResult.CHECK_FAILED
         )
 
-    def _build_successful_check(self, name: str) -> ReleasabilityCheckResult:
+
+    @staticmethod
+    def _build_successful_check(name: str) -> ReleasabilityCheckResult:
         return ReleasabilityCheckResult(
             name=name,
             message='',

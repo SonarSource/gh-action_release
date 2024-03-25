@@ -1,11 +1,12 @@
 import ast
+import copy
 import unittest
 from unittest import mock
 
 from unittest.mock import patch, MagicMock
 
 from release.steps.ReleaseRequest import ReleaseRequest
-from release.releasability.releasability import Releasability
+from release.releasability.releasability import Releasability, CouldNotRetrieveReleasabilityCheckResultsException
 
 
 class ReleasabilityTest(unittest.TestCase):
@@ -165,8 +166,8 @@ class ReleasabilityTest(unittest.TestCase):
         self.assertEqual(len(messages), 4)
 
     @mock.patch('boto3.Session.client')
-    def test_fetch_filtered_check_results_should_return_2_messages_given_the_4_provided_contains_only_2_matching_criteria(self, mock_client):
-
+    def test_fetch_filtered_check_results_should_return_2_messages_given_the_4_provided_contains_only_2_matching_criteria(self,
+                                                                                                                          mock_client):
         mock_receive_message_response = {
             "Messages": [
                 {
@@ -233,6 +234,86 @@ class ReleasabilityTest(unittest.TestCase):
         filtered_messages = releasability._fetch_filtered_check_results(filters)
 
         self.assertEqual(len(filtered_messages), 2)
+
+    @mock.patch('boto3.Session.client')
+    def test_get_check_results_should_return_a_list_of_the_same_size_as_the_one_received_from_filtered_check_results(self, mock_session):
+        organization = "sonar"
+        project_name = "sonar-dummy"
+        version = "5.4.3"
+        sha = "434343443efdcaaa123232"
+        build_number = 42
+        branch_name = "feat/some"
+        release_request = ReleaseRequest(organization, project_name, version, build_number, branch_name, sha)
+
+        releasability = Releasability(release_request)
+
+        correlation_id = "ffff-0000-ffff-0000"
+        filtered_check_results = [
+                {
+                    "type": "PASSED",
+                    "requestUUID": correlation_id,
+                    "checkName": "Jira",
+                },
+                {
+                    "type": "ERROR",
+                    "requestUUID": correlation_id,
+                    "checkName": "some_check",
+                },
+            ]
+
+        def mock_fetch_filtered_check_results(filters):
+            return filtered_check_results
+
+        def mock_get_checks_count():
+            return len(filtered_check_results)
+
+        releasability._get_checks_count = mock_get_checks_count
+
+        releasability._fetch_filtered_check_results = mock_fetch_filtered_check_results
+
+        results = releasability._get_check_results(correlation_id)
+
+        self.assertEqual(len(results), len(filtered_check_results))
+
+    @mock.patch('boto3.Session.client')
+    def test_get_check_results_should_raise_an_exception_given_not_enough_check_result_were_retrieved(self, mock_session):
+        organization = "sonar"
+        project_name = "sonar-dummy"
+        version = "5.4.3"
+        sha = "434343443efdcaaa123232"
+        build_number = 42
+        branch_name = "feat/some"
+        release_request = ReleaseRequest(organization, project_name, version, build_number, branch_name, sha)
+
+        Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS = 2
+
+        releasability = Releasability(release_request)
+
+        correlation_id = "ffff-0000-ffff-0000"
+        filtered_check_results = [
+                {
+                    "type": "PASSED",
+                    "requestUUID": correlation_id,
+                    "checkName": "Jira",
+                }
+            ]
+
+        def mock_fetch_filtered_check_results(filters):
+                """
+                Returns:
+                    filtered_check_results only the first time it is invoked, after return an empty list
+                """
+                result = copy.deepcopy(filtered_check_results)
+                filtered_check_results.clear()
+                return result
+        releasability._fetch_filtered_check_results = mock_fetch_filtered_check_results
+
+        def mock_get_checks_count():
+            return 5
+        releasability._get_checks_count = mock_get_checks_count
+
+        with self.assertRaises(CouldNotRetrieveReleasabilityCheckResultsException):
+            releasability._get_check_results(correlation_id)
 
     @mock.patch('boto3.Session.client')
     def test_get_check_names(self, mock_client):
