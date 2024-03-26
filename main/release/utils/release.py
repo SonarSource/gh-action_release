@@ -102,6 +102,7 @@ def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasabil
     except CouldNotRetrieveReleasabilityCheckResultsException as ex:
         print(f'Unable to retrieve all the requested releasability check results {ex}')
         _fail_release(github, release_request)
+        raise ex
 
     except Exception as ex:
         _fail_release(github, release_request)
