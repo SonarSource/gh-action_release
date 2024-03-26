@@ -64,7 +64,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    uses: SonarSource/gh-action_release/.github/workflows/releasability-check.yaml@<id>
+    uses: SonarSource/gh-action_release/.github/workflows/releasability-check.yaml@v5
 ```
 
 ## Dry Run
