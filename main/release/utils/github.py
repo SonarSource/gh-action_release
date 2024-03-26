@@ -45,10 +45,12 @@ class GitHub:
             version = self.event['inputs']['version'] if release is None else release['tag_name']
 
             # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER (SEMVER)
-            version_pattern = re.compile(r'^\d+\.\d+\.\d+(?:-M\d+)?[.+](\d+)$')
+            # tag can be prefixed with a string containing lowercase letters and a dash
+            version_pattern = re.compile(r'^(?:[a-z]+-)?\d+\.\d+\.\d+(?:-M\d+)?[.+](\d+)$')
             version_match = version_pattern.match(version)
             if version_match is None:
-                raise GitHubException('The tag must follow this pattern: X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER')
+                raise GitHubException('The tag must follow this pattern: X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER. It can be preixed with a string containing lowercase letters and a dash: ss-X.X.X.BUILD_NUMBER')
+            
             DEFAULT_BRANCH = self.event.get('repository', {}).get('default_branch', 'master')
             if release is None:
                 branch_name = DEFAULT_BRANCH
