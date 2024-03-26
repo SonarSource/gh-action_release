@@ -1,4 +1,5 @@
 import os
+import sys
 
 from dryable import Dryable
 
@@ -99,16 +100,19 @@ def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasabil
         report = releasability.get_releasability_report(correlation_id)
         print(report)
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
+
+        if report.contains_error():
+            _fail_release(github, release_request)
+
     except CouldNotRetrieveReleasabilityCheckResultsException as ex:
         print(f'Unable to retrieve all the requested releasability check results {ex}')
         _fail_release(github, release_request)
-        raise ex
 
     except Exception as ex:
         _fail_release(github, release_request)
-        raise ex
 
 
 def _fail_release(github: GitHub, release_request: ReleaseRequest):
     notify_slack(f"The release of {release_request.project}:{release_request.version} failed")
     github.revoke_release()
+    sys.exit(1)
