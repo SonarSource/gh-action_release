@@ -117,38 +117,43 @@ class Releasability:
         return ReleasabilityChecksReport(check_results)
 
     def _get_check_results(self, correlation_id: str):
-        filters = self._build_filters(correlation_id)
 
-        expected_message_count = self._get_checks_count()
-        received_message_count = 0
+        releasability_checks_awaiting_response = self._get_checks()
+        expected_check_results_amount = len(releasability_checks_awaiting_response)
         received_check_results = list[ReleasabilityCheckResult]()
 
+        filters = self._build_filters(correlation_id)
+
         now = time.time()
-        while (received_message_count < expected_message_count
+        while (releasability_checks_awaiting_response
                and not has_exceeded_timeout(now, Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS)):
             filtered_messages = self._fetch_filtered_check_results(filters)
 
             for message_payload in filtered_messages:
-                received_message_count += 1
 
-                received_check_results.append(
-                    ReleasabilityCheckResult(
-                        message_payload["checkName"],
-                        message_payload["type"],
-                        message_payload["message"] if "message" in message_payload else None
+                check_name = message_payload['checkName']
+
+                if check_name in releasability_checks_awaiting_response:
+                    releasability_checks_awaiting_response.remove(check_name)
+                    received_check_results.append(
+                        ReleasabilityCheckResult(
+                            check_name,
+                            message_payload["type"],
+                            message_payload["message"] if "message" in message_payload else None
+                        )
                     )
-                )
+                else:
+                    print(f"Received an unexpected check result for a check named '{check_name}', ignoring it")
 
             time.sleep(Releasability.FETCH_SLEEP_TIME_SECONDS)
 
-        #  TODO: The code should not relies on amount of results but check 1:1 between check name and received response.
-        #  A ticket has been created for that: https://sonarsource.atlassian.net/browse/BUILD-4703
-        if expected_message_count == received_message_count:
+        if not releasability_checks_awaiting_response:
             return received_check_results
         else:
             raise CouldNotRetrieveReleasabilityCheckResultsException(
-                f'Received {received_message_count}/{expected_message_count} check result messages within '
-                f'allowed time ({Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS} seconds)')
+                f'Received {len(received_check_results)}/{expected_check_results_amount} check result messages '
+                f'({",".join(releasability_checks_awaiting_response)} checks did not responded'
+                f' within time of {Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS} seconds)')
 
     def _build_filters(self, correlation_id: str) -> []:
         def match_correlation_id(msg):
@@ -186,11 +191,8 @@ class Releasability:
     def _get_checks(self) -> list[str]:
         sns_client = self.session.client('sns')
         sns_response = sns_client.list_subscriptions_by_topic(TopicArn=self.TRIGGER_TOPIC_ARN)
-        subscriptions = sns_response['Subscriptions'] # Caveat: maximum number of subscriptions returned by AWS in a single call is 100
+        subscriptions = sns_response['Subscriptions']  # Caveat: maximum number of subscriptions returned by AWS in a single call is 100
 
         checks = [subscription['Endpoint'].split(':')[-1] for subscription in subscriptions]
 
         return checks
-
-    def _get_checks_count(self):
-        return len(self._get_checks())

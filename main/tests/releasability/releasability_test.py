@@ -236,7 +236,7 @@ class ReleasabilityTest(unittest.TestCase):
         self.assertEqual(len(filtered_messages), 2)
 
     @mock.patch('boto3.Session.client')
-    def test_get_check_results_should_return_a_list_of_the_same_size_as_the_one_received_from_filtered_check_results(self, mock_session):
+    def test_get_check_results_should_return_a_list_of_the_same_checks_as_the_one_expected_from_get_checks(self, mock_session):
         organization = "sonar"
         project_name = "sonar-dummy"
         version = "5.4.3"
@@ -249,31 +249,35 @@ class ReleasabilityTest(unittest.TestCase):
 
         correlation_id = "ffff-0000-ffff-0000"
         filtered_check_results = [
-                {
-                    "type": "PASSED",
-                    "requestUUID": correlation_id,
-                    "checkName": "Jira",
-                },
-                {
-                    "type": "ERROR",
-                    "requestUUID": correlation_id,
-                    "checkName": "some_check",
-                },
-            ]
+            {
+                "type": "PASSED",
+                "requestUUID": correlation_id,
+                "checkName": "Jira",
+            },
+            {
+                "type": "ERROR",
+                "requestUUID": correlation_id,
+                "checkName": "some_check",
+            },
+        ]
 
         def mock_fetch_filtered_check_results(filters):
             return filtered_check_results
 
-        def mock_get_checks_count():
-            return len(filtered_check_results)
+        def mock_get_checks():
+            return [
+                "Jira",
+                "some_check"
+            ]
 
-        releasability._get_checks_count = mock_get_checks_count
+        releasability._get_checks = mock_get_checks
 
         releasability._fetch_filtered_check_results = mock_fetch_filtered_check_results
 
-        results = releasability._get_check_results(correlation_id)
+        result = releasability._get_check_results(correlation_id)
 
-        self.assertEqual(len(results), len(filtered_check_results))
+        self.assertEqual(len(releasability._get_checks()), len(result))
+        self.assertEqual(releasability._get_checks(), list(map(lambda x: x.name, result)))
 
     @mock.patch('boto3.Session.client')
     def test_get_check_results_should_raise_an_exception_given_not_enough_check_result_were_retrieved(self, mock_session):
@@ -286,31 +290,35 @@ class ReleasabilityTest(unittest.TestCase):
         release_request = ReleaseRequest(organization, project_name, version, build_number, branch_name, sha)
 
         Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS = 2
-
         releasability = Releasability(release_request)
 
         correlation_id = "ffff-0000-ffff-0000"
         filtered_check_results = [
-                {
-                    "type": "PASSED",
-                    "requestUUID": correlation_id,
-                    "checkName": "Jira",
-                }
-            ]
+            {
+                "type": "PASSED",
+                "requestUUID": correlation_id,
+                "checkName": "Jira",
+            }
+        ]
 
         def mock_fetch_filtered_check_results(filters):
-                """
+            """
                 Returns:
                     filtered_check_results only the first time it is invoked, after return an empty list
                 """
-                result = copy.deepcopy(filtered_check_results)
-                filtered_check_results.clear()
-                return result
+            result = copy.deepcopy(filtered_check_results)
+            filtered_check_results.clear()
+            return result
+
         releasability._fetch_filtered_check_results = mock_fetch_filtered_check_results
 
-        def mock_get_checks_count():
-            return 5
-        releasability._get_checks_count = mock_get_checks_count
+        def mock_get_checks():
+            return [
+                "Jira",
+                "License"
+            ]
+
+        releasability._get_checks = mock_get_checks
 
         with self.assertRaises(CouldNotRetrieveReleasabilityCheckResultsException):
             releasability._get_check_results(correlation_id)
