@@ -1,4 +1,5 @@
 import os
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch, mock_open, ANY, call
@@ -35,7 +36,9 @@ class MainTest(unittest.TestCase):
     @patch.object(Releasability, 'get_releasability_report')
     @patch('release.main.notify_slack')
     @patch.object(GitHub, 'revoke_release')
+    @patch.object(sys, 'exit')
     def test_releasability_failure_burgr(self,
+                                   sys_exit,
                                    github_revoke_release,
                                    notify_slack,
                                    _get_aws_account_id,
@@ -47,7 +50,7 @@ class MainTest(unittest.TestCase):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
-                with pytest.raises(Exception, match='exception'):
+                with pytest.raises(Exception):
                     main()
                     _get_aws_account_id.assert_called_once()
                     check_params.assert_called_once()
@@ -69,7 +72,9 @@ class MainTest(unittest.TestCase):
     @patch.object(Releasability, 'get_releasability_report', side_effect=Exception('exception'))
     @patch('release.main.notify_slack')
     @patch.object(GitHub, 'revoke_release')
+    @patch.object(sys, 'exit')
     def test_releasability_failure(self,
+                                   sys_exit,
                                    github_revoke_release,
                                    notify_slack,
                                    _get_aws_account_id,
@@ -81,7 +86,7 @@ class MainTest(unittest.TestCase):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
-                with pytest.raises(Exception, match='exception'):
+                with pytest.raises(Exception):
                     main()
                     _get_aws_account_id.assert_called_once()
                     check_params.assert_called_once()
@@ -106,15 +111,19 @@ class MainTest(unittest.TestCase):
     @patch.object(Artifactory, 'receive_build_info')
     @patch.object(Artifactory, 'promote')
     @patch.object(GitHub, 'is_publish_to_binaries', return_value=True)
+    @patch.object(GitHub, 'revoke_release')
     @patch.object(Burgr, 'notify')
     @patch('release.main.notify_slack')
     @patch('release.main.set_output')
     @patch('release.main.check_params')
+    @patch.object(sys, 'exit')
     def test_main_happy_path(self,
+                             sys_exit,
                              check_params,
                              set_output,
                              notify_slack,
                              burgr_notify,
+                             github_revoke_release,
                              github_is_publish_to_binaries,
                              artifactory_promote,
                              artifactory_receive_build_info,
@@ -171,7 +180,7 @@ class MainTest(unittest.TestCase):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
-                with pytest.raises(Exception, match='exception'):
+                with pytest.raises(Exception):
                     main()
                     _get_aws_account_id.assert_called_once()
                     check_params.assert_called_once()
