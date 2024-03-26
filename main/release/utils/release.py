@@ -102,6 +102,7 @@ def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasabil
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows
 
         if report.contains_error():
+            print("Releasability checks failed")
             _fail_release(github, release_request)
         else:
             print("Releasability checks passed successfully")
