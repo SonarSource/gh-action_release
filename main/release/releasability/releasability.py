@@ -148,7 +148,8 @@ class Releasability:
                 f'Received {received_message_count}/{expected_message_count} check result messages within '
                 f'allowed time ({Releasability.FETCH_CHECK_RESULT_TIMEOUT_SECONDS} seconds)')
 
-    def _build_filters(self, correlation_id: str) -> []:
+    @staticmethod
+    def _build_filters(correlation_id: str) -> []:
         def match_correlation_id(msg):
             return msg['requestUUID'] == correlation_id
 
