@@ -8,6 +8,8 @@ from importlib import resources
 from release import resources as file_resources
 from xml.dom.minidom import parseString
 
+from release.vars import binaries_aws_region_name, binaries_aws_session_token, binaries_aws_secret_access_key, binaries_aws_access_key_id
+
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
 DISTRIBUTION_ID_PROD = 'E2WHX4O0Y6Z6C6'
@@ -19,7 +21,14 @@ class Binaries:
 
     def __init__(self, binaries_bucket_name: str):
         self.binaries_bucket_name = binaries_bucket_name
-        self.client = boto3.client('s3')
+        self.binaries_session = boto3.Session(
+            aws_access_key_id=binaries_aws_access_key_id,
+            aws_secret_access_key=binaries_aws_secret_access_key,
+            aws_session_token=binaries_aws_session_token,
+            region_name=binaries_aws_region_name
+        )
+        self.s3_client = self.binaries_session.client('s3')
+        self.cloudfront_client = self.binaries_session.client('cloudfront')
 
     @staticmethod
     def get_binaries_repo(gid):
@@ -32,10 +41,10 @@ class Binaries:
         root_bucket_key = self.get_file_bucket_key(aid, gid)
         file_bucket_key = f"{root_bucket_key}/{filename}"
 
-        self.client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
+        self.s3_client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
         print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
         for checksum in self.upload_checksums:
-            self.client.upload_file(f'{artifact_file}.{checksum}', self.binaries_bucket_name, f'{file_bucket_key}.{checksum}')
+            self.s3_client.upload_file(f'{artifact_file}.{checksum}', self.binaries_bucket_name, f'{file_bucket_key}.{checksum}')
             print(f'uploaded {artifact_file}.{checksum} to s3://{self.binaries_bucket_name}/{file_bucket_key}.{checksum}')
 
         # SonarLint
@@ -63,7 +72,7 @@ class Binaries:
                     local_file = os.path.join(root, filename)
                     s3_file = os.path.join(version_bucket_key, os.path.relpath(local_file, tmpdirname))
                     print(f"upload {s3_file}")
-                    self.client.upload_file(local_file, self.binaries_bucket_name, s3_file)
+                    self.s3_client.upload_file(local_file, self.binaries_bucket_name, s3_file)
         print(f'uploaded content of {zip_file} to s3://{self.binaries_bucket_name}/{version_bucket_key}')
 
     def upload_sonarlint_p2_site(self, root_bucket_key, version_bucket_key):
@@ -81,15 +90,14 @@ class Binaries:
             with open(temp_file, 'w') as output:
                 document.writexml(output, encoding='UTF-8')
             composite_bucket_key = f"{root_bucket_key}/{composite_file}"
-            self.client.upload_file(temp_file, self.binaries_bucket_name, composite_bucket_key)
+            self.s3_client.upload_file(temp_file, self.binaries_bucket_name, composite_bucket_key)
             print(f'uploaded {composite_file} to s3://{self.binaries_bucket_name}/{composite_bucket_key}')
 
-    @staticmethod
-    def update_sonarlint_p2_site(distribution_id, version):
+    def update_sonarlint_p2_site(self, distribution_id, version):
         """
         Create CloudFront invalidation to update the cache of SonarLint Eclipse P2 update site files
         """
-        client = boto3.client('cloudfront')
+        client = self.cloudfront_client
         response = client.create_invalidation(
             DistributionId=distribution_id,
             InvalidationBatch={
@@ -110,7 +118,7 @@ class Binaries:
         root_bucket_key = self.get_file_bucket_key(aid, gid)
         bucket_key = f"{root_bucket_key}/{filename}"
 
-        self.client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
+        self.s3_client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
         print(f'deleted {bucket_key}')
 
         if aid == SONARLINT_AID:

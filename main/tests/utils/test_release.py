@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 
 from _pytest.fixtures import fixture
 
@@ -103,8 +103,10 @@ def test_publish_artifact_s3_upload_sonarqube(buildinfo_sonarqube, capsys):
 
 
 def test_publish_artifact_upload_file(buildinfo_com, buildinfo_org, capsys):
+    binaries_session = MagicMock()
     client = MagicMock()
-    with patch('boto3.client', return_value=client):
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
         artifactory = MagicMock(**{'download.return_value': "/tmp/dummy-1.0.2.456.jar"})
         binaries = Binaries("test_bucket")
         with patch.object(binaries, 'upload_sonarlint_unzip') as mock_upload_sonarlint_unzip, \
@@ -151,8 +153,10 @@ def test_publish_artifact_upload_file(buildinfo_com, buildinfo_org, capsys):
 
 
 def test_publish_artifact_upload_file_sonarlint(buildinfo_sonarlint, capsys):
+    binaries_session = MagicMock()
     client = MagicMock()
-    with patch('boto3.client', return_value=client):
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
         artifactory = MagicMock(**{'download.return_value': "/tmp/org.sonarlint.eclipse.site-7.9.0.63244.zip"})
         binaries = Binaries("test_bucket")
         with patch.object(binaries, 'upload_sonarlint_unzip') as mock_upload_sonarlint_unzip, \

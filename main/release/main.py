@@ -2,6 +2,7 @@ import os
 
 from dryable import Dryable
 from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
+from release.releasability.releasability import Releasability
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
@@ -60,6 +61,7 @@ def main():
     github = GitHub()
     release_request = github.get_release_request()
 
+    releasability = Releasability(release_request)
     burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request)
 
     # Allow skipping releasability checks in exceptional cases
@@ -67,7 +69,7 @@ def main():
     if os.environ.get('SKIP_RELEASABILITY_CHECKS') == "true":
         set_output("releasability", "done")
     else:
-        releasability_checks(github, burgr, release_request)
+        releasability_checks(github, burgr, releasability, release_request)
 
     artifactory = Artifactory(os.environ.get('ARTIFACTORY_ACCESS_TOKEN'))
     buildinfo = artifactory.receive_build_info(release_request)
