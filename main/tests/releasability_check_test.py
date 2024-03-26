@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from unittest.mock import patch, mock_open
 
@@ -21,8 +22,10 @@ class ReleasabilityCheckTest(unittest.TestCase):
     @patch.object(Releasability, '_get_aws_account_id')
     @patch.object(Releasability, 'start_releasability_checks')
     @patch.object(Releasability, "get_releasability_report")
+    @patch.object(sys, 'exit')
     def test_releasability_checks_script(
         self,
+        sys_exit,
         json_load_mock,
         burgr_start_releasability_checks,
         _get_aws_account_id,
