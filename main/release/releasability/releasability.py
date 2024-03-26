@@ -81,6 +81,7 @@ class Releasability:
                            revision: str,
                            version: str,
                            build_number: int):
+
         sns_request = {
             'uuid': correlation_id,
             'responseToARN': self.RESULT_TOPIC_ARN,
@@ -91,12 +92,6 @@ class Releasability:
             'branchName': branch_name
         }
         return sns_request
-
-    """
-    This method is responsible to return an SQS queue url based on an arn.
-    More details about SQS urls can be found here:
-    https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-message-identifiers.html
-    """
 
     @staticmethod
     def _arn_to_sqs_url(arn):
