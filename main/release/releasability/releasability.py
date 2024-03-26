@@ -119,6 +119,9 @@ class Releasability:
     def _get_check_results(self, correlation_id: str):
 
         releasability_checks_awaiting_response = self._get_checks()
+
+        print(f'awaiting response for the following releasability checks: {",".join(releasability_checks_awaiting_response)}')
+
         expected_check_results_amount = len(releasability_checks_awaiting_response)
         received_check_results = list[ReleasabilityCheckResult]()
 
