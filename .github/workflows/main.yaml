@@ -150,7 +150,7 @@ jobs:
 
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@5.3.2
+        uses: SonarSource/gh-action_release/main@36e82d2dfaf096c6c501afa6f858cdffd6a1c1d0
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
