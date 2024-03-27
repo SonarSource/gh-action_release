@@ -130,10 +130,10 @@ next_version=5.3.1
 git checkout master
 git pull
 git checkout -b release/update-self-references
-git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)master,\1${next_version},g"
+git grep -Hl SonarSource/gh-action_release | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)master,\1${next_version},g"
 git commit -m "chore: update self-references to ${next_version}" -a
 next_ref=$(git show -s --pretty=format:'%H')
-git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${next_version},\1${next_ref},g"
+git grep -Hl SonarSource/gh-action_release | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${next_version},\1${next_ref},g"
 git commit -m "chore: update self-references to $next_ref" -a
 git tag "$next_version"
 git checkout master -- .
