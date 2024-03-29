@@ -121,37 +121,51 @@ The development is done on `master` and the `branch-*` maintenance branches.
 
 ### Release
 
-Create a release from a maintained branches, then update the `v*` shortcut.
+Due to the circular dependency issue with GitHub Actions self-reference, the release process is a bit more complex, as described
+in [scripts/pull-request-body.txt](./scripts/pull-request-body.txt).
 
-Prepare a pull-request with the self-references updated to the current changeset:
+#### Tag and Release
 
-```shell
-next_version=5.3.1
-git checkout master
-git pull
-git checkout -b release/update-self-references
-git grep -Hl SonarSource/gh-action_release | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)master,\1${next_version},g"
-git commit -m "chore: update self-references to ${next_version}" -a
-next_ref=$(git show -s --pretty=format:'%H')
-git grep -Hl SonarSource/gh-action_release | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${next_version},\1${next_ref},g"
-git commit -m "chore: update self-references to $next_ref" -a
-git tag "$next_version"
-git checkout master -- .
-git commit -m "chore: update self-references to master" -a
-gh pr create # TO BE MERGED ON MASTER BEFORE ANY OTHER PR
-git push origin "$next_version"
+This is available on GitHub: https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml
+
+```bash
+scripts/release.sh <branch> <version>
 ```
 
-Browse to the [releases](https://github.com/SonarSource/gh-action_release/releases) page and create a new release from the new tag created
-above.
+This script will:
 
-The `v-` branch update is now automated by the [release.yml](.github/workflows/release.yml) workflow.
-The following manual steps are not required anymore:
+1. commit references the future tag
+2. commit references the previous commit
+3. tag this second commit
+4. commit references back to the branch
+5. generate a PR with those release commits and the release tag
+6. the PR should be automatically approved and fast-forward merged
+7. create a Release on GitHub
 
-```shell
-git fetch --tags
-git update-ref -m "reset: update branch v4 to tag 4.2.5" refs/heads/v4 4.2.5
-git push origin v4
+Example:
+
+```
+$ scripts/release.sh branch-2 2.0.0
+$ git log --graph --pretty="%H %s %d" branch-2 -3 --reverse
+* 1c42d553f38c91d92aaff793a67d48d62255f9be chore: update self-references to 2.0.0
+* 2082aca0c8aa7cb64320b3713391d3d1056aaec6 chore: update self-references to 1c42d553f38c91d92aaff793a67d48d62255f9be  (tag: 2.0.0)
+* 0000554720dc90f987a86a43531b8595f27ea53e chore: update self-references to branch-2  (origin/pull/158, origin/branch-2)
+```
+
+#### Update the v* Branch
+
+This is available on GitHub: https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml
+
+```bash
+scripts/updatevbranch.sh <version>
+```
+
+Example:
+
+```
+$ scripts/updatevbranch.sh 2.0.0
+$ git show -s --pretty=format:'%H%d' 2.0.0
+2082aca0c8aa7cb64320b3713391d3d1056aaec6 (tag: 2.0.0, origin/v2)
 ```
 
 ## Requirements

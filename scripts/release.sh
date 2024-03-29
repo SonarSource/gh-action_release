@@ -30,3 +30,4 @@ git fetch
 git checkout "${branch}"
 git merge --ff-only "$working_branch"
 git push origin "${branch}"
+gh release create "$version" -t "$version" --target "$(git show -s --pretty=format:'%H' "$version")" --verify-tag --generate-notes
