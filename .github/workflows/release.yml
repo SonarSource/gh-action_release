@@ -1,14 +1,51 @@
 ---
+name: Releasability Check
+---
 name: Release
-run-name: Release ${{ github.event.release.tag_name }}
-"on":
-  release:
-    types:
-      - published
-      - prereleased
-
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Release branch (master or branch-*)
+        required: true
+        type: string
+        default: master
+      version:
+        description: Release version
+        required: true
+        type: string
+      doRelease:
+        type: boolean
+        description: Do a release
+        default: false
+        required: true
+      updateVBranch:
+        type: boolean
+        description: Update the v* branch
+        default: false
+        required: true
 jobs:
-  update-release-branch:
+  release:
+    name: Release
+    if: ${{ inputs.doRelease == true }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
+        with:
+          ref: ${{ inputs.branch }}
+          fetch-tags: true
+      - name: tag
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          PRE_RELEASE: ${{ github.event.release.prerelease }}
+        run: |
+          GIT_OPTS=$([[ "${PRE_RELEASE}" == "true" ]] && echo "--dry-run")
+          branch="v${TAG%%.*}"
+          git update-ref -m "reset: update branch $branch to tag $TAG" "refs/heads/$branch" "$TAG"
+          git push "${GIT_OPTS}" origin HEAD:"refs/heads/$branch"
+  update-v-branch:
     name: Update release branch
     runs-on: ubuntu-latest
     permissions:
