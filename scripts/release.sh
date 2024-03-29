@@ -18,7 +18,7 @@ git commit -m "chore: update self-references to $next_ref" -a
 git tag "$version"
 git checkout "${branch}" -- .
 git commit -m "chore: update self-references to ${branch}" -a
-git log --oneline "${branch}".. >> scripts/pull-request-body.txt
+git log --pretty="%H %s %d" "${branch}".. --reverse >> scripts/pull-request-body.txt
 git push origin "$working_branch"
 git push origin "$version"
 gh pr create --base "${branch}" --title "Release $version" --body-file scripts/pull-request-body.txt -a @me --label auto-approve
