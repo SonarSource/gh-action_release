@@ -1,14 +1,14 @@
 #!/bin/bash
 # Release a new version of the action
 # Usage: scripts/release.sh <branch> <version>
-set -euo pipefail
+set -xeuo pipefail
 
 type git gh jq >/dev/null
 branch=$1
 version=$2
 working_branch="release/update-self-references-${version}"
 git checkout "${branch}"
-git pull
+git pull origin "${branch}"
 git checkout -b "$working_branch"
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${branch},\1${version},g"
 git commit -m "chore: update self-references to ${version}" -a
