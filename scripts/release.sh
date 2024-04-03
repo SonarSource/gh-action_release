@@ -23,8 +23,9 @@ git push origin "$working_branch"
 git push origin "$version"
 gh pr create --base "${branch}" --title "Release $version" --body-file scripts/pull-request-body.txt -a @me --label auto-approve
 echo "Wait for PR approval..."
+counter=0
 while ! gh pr view --json state --jq .state | grep -q MERGED; do
-  ((counter++)) && ((counter > 30)) && exit 1
+  ((counter++)) && ((counter == 30)) && exit 1
   printf "."
   sleep 5
 done
