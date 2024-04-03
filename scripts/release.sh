@@ -3,7 +3,7 @@
 # Usage: scripts/release.sh <branch> <version>
 set -xeuo pipefail
 
-type git gh jq >/dev/null
+type git gh >/dev/null
 branch=$1
 version=$2
 working_branch="release/update-self-references-${version}"
