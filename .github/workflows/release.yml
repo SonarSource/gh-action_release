@@ -27,23 +27,18 @@ jobs:
     name: Release ${{ inputs.version }}
     if: ${{ inputs.doRelease == true || inputs.updateVBranch == true }}
     runs-on: ubuntu-latest
-#    permissions:
-#      contents: write
-#      actions: write
-#      pull-requests: write
     steps:
-#      - name: get secrets
-#        id: secrets
-#        uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
-#        with:
-#          secrets: |
-#            development/github/token/{REPO_OWNER_NAME_DASH}-release token | github_token;
+      - name: get secrets
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
+        with:
+          secrets: |
+            development/github/token/{REPO_OWNER_NAME_DASH}-release token | github_token;
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
         with:
           ref: ${{ inputs.branch }}
           fetch-tags: true
-          token: ${{ secrets.BUILD_4729 }}
-#          token: ${{ fromJSON(steps.secrets.outputs.vault).github_token }}
+          token: ${{ fromJSON(steps.secrets.outputs.vault).github_token }}
           persist-credentials: true
       - name: Git config
         run: |
@@ -52,7 +47,7 @@ jobs:
       - name: release
         if: ${{ inputs.doRelease == true }}
         env:
-          GH_TOKEN: ${{ secrets.BUILD_4729 }}
+          GH_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).github_token }}
         run: scripts/release.sh ${{ inputs.branch }} ${{ inputs.version }}
       - name: update v* branch
         if: ${{ inputs.updateVBranch == true }}
