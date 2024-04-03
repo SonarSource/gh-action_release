@@ -24,28 +24,57 @@ on:
         required: true
 jobs:
   release:
-    name: Release
+    name: Release ${{ inputs.version }}
     if: ${{ inputs.doRelease == true }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+      id-token: write
     steps:
+      - name: get secrets
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
+        with:
+          secrets: |
+            development/github/token/{REPO_OWNER_NAME_DASH}-release token | github_token;
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
         with:
           ref: ${{ inputs.branch }}
           fetch-tags: true
+          token: ${{ fromJSON(steps.secrets.outputs.vault).github_token }}
+          persist-credentials: true
+      - name: Git config
+        run: |
+          git config user.name sonartech
+          git config user.email sonartech@sonarsource.com
       - name: release
+        env:
+          GH_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).github_token }}
         run: scripts/release.sh ${{ inputs.branch }} ${{ inputs.version }}
-  update-v-branch:
-    name: Update the v* branch
+  vbranch:
+    name: Update v* branch to ${{ inputs.version }}
     if: ${{ inputs.updateVBranch == true }}
+    needs: release
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+      id-token: write
     steps:
+      - name: get secrets
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
+        with:
+          secrets: |
+            development/github/token/{REPO_OWNER_NAME_DASH}-release token | github_token;
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4.1.1
         with:
           ref: ${{ inputs.branch }}
           fetch-tags: true
+          token: ${{ fromJSON(steps.secrets.outputs.vault).github_token }}
+          persist-credentials: true
+      - name: Git config
+        run: |
+          git config user.name sonartech
+          git config user.email sonartech@sonarsource.com
       - name: update v* branch
         run: scripts/updatevbranch.sh ${{ inputs.version }}
