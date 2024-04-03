@@ -3,8 +3,6 @@ on:
     types: [opened, reopened, labeled, edited]
     branches:
       - 'releases/**'
-    paths:
-      - '.github/workflows/**'
 
 permissions:
   contents: read
