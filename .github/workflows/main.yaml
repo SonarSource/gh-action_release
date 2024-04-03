@@ -70,6 +70,10 @@ on:
         description: Skip releasability checks for Python projects
         default: false
         required: false
+      version:
+        type: string
+        description: Version to run releasability checks for in the format of MAJOR.MINOR.PATCH.BUILD
+        required: false
 
 jobs:
   release:
