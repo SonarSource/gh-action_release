@@ -5,7 +5,7 @@ This PR:
 - MUST be fast-forward merged (GitHub UI merge features DO NOT WORK)
 - will be auto-approved under conditions, but manual approval is still allowed
 
-This PR is used to work around the circular dependency issue with GitHub Actions self-reference.
+This PR is used to work around the versioning issue with reusable workflows referencing GitHub Actions in the same repository.
 It is creating a commit to reference the future tag, then a commit to reference the previous commit, and finally a commit to revert and
 reference the main branch. The tag is created on the second commit.
 This way, the circular dependency is broken and the workflow call itself.
