@@ -18,12 +18,14 @@ git commit -m "chore: update self-references to $next_ref" -a
 git tag "$version"
 git checkout "${branch}" -- .
 git commit -m "chore: update self-references to ${branch}" -a
-git log --pretty="%H %s %d" "${branch}".. --reverse >> scripts/pull-request-body.txt
+git log --pretty="%H %s %d" "${branch}".. --reverse >>scripts/pull-request-body.txt
 git push origin "$working_branch"
 git push origin "$version"
 gh pr create --base "${branch}" --title "Release $version" --body-file scripts/pull-request-body.txt -a @me --label auto-approve
 echo "Wait for PR approval..."
-while ! gh pr view --json reviewDecision --jq .reviewDecision | grep -q APPROVED; do
+while ! gh pr view --json state --jq .state | grep -q MERGED; do
+  ((counter++)) && ((counter > 30)) && exit 1
+  printf "."
   sleep 5
 done
 git fetch
