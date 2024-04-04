@@ -76,12 +76,27 @@ on:
         required: false
 
 jobs:
+  check-releasability:
+    name: Check Releasability
+    runs-on: ubuntu-latest
+    steps:
+      - name: Releasability checks
+        uses: SonarSource/gh-action_releasability@BUILD-4613-Provide-a-way-to-trigger-releasability-checks-before-creating-a-release
+        id: releasability-checks
+        with:
+          organization: ${{ github.repository_owner }}
+          repository: ${{ github.event.repository.name }}
+          branch: ${{ github.event.ref }}
+          version: ${{ github.event.inputs.version }}
+          commit-sha: ${{ github.event.sha }}
+
   release:
     name: Release
     runs-on: ubuntu-latest
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
+    needs: check-releasability
     timeout-minutes: 30
     if: ${{ inputs.dryRun == true || github.event_name == 'release' && github.event.action == 'published' }}
     outputs:
