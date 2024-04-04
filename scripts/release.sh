@@ -23,20 +23,23 @@ git push origin "$working_branch"
 git push origin "$version"
 gh pr create --base "${branch}" --title "Release $version" --body-file scripts/pull-request-body.txt -a @me --label auto-approve
 echo "Wait for PR approval..."
+pr_number=$(gh pr view --json number --jq .number)
 counter=0
-while gh pr view --json state --jq .state | grep -q OPEN && ! gh pr view --json reviewDecision --jq .reviewDecision | grep -q APPROVED; do
+while gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
+  ! gh pr view "$pr_number" --json reviewDecision --jq .reviewDecision | grep -q APPROVED; do
   ((counter++)) && ((counter == 30)) && echo "Timed out waiting for PR approval!" >&2 && exit 1
   printf "."
   sleep 5
 done
-if gh pr view --json state --jq .state | grep -q OPEN && gh pr view --json reviewDecision --jq .reviewDecision | grep -q APPROVED; then
+if gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
+  gh pr view --json reviewDecision --jq .reviewDecision | grep -q APPROVED; then
   echo "Fast-forward merge approved PR..."
   git fetch
   git checkout "${branch}"
   git merge --ff-only "$working_branch"
   git push origin "${branch}"
 fi
-if ! gh pr view --json state --jq .state | grep -q MERGED; then
+if ! gh pr view "$pr_number" --json state --jq .state | grep -q MERGED; then
   echo "PR is not merged, exit" >&2
   exit 1
 fi
