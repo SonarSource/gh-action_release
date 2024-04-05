@@ -5,6 +5,8 @@ set -xeuo pipefail
 
 version=$1
 vbranch="v${version%%.*}"
+git branch -D "$vbranch"
+git tag -d "$version"
 git fetch --tags --all
 git update-ref -m "reset: update branch $vbranch to tag $version" "refs/heads/$vbranch" "$version"
 git push origin "$vbranch:refs/heads/$vbranch" || (
