@@ -22,6 +22,7 @@ git log --pretty="%H %s %d" "${branch}".. --reverse >>scripts/pull-request-body.
 git push origin "$working_branch"
 git push origin "$version"
 gh pr create --base "${branch}" --title "Release $version" --body-file scripts/pull-request-body.txt -a sonartech --label auto-approve
+set +x
 echo "Wait for PR approval..."
 pr_number=$(gh pr view --json number --jq .number)
 counter=0
@@ -31,6 +32,7 @@ while gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
   printf "."
   sleep 5
 done
+set -x
 if gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
   gh pr view --json reviewDecision --jq .reviewDecision | grep -q APPROVED; then
   echo "Fast-forward merge approved PR..."
