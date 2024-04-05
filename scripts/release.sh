@@ -21,7 +21,7 @@ git commit -m "chore: update self-references to ${branch}" -a
 git log --pretty="%H %s %d" "${branch}".. --reverse >>scripts/pull-request-body.txt
 git push origin "$working_branch"
 git push origin "$version"
-gh pr create --base "${branch}" --title "Release $version" --body-file scripts/pull-request-body.txt -a @sonartech --label auto-approve
+gh pr create --base "${branch}" --title "Release $version" --body-file scripts/pull-request-body.txt -a sonartech --label auto-approve
 echo "Wait for PR approval..."
 pr_number=$(gh pr view --json number --jq .number)
 counter=0
