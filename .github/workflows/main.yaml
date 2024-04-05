@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Releasability checks
-        uses: SonarSource/gh-action_releasability@BUILD-4613-Provide-a-way-to-trigger-releasability-checks-before-creating-a-release
+        uses: SonarSource/gh-action_releasability@feat/mm/build-4767
         id: releasability-checks
         with:
           organization: ${{ github.repository_owner }}
@@ -174,7 +174,7 @@ jobs:
 
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@master
+        uses: SonarSource/gh-action_release/main@feat/mm/build-4613
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
