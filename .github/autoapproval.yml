@@ -4,5 +4,6 @@ from_owner:
   - matemoln
   - julien-carsique-sonarsource
   - jayadeep-km-sonarsource
+  - hashicorp-vault-sonar-prod
 required_labels:
   - auto-approve
