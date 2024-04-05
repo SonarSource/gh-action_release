@@ -35,6 +35,7 @@ while gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
   sleep 2
 done
 set -x
+gh pr checks "$pr_number" --fail-fast --watch
 if gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
   gh pr view "$pr_number" --json mergeable --jq .mergeable | grep -q MERGEABLE &&
   gh pr view "$pr_number" --json reviewDecision --jq .reviewDecision | grep -q APPROVED; then
@@ -44,6 +45,12 @@ if gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
   git merge --ff-only "$working_branch"
   git push origin "${branch}"
 fi
+counter=0
+# wait for merge status to be updated
+while ! gh pr view "$pr_number" --json state --jq .state | grep -q MERGED; do
+  ((counter++)) && ((counter == 5)) && break
+  sleep 2
+done
 if ! gh pr view "$pr_number" --json state --jq .state | grep -q MERGED; then
   echo "PR is not merged, exit" >&2
   exit 1
