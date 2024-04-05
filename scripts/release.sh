@@ -1,7 +1,7 @@
 #!/bin/bash
 # Release a new version of the action
 # Usage: scripts/release.sh <branch> <version>
-set -euo pipefail
+set -xeuo pipefail
 
 type git gh >/dev/null
 branch=$1
