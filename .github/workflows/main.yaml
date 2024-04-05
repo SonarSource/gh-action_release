@@ -90,7 +90,7 @@ jobs:
           repository: ${{ github.event.repository.name }}
           branch: ${{ github.event.ref }}
           version: ${{ github.event.inputs.version }}
-          commit-sha: ${{ github.event.sha }}
+          commit-sha: ${{ github.event.ref }}
 
   release:
     name: Release
