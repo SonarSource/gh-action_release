@@ -35,7 +35,7 @@ while gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
   sleep 2
 done
 set -x
-gh pr checks "$pr_number" --fail-fast --watch
+gh pr checks "$pr_number" --fail-fast --watch --interval 30
 if gh pr view "$pr_number" --json state --jq .state | grep -q OPEN &&
   gh pr view "$pr_number" --json mergeable --jq .mergeable | grep -q MERGEABLE &&
   gh pr view "$pr_number" --json reviewDecision --jq .reviewDecision | grep -q APPROVED; then
