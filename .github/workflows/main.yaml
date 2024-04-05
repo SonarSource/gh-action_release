@@ -79,6 +79,8 @@ jobs:
   check-releasability:
     name: Check Releasability
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     steps:
       - name: Releasability checks
         uses: SonarSource/gh-action_releasability@feat/mm/build-4767
