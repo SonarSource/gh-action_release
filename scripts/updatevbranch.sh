@@ -1,7 +1,7 @@
 #!/bin/bash
 # Update the v* branch to the tag version
 # Usage: scripts/updatevbranch.sh <version>
-set -euo pipefail
+set -xeuo pipefail
 
 version=$1
 branch="v${version%%.*}"
