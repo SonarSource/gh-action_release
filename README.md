@@ -1,16 +1,14 @@
-# SonarSource GitHub release action
+# SonarSource Release Action
 
-This action implements the release process for all SonarSource projects. It must be used when you publish a GitHub release.
+GitHub Action implementing the common release steps for SonarSource projects. It's recommended to use when publishing a GitHub release.
 
 ## Usage
 
-### Release, Promotion and Publication
-
+Add `.github/workflows/release.yml` to the repository
 ```yaml
----
-name: sonar-release
-# This workflow is triggered when publishing a new github release
-# yamllint disable-line rule:truthy
+name: Release
+
+# Trigger when publishing a new GitHub release
 on:
   release:
     types:
@@ -42,30 +40,44 @@ Available options:
 - artifactoryRoleSuffix (default: promoter): Artifactory promoter suffix
 - dryRun (default: false): perform a dry run execution
 
-### Releasability check
+## Releasability check
 
-If one wants to perform a releasability check for a given version without
-performing an actual release, the `releasability-check` workflow can be used.
-Here is an example:
+To perform a releasability check for a given version without performing an actual release, run the [releasability_check workflow](https://github.com/SonarSource/gh-action_releasability/actions/workflows/releasability_checks.yml).
 
-``` yaml
----
-name: my-releasability-check
+## Requirements
 
-on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Version number to check releasability on
-        required: true
+[the repository needs to be onboarded to the Vault](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/2466316312/HashiCorp+Vault#Onboarding-a-Repository-on-Vault).
 
-jobs:
-  release:
-    permissions:
-      id-token: write
-      contents: write
-    uses: SonarSource/gh-action_release/.github/workflows/releasability-check.yaml@<id>
-```
+The following secrets and permissions are required:
+
+- development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
+- development/kv/data/slack
+- development/kv/data/repox
+- development/kv/data/burgr
+- secrets.GITHUB_TOKEN (provided by the GitHub Action runner)
+
+Additionally,
+
+If using `publishToBinaries` option:
+
+- development/aws/sts/downloads
+
+If using `mavenCentralSync` option:
+
+- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+- development/kv/data/ossrh
+
+If using `publishToPyPI` option:
+
+- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+- development/kv/data/pypi
+
+If using `publishToTestPyPI` option:
+
+- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+- development/kv/data/pypi-test
+
+# Development
 
 ## Dry Run
 
@@ -74,7 +86,6 @@ There comes the dry run.
 
 What the dry run will do and not do:
 
-* Will not communicate with burger
 * Will not promote any artifacts in repox
 * Will not push binaries
 * Will not publish to slack
@@ -106,11 +117,11 @@ ie: [`5.0.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0.
 
 The `master` branch shall not be referenced by end-users.
 
-Branches prefixed with a `v` are pointers to the last major versions, ie: [`v4`](https://github.com/SonarSource/gh-action_release/tree/v4).
+Branches prefixed with a `v` are pointers to the last major versions, ie: [`v5`](https://github.com/SonarSource/gh-action_release/tree/v6).
 
 ```yaml
     steps:
-      - uses: SonarSource/gh-action_release/main@v4
+      - uses: SonarSource/gh-action_release/main@v5
 ```
 
 Note: use only branches with precaution and confidence in the provider.
@@ -167,40 +178,6 @@ $ scripts/updatevbranch.sh 2.0.0
 $ git show -s --pretty=format:'%H%d' 2.0.0
 2082aca0c8aa7cb64320b3713391d3d1056aaec6 (tag: 2.0.0, origin/v2)
 ```
-
-## Requirements
-
-As of version 5.0.0,
-[the repository needs to be onboarded to the Vault](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/2466316312/HashiCorp+Vault#Onboarding-a-Repository-on-Vault).
-
-The following secrets and permissions are required:
-
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
-- development/kv/data/slack
-- development/kv/data/repox
-- development/kv/data/burgr
-- secrets.GITHUB_TOKEN (provided by the GitHub Action runner)
-
-Additionally,
-
-If using `publishToBinaries` option:
-
-- development/aws/sts/downloads
-
-If using `mavenCentralSync` option:
-
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
-- development/kv/data/ossrh
-
-If using `publishToPyPI` option:
-
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
-- development/kv/data/pypi
-
-If using `publishToTestPyPI` option:
-
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
-- development/kv/data/pypi-test
 
 ## References
 
