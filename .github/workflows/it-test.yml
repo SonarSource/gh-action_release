@@ -18,8 +18,6 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1 (Necessary to access local action)
       - uses: ./main
         env:
-          BURGRX_USER: "bob user"
-          BURGRX_PASSWORD: "*******"
           ARTIFACTORY_ACCESS_TOKEN: "42"
           BINARIES_AWS_DEPLOY: "s3://empty"
           SLACK_API_TOKEN: "slack-token-test"

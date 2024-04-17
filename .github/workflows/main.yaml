@@ -105,8 +105,6 @@ jobs:
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
             development/kv/data/slack token | slack_api_token;
             development/kv/data/repox url | artifactory_url;
-            development/kv/data/burgr github_username | burgrx_username;
-            development/kv/data/burgr github_password | burgrx_password;
       - name: Vault Binaries AWS Secrets
         id: secrets-binaries-aws
         if: ${{ inputs.dryRun != true && inputs.publishToBinaries }}
@@ -127,8 +125,6 @@ jobs:
           if [[ "${DUMMY_VALUES}" == "true" ]]; then
             {
               echo "artifactory_access_token=test"
-              echo "burgrx_username=test"
-              echo "burgrx_password=test"
               echo "slack_api_token=test"
               echo "binaries_aws_access_key_id=test"
               echo "binaries_aws_secret_access_key=test"
@@ -164,8 +160,6 @@ jobs:
           PYTHONUNBUFFERED: 1
           ARTIFACTORY_ACCESS_TOKEN: ${{ steps.parse_vault.outputs.artifactory_access_token }}
           BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
-          BURGRX_USER: ${{ steps.parse_vault.outputs.burgrx_username }}
-          BURGRX_PASSWORD: ${{ steps.parse_vault.outputs.burgrx_password }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_API_TOKEN: ${{ steps.parse_vault.outputs.slack_api_token }}
           BINARIES_AWS_ACCESS_KEY_ID: ${{ steps.parse_vault.outputs.binaries_aws_access_key_id }}

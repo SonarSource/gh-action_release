@@ -53,7 +53,6 @@ The following secrets and permissions are required:
 - development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
 - development/kv/data/slack
 - development/kv/data/repox
-- development/kv/data/burgr
 - secrets.GITHUB_TOKEN (provided by the GitHub Action runner)
 
 Additionally,

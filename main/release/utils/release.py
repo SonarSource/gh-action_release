@@ -6,7 +6,6 @@ from dryable import Dryable
 from release.releasability.releasability import Releasability, CouldNotRetrieveReleasabilityCheckResultsException
 from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
-from release.utils.burgr import Burgr
 from release.utils.github import GitHub
 from release.utils.slack import notify_slack
 
@@ -93,10 +92,9 @@ def set_output(output_name, value):
 
 
 @Dryable(logging_msg='{function}({args}{kwargs})')
-def releasability_checks(github: GitHub, burgr: Burgr, releasability: Releasability, release_request: ReleaseRequest.ReleaseRequest):
+def releasability_checks(github: GitHub, releasability: Releasability, release_request: ReleaseRequest.ReleaseRequest):
     try:
         correlation_id = releasability.start_releasability_checks()
-        burgr.start_releasability_checks()
         report = releasability.get_releasability_report(correlation_id)
         print(report)
         set_output("releasability", "done")  # There is no value to do it expect to not break existing workflows

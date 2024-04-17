@@ -6,16 +6,13 @@ from release.releasability.releasability import Releasability
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
-from release.utils.burgr import Burgr
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
 from release.utils.release import publish_all_artifacts_to_binaries, releasability_checks, revoke_release, set_output
 from release.utils.slack import notify_slack
-from release.vars import binaries_bucket_name, burgrx_password, burgrx_url, burgrx_user
+from release.vars import binaries_bucket_name
 
 MANDATORY_ENV_VARIABLES = [
-    "BURGRX_USER",
-    "BURGRX_PASSWORD",
     "ARTIFACTORY_ACCESS_TOKEN"
 ]
 
@@ -62,14 +59,13 @@ def main():
     release_request = github.get_release_request()
 
     releasability = Releasability(release_request)
-    burgr = Burgr(burgrx_url, burgrx_user, burgrx_password, release_request)
 
     # Allow skipping releasability checks in exceptional cases
     # Eg: when the releasability checks are not implemented for a specific language
     if os.environ.get('SKIP_RELEASABILITY_CHECKS') == "true":
         set_output("releasability", "done")
     else:
-        releasability_checks(github, burgr, releasability, release_request)
+        releasability_checks(github, releasability, release_request)
 
     artifactory = Artifactory(os.environ.get('ARTIFACTORY_ACCESS_TOKEN'))
     buildinfo = artifactory.receive_build_info(release_request)
@@ -83,7 +79,6 @@ def main():
             publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo)
             set_output("publish_to_binaries", "done")  # There is no value to do it expect to not break existing workflows
 
-        burgr.notify('passed')
         notify_slack(f"Successfully released {release_request.project}:{release_request.version}")
     except Exception as e:
         notify_slack(f"Released {release_request.project}:{release_request.version} failed")
