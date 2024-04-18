@@ -86,10 +86,20 @@ jobs:
       publish_to_binaries: ${{ steps.release.outputs.publish_to_binaries }}
       release: ${{ steps.release.outputs.release }}
     steps:
-      # Clone the repo; Only required for checking releasability prerequisites
+      # Clone gh-action_release repository to run actions locally
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
+          # to directly reference the repository where the reusable workflow is defined
+          repository: SonarSource/gh-action_release
+          # This property is changed during the release process to reference the correct tag
+          # During development you might want to change this to your branch name to run it in another repository
+          ref: ${{ github.ref }}
+          path: gh-action_release
+      # Clone the calling repo for checking releasability prerequisites
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          path: ${{ github.event.repository.name }}
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
@@ -143,7 +153,7 @@ jobs:
           SKIP_PYTHON_RELEASABILITY_CHECKS: ${{ inputs.skipPythonReleasabilityChecks }}
         run: |
           # Skip releasability checks if the project contains pyproject.toml file
-          if test -f "pyproject.toml" && "$SKIP_PYTHON_RELEASABILITY_CHECKS" == "true"  ; then
+          if test -f "${{ github.event.repository.name }}/pyproject.toml" && "$SKIP_PYTHON_RELEASABILITY_CHECKS" == "true"  ; then
             echo "skip_releasability_checks=true" >> "${GITHUB_OUTPUT}"
           else
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
@@ -151,7 +161,7 @@ jobs:
 
       - name: Release
         id: release
-        uses: SonarSource/gh-action_release/main@master
+        uses: ./gh-action_release/main
         with:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}

@@ -11,9 +11,11 @@ git checkout "${branch}"
 git pull origin "${branch}"
 git checkout -b "$working_branch"
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${branch},\1${version},g"
+git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s/ref: \${{ github.ref }}/ref: ${version}/g"
 git commit -m "chore: update self-references to ${version}" -a
 next_ref=$(git show -s --pretty=format:'%H')
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${version},\1${next_ref},g"
+git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s/ref: ${version}/ref: ${next_ref}/g"
 git commit -m "chore: update self-references to $next_ref" -a
 git tag "$version"
 git checkout "${branch}" -- .
