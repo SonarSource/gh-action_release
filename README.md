@@ -76,31 +76,7 @@ If using `publishToTestPyPI` option:
 - development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 - development/kv/data/pypi-test
 
-# Development
-
-## Dry Run
-
-For testing purpose you may want to use this gh-action without really releasing.
-There comes the dry run.
-
-What the dry run will do and not do:
-
-* Will not promote any artifacts in repox
-* Will not push binaries
-* Will not publish to slack
-
-Instead, it will actually print the sequence of operations that would have
-been performed based on the provided inputs defined in `with:` section.
-
 ## Versioning
-
-Using the versioned semantic [tags](#Tags) is recommended for security and reliability.
-
-See [GitHub: Using tags for release management](https://docs.github.com/en/actions/creating-actions/about-custom-actions#using-tags-for-release-management)
-and [GitHub: Keeping your actions up to date with Dependabot](https://docs.github.com/en/code-security/supply-chain-security/keeping-your-dependencies-updated-automatically/keeping-your-actions-up-to-date-with-dependabot)
-.
-
-For convenience, it is possible to use the [branches](#Branches) following the major releases.
 
 ### Tags
 
@@ -114,69 +90,38 @@ ie: [`5.0.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0.
 
 ### Branches
 
-The `master` branch shall not be referenced by end-users.
+The `master` branch is used for pre-releases and shall be referenced with caution.
 
-Branches prefixed with a `v` are pointers to the last major versions, ie: [`v5`](https://github.com/SonarSource/gh-action_release/tree/v6).
+Branches prefixed with a `v` are pointers to the last major versions, ie: [`v5`](https://github.com/SonarSource/gh-action_release/tree/v5).
 
 ```yaml
     steps:
       - uses: SonarSource/gh-action_release/main@v5
 ```
 
-Note: use only branches with precaution and confidence in the provider.
-
 ## Development
 
 The development is done on `master` and the `branch-*` maintenance branches.
 
-### Release
+### Dry Run
 
-Due to the circular dependency issue with GitHub Actions self-reference, the release process is a bit more complex, as described
-in [scripts/pull-request-body.txt](./scripts/pull-request-body.txt).
+For testing purpose you may want to use this gh-action without really releasing.
+There comes the dry run.
 
-#### Tag and Release
+What the dry run will do and not do:
 
-This is available on GitHub: https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml
+* Will not promote any artifacts in repox
+* Will not push binaries
+* Will not publish to slack
 
-```bash
-scripts/release.sh <branch> <version>
-```
+Instead, it will actually print the sequence of operations that would have
+been performed based on the provided inputs defined in `with:` section.
 
-This script will:
+### Releasing
 
-1. commit references the future tag
-2. commit references the previous commit
-3. tag this second commit
-4. commit references back to the branch
-5. generate a PR with those release commits and the release tag
-6. the PR should be automatically approved and fast-forward merged
-7. create a Release on GitHub
-
-Example:
-
-```
-$ scripts/release.sh branch-2 2.0.0
-$ git log --graph --pretty="%H %s %d" branch-2 -3 --reverse
-* 1c42d553f38c91d92aaff793a67d48d62255f9be chore: update self-references to 2.0.0
-* 2082aca0c8aa7cb64320b3713391d3d1056aaec6 chore: update self-references to 1c42d553f38c91d92aaff793a67d48d62255f9be  (tag: 2.0.0)
-* 0000554720dc90f987a86a43531b8595f27ea53e chore: update self-references to branch-2  (origin/pull/158, origin/branch-2)
-```
-
-#### Update the v* Branch
-
-This is available on GitHub: https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml
-
-```bash
-scripts/updatevbranch.sh <version>
-```
-
-Example:
-
-```
-$ scripts/updatevbranch.sh 2.0.0
-$ git show -s --pretty=format:'%H%d' 2.0.0
-2082aca0c8aa7cb64320b3713391d3d1056aaec6 (tag: 2.0.0, origin/v2)
-```
+To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml) and approve the Release PR.
+The workflow will create the GitHub Release.
+For more deails see [RELEASE.md](./RELEASE.md)
 
 ## References
 
@@ -185,3 +130,5 @@ $ git show -s --pretty=format:'%H%d' 2.0.0
 [Semantic Versioning 2.0.0](https://semver.org/)
 
 [GitHub: About Custom Actions](https://docs.github.com/en/actions/creating-actions/about-custom-actions)
+
+[GitHub: Using tags for release management](https://docs.github.com/en/actions/creating-actions/about-custom-actions#using-tags-for-release-management)
