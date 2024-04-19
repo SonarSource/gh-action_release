@@ -16,13 +16,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Vault Secrets
-        id: secrets
-        uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
-        with:
-          secrets: |
-            development/kv/data/burgr github_username | burgrx_username;
-            development/kv/data/burgr github_password | burgrx_password;
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
         with:
           # This will be called from other repositories, so we need to ensure we
@@ -38,6 +31,3 @@ jobs:
         run: |
           python -m pip install --upgrade pip pipenv
           make releasability-check
-        env:
-          BURGRX_USER: ${{ fromJSON(steps.secrets.outputs.vault).burgrx_username }}
-          BURGRX_PASSWORD: ${{ fromJSON(steps.secrets.outputs.vault).burgrx_password }}

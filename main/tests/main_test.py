@@ -12,7 +12,6 @@ from release.main import main, set_output, check_params, MANDATORY_ENV_VARIABLES
 from release.releasability.releasability import Releasability
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
-from release.utils.burgr import Burgr
 from release.utils.github import GitHub
 
 
@@ -30,20 +29,18 @@ class MainTest(unittest.TestCase):
     @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release'}, clear=True)
     @patch('release.main.check_params')
     @patch('release.utils.github.json.load')
-    @patch.object(Burgr, 'start_releasability_checks', side_effect=Exception('exception'))
     @patch.object(Releasability, '_get_aws_account_id')
     @patch.object(Releasability, 'start_releasability_checks')
     @patch.object(Releasability, 'get_releasability_report')
     @patch('release.main.notify_slack')
     @patch.object(GitHub, 'revoke_release')
     @patch.object(sys, 'exit')
-    def test_releasability_failure_burgr(self,
+    def test_releasability_failure(self,
                                    sys_exit,
                                    github_revoke_release,
                                    notify_slack,
                                    _get_aws_account_id,
                                    check_params,
-                                   burgr_start_releasability_checks,
                                    releasability_start_releasability_checks,
                                    releasability_get_releasability_status,
                                    github_event):
@@ -57,7 +54,6 @@ class MainTest(unittest.TestCase):
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
                     github_release_request.assert_called_once()
-                    burgr_start_releasability_checks.assert_called_once()
                     releasability_start_releasability_checks.assert_called_once()
                     releasability_get_releasability_status.assert_called_once()
                     notify_slack.assert_called_once_with('"Released project:version failed')
@@ -67,7 +63,6 @@ class MainTest(unittest.TestCase):
     @patch('release.main.check_params')
     @patch('release.utils.github.json.load')
     @patch.object(Releasability, '_get_aws_account_id')
-    @patch.object(Burgr, 'start_releasability_checks')
     @patch.object(Releasability, 'start_releasability_checks', side_effect=Exception('exception'))
     @patch.object(Releasability, 'get_releasability_report', side_effect=Exception('exception'))
     @patch('release.main.notify_slack')
@@ -79,7 +74,6 @@ class MainTest(unittest.TestCase):
                                    notify_slack,
                                    _get_aws_account_id,
                                    check_params,
-                                   burgr_start_releasability_checks,
                                    releasability_start_releasability_checks,
                                    releasability_get_releasability_checks,
                                    github_event):
@@ -93,7 +87,6 @@ class MainTest(unittest.TestCase):
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
                     github_release_request.assert_called_once()
-                    burgr_start_releasability_checks.assert_called_once()
                     releasability_start_releasability_checks.assert_called_once()
                     releasability_get_releasability_checks.assert_called_once()
                     notify_slack.assert_called_once_with('"Released project:version failed')
@@ -105,14 +98,12 @@ class MainTest(unittest.TestCase):
     }, clear=True)
     @patch('release.utils.github.json.load')
     @patch.object(Releasability, '_get_aws_account_id')
-    @patch.object(Burgr, 'start_releasability_checks')
     @patch.object(Releasability, 'start_releasability_checks')
     @patch.object(Releasability, 'get_releasability_report')
     @patch.object(Artifactory, 'receive_build_info')
     @patch.object(Artifactory, 'promote')
     @patch.object(GitHub, 'is_publish_to_binaries', return_value=True)
     @patch.object(GitHub, 'revoke_release')
-    @patch.object(Burgr, 'notify')
     @patch('release.main.notify_slack')
     @patch('release.main.set_output')
     @patch('release.main.check_params')
@@ -122,7 +113,6 @@ class MainTest(unittest.TestCase):
                              check_params,
                              set_output,
                              notify_slack,
-                             burgr_notify,
                              github_revoke_release,
                              github_is_publish_to_binaries,
                              artifactory_promote,
@@ -130,7 +120,6 @@ class MainTest(unittest.TestCase):
                              releasability_get_releasability_status,
                              releasability_start_releasability_checks,
                             _get_aws_account_id,
-                             burgr_start_releasability_checks,
                              github_event):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
@@ -141,13 +130,11 @@ class MainTest(unittest.TestCase):
                 open_mock.assert_called_once()
                 github_event.assert_called_once()
                 github_release_request.assert_called_once()
-                burgr_start_releasability_checks.assert_called_once()
                 releasability_start_releasability_checks.assert_called_once()
                 releasability_get_releasability_status.assert_called_once()
                 artifactory_receive_build_info.assert_called_once_with(release_request)
                 artifactory_promote.assert_called_once_with(release_request, ANY)
                 github_is_publish_to_binaries.assert_called_once()
-                burgr_notify.assert_called_once_with('passed')
                 notify_slack.assert_called_once_with('Successfully released project:version')
                 assert set_output.call_count == 2
                 set_output.assert_has_calls([call('promote', 'done'), call('publish_to_binaries', 'done')])
@@ -161,7 +148,6 @@ class MainTest(unittest.TestCase):
     @patch('release.utils.github.json.load')
     @patch.object(Releasability, 'get_releasability_report')
     @patch.object(Releasability, 'start_releasability_checks')
-    @patch.object(Burgr, 'start_releasability_checks')
     @patch.object(Artifactory, 'receive_build_info')
     @patch.object(Artifactory, 'promote', side_effect=Exception('exception'))
     @patch('release.main.notify_slack')
@@ -173,7 +159,6 @@ class MainTest(unittest.TestCase):
                                check_params,
                                artifactory_promote,
                                artifactory_receive_build_info,
-                               burgr_start_releasability_checks,
                                releasability_start_releasability_checks,
                                releasability_get_releasability_status,
                                github_event):
@@ -187,7 +172,6 @@ class MainTest(unittest.TestCase):
                     open_mock.assert_called_once()
                     github_event.assert_called_once()
                     github_release_request.assert_called_once()
-                    burgr_start_releasability_checks.assert_called_once()
                     releasability_start_releasability_checks.assert_called_once()
                     releasability_get_releasability_status.assert_called_once()
                     artifactory_receive_build_info.assert_called_once_with(release_request)
@@ -196,7 +180,7 @@ class MainTest(unittest.TestCase):
                     abort_release(ANY, ANY, ANY, release_request)
 
     @parameterized.expand([
-        "BURGRX_USER", "BURGRX_PASSWORD", "ARTIFACTORY_ACCESS_TOKEN"
+        "ARTIFACTORY_ACCESS_TOKEN"
     ])
     def test_check_params_should_raise_an_exception_given_a_mandatory_env_variable_is_not_provided(self, parameter_not_provided):
         for variable_name in MANDATORY_ENV_VARIABLES:

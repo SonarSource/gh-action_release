@@ -3,7 +3,7 @@
 #
 # It checks for the current branch, and allows checking of new input/output parameters at the PR time  (Fail fast principles)
 # without having to release the action first and then use it in a side project.
-name: gh-action_release Integration Test
+name: Integration tests
 on:
   push:
     branches:
@@ -12,14 +12,12 @@ on:
     types: [opened, synchronize, reopened]
 jobs:
   release:
-    name: "Release (it-tests)"
+    name: Test action
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1 (Necessary to access local action)
       - uses: ./main
         env:
-          BURGRX_USER: "bob user"
-          BURGRX_PASSWORD: "*******"
           ARTIFACTORY_ACCESS_TOKEN: "42"
           BINARIES_AWS_DEPLOY: "s3://empty"
           SLACK_API_TOKEN: "slack-token-test"
@@ -29,7 +27,7 @@ jobs:
             slack_channel: build
 
   release-reusable_workflow:
-    name: Release (reusable-workflow)
+    name: Test reusable workflow
     uses: ./.github/workflows/main.yaml
     with:
       dryRun: true
