@@ -94,7 +94,7 @@ jobs:
           repository: SonarSource/gh-action_release
           # This property is changed during the release process to reference the correct tag
           # During development you might want to change this to your branch name to run it in another repository
-          ref: 7bbeea01f7e1dc4960aaaef20ef4baea7242f0ae
+          ref: ${{ github.ref }}
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
