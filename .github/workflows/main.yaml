@@ -1,6 +1,7 @@
 # yamllint disable rule:line-length
 ---
-name: Release
+name: Release reusable workflow
+
 on:
   workflow_call:
     inputs:
@@ -159,7 +160,17 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - name: Release
+      - uses: SonarSource/gh-action_releasability@v1.0.0
+        id: releasability
+        if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
+        with:
+          branch: ${{ github.ref_name }}
+          commit-sha: ${{ github.sha }}
+          organization: ${{ github.repository_owner }}
+          repository: ${{ github.event.repository.name }}
+          version: ${{ github.event.release.tag_name }}
+
+      - name: Release ${{ github.event.release.tag_name }}
         id: release
         uses: ./gh-action_release/main
         with:
@@ -180,7 +191,7 @@ jobs:
       - name: Release action results
         if: always()
         run: |
-          echo "${{ steps.release.outputs.releasability }}"
+          echo "${{ steps.releasability.outputs.status }}"
           echo "${{ steps.release.outputs.promote }}"
           echo "${{ steps.release.outputs.publish_to_binaries }}"
           echo "${{ steps.release.outputs.release }}"
