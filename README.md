@@ -90,7 +90,7 @@ ie: [`5.0.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0.
 
 ### Branches
 
-The `master` branch is used for pre-releases and shall be referenced with caution.
+The `master` branch is used for pre-releases and shall not be referenced directly.
 
 Branches prefixed with a `v` are pointers to the last major versions, ie: [`v5`](https://github.com/SonarSource/gh-action_release/tree/v5).
 
