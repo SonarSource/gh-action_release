@@ -187,7 +187,7 @@ jobs:
           BINARIES_AWS_SECRET_ACCESS_KEY: ${{ steps.parse_vault.outputs.binaries_aws_secret_access_key }}
           BINARIES_AWS_SESSION_TOKEN: ${{ steps.parse_vault.outputs.binaries_aws_security_token }}
           BINARIES_AWS_DEFAULT_REGION: eu-central-1
-          SKIP_RELEASABILITY_CHECKS: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks }}
+
       - name: Release action results
         if: always()
         run: |

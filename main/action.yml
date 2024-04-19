@@ -14,8 +14,6 @@ inputs:
     default: 'false'
     required: false
 outputs:
-  releasability:
-    description: "Output to detect if releasability was successful"
   promote:
     description: "Output to detect if promote was executed"
   publish_to_binaries:
