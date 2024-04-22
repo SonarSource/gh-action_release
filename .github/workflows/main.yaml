@@ -115,6 +115,7 @@ jobs:
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
             development/kv/data/slack token | slack_api_token;
+            development/kv/data/slack webhook | slack_webhook;
             development/kv/data/repox url | artifactory_url;
       - name: Vault Binaries AWS Secrets
         id: secrets-binaries-aws
@@ -169,6 +170,32 @@ jobs:
           organization: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
           version: ${{ github.event.release.tag_name }}
+
+      - name: Revoke release on releasability check failure
+        if: failure() && steps.releasability.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/${{ github.repository }}/releases/${{ github.event.release.id }} -X PATCH -F draft=true
+          gh api repos/${{ github.repository }}/git/refs/tags/${{ github.event.release.tag_name }} -X DELETE
+
+      - name: Send Slack notification on releasability check failure
+        if: failure() && steps.releasability.outcome == 'failure'
+        uses: slackapi/slack-github-action@v1.26.0
+        env:
+          SLACK_WEBHOOK_URL: ${{ steps.parse_vault.outputs.slack_webhook }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        with:
+          payload: |
+            {
+              "channel": "${{ inputs.slackChannel }}",
+              "attachments": [
+                {
+                  "color": "#ff0000",
+                  "text": "Releasability checks failed in `${{ github.repository }}`. Release `${{ github.event.release.tag_name }}` was revoked. Publish the release again after resolving the issue. \n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
+                }
+              ]
+            }
 
       - name: Release ${{ github.event.release.tag_name }}
         id: release
