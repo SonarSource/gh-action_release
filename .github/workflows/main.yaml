@@ -161,7 +161,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@v1.0.0
+      - uses: SonarSource/gh-action_releasability@22a27d12434b8e8c56bc64006b954e6d8c173bc3 # v1.0.0
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
@@ -181,7 +181,7 @@ jobs:
 
       - name: Send Slack notification on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
-        uses: slackapi/slack-github-action@v1.26.0
+        uses: slackapi/slack-github-action@70cd7be8e40a46e8b0eced40b0de447bdb42f68e # v1.26.0
         env:
           SLACK_WEBHOOK_URL: ${{ steps.parse_vault.outputs.slack_webhook }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
