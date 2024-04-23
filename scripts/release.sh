@@ -12,14 +12,14 @@ git pull origin "${branch}"
 git checkout -b "$working_branch"
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${branch},\1${version},g"
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s/ref: \${{ github.ref }}/ref: ${version}/g"
-git commit -m "chore: update self-references to ${version}" -a
+git commit -m "chore: prepare ${version} for future reference" -a
 next_ref=$(git show -s --pretty=format:'%H')
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${version},\1${next_ref},g"
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s/ref: ${version}/ref: ${next_ref}/g"
-git commit -m "chore: update self-references to $next_ref" -a
+git commit -m "chore: release ${version} reference" -a
 git tag "$version"
 git checkout "${branch}" -- .
-git commit -m "chore: update self-references to ${branch}" -a
+git commit -m "chore: revert release commits" -a
 git log --pretty="%H %s %d" "${branch}".. --reverse >>scripts/pull-request-body.txt
 git push origin "$working_branch"
 git push origin "$version"

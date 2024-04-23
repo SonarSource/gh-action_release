@@ -1,1 +1,4 @@
 * @sonarsource/platform-devinfra-squad
+
+# No review needed for documentation changes
+*.md
