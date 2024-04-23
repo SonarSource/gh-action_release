@@ -2,13 +2,12 @@ import os
 
 from dryable import Dryable
 from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
-from release.releasability.releasability import Releasability
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
-from release.utils.release import publish_all_artifacts_to_binaries, releasability_checks, revoke_release, set_output
+from release.utils.release import publish_all_artifacts_to_binaries, revoke_release, set_output
 from release.utils.slack import notify_slack
 from release.vars import binaries_bucket_name
 
@@ -57,15 +56,6 @@ def main():
 
     github = GitHub()
     release_request = github.get_release_request()
-
-    releasability = Releasability(release_request)
-
-    # Allow skipping releasability checks in exceptional cases
-    # Eg: when the releasability checks are not implemented for a specific language
-    if os.environ.get('SKIP_RELEASABILITY_CHECKS') == "true":
-        set_output("releasability", "done")
-    else:
-        releasability_checks(github, releasability, release_request)
 
     artifactory = Artifactory(os.environ.get('ARTIFACTORY_ACCESS_TOKEN'))
     buildinfo = artifactory.receive_build_info(release_request)
