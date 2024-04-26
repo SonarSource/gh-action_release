@@ -121,6 +121,8 @@ been performed based on the provided inputs defined in `with:` section.
 
 To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml) and approve the Release PR.
 The workflow will create the GitHub Release.
+
+To update the `v` branch run the [Update v-branch workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/update-v-branch.yml)
 For more deails see [RELEASE.md](./RELEASE.md)
 
 ## References
