@@ -1,7 +1,6 @@
 # SonarSource GitHub release action
 
 This action implements the release process for all SonarSource projects. It must be used when you publish a GitHub release.
-
 ## Usage
 
 ### Release, Promotion and Publication
