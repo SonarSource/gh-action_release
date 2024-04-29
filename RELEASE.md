@@ -1,12 +1,12 @@
 # Releasing the Release Action 🤯 😵‍💫
 
 ## TLDR;
-To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml) and approve the Release PR.
-The workflow will create the GitHub Release.
+To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml). The workflow will create the GitHub Release.
+
+To update the v-branch run the [Update v-branch workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/update-v-branch.yml). The workflow will update the v-branch to the specified tag.
 
 ## Explanation
-Due to the circular dependency issue with GitHub Actions self-reference, the release process is a bit more complex, as described
-in [scripts/pull-request-body.txt](./scripts/pull-request-body.txt).
+Due to the issue with GitHub Reusable Workflows referencing files in the same repository, the release process needs to create 2 commits to be able to have a tag referencing all worflows with the same version.
 
 #### Tag and Release
 
@@ -21,10 +21,8 @@ This script will:
 1. commit references the future tag
 2. commit references the previous commit
 3. tag this second commit
-4. commit references back to the branch
-5. generate a PR with those release commits and the release tag
-6. the PR should be automatically approved and fast-forward merged
-7. create a Release on GitHub
+4. revert previous commits
+5. create a Release on GitHub
 
 Example:
 
@@ -38,7 +36,7 @@ $ git log --graph --pretty="%H %s %d" branch-2 -3 --reverse
 
 #### Update the v* Branch
 
-This is available on GitHub: https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml
+Available as a workflow at: https://github.com/SonarSource/gh-action_release/actions/workflows/update-v-branch.yml
 
 ```bash
 scripts/updatevbranch.sh <version>

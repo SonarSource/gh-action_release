@@ -83,21 +83,11 @@ If using `publishToTestPyPI` option:
 All the actions in this repository are released together following semantic versioning,
 ie: [`5.0.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0.0).
 
-```yaml
-    steps:
-      - uses: SonarSource/gh-action_release/main@5.0.0
-```
-
 ### Branches
-
-The `master` branch is used for pre-releases and shall not be referenced directly.
 
 Branches prefixed with a `v` are pointers to the last major versions, ie: [`v5`](https://github.com/SonarSource/gh-action_release/tree/v5).
 
-```yaml
-    steps:
-      - uses: SonarSource/gh-action_release/main@v5
-```
+> Note: the `master` branch is used for development and can not be referenced directly. Use a `v` branch or a tag instead.
 
 ## Development
 
@@ -119,8 +109,11 @@ been performed based on the provided inputs defined in `with:` section.
 
 ### Releasing
 
-To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml) and approve the Release PR.
-The workflow will create the GitHub Release.
+To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml). The workflow will create the GitHub Release.
+
+To update the v-branch run the [Update v-branch workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/update-v-branch.yml). The workflow will update the v-branch to the specified tag.
+
+
 For more deails see [RELEASE.md](./RELEASE.md)
 
 ## References

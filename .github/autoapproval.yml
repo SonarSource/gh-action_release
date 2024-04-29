@@ -1,9 +1,0 @@
-from_owner:
-  - tomverin
-  - sebastienvermeille
-  - matemoln
-  - julien-carsique-sonarsource
-  - jayadeep-km-sonarsource
-  - hashicorp-vault-sonar-prod
-required_labels:
-  - auto-approve
