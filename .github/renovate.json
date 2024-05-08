@@ -1,17 +1,4 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "github>SonarSource/renovate-config:re-team"
-  ],
-  "packageRules": [
-    {
-      "groupName": "github-actions non-major dependencies",
-      "groupSlug": "github-actions-minor-patch",
-      "matchDepTypes": ["action"],
-      "matchUpdateTypes": [
-        "minor",
-        "patch"
-      ]
-    }
-  ]
+  "extends": ["github>SonarSource/renovate-config:re-team"]
 }
