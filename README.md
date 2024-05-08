@@ -27,54 +27,67 @@ jobs:
 
 Available options:
 
-- publishToBinaries (default: false): enable the publication to binaries
-- publishJavadoc (default: false): enable the publication of the javadoc to https://javadocs.sonarsource.org/
-- javadocDestinationDirectory (default: use repository name): define the subdir to use in https://javadocs.sonarsource.org/
-- binariesS3Bucket (default: downloads-cdn-eu-central-1-prod): target bucket
-- mavenCentralSync (default: false): enable synchronization to Maven Central, **for OSS projects only**
-- mavenCentralSyncExclusions (default: none): exclude some artifacts from synchronization
-- publishToPyPI (default: false): Publish pypi artifacts to https://pypi.org/, **for OSS projects only**
-- publishToTestPyPI (default: false): Publish pypi artifacts to https://test.pypi.org/, **for OSS projects only**
-- skipPythonReleasabilityChecks (default: false): Skip releasability checks **for Python projects only**
-- slackChannel (default: build): notification Slack channel
-- artifactoryRoleSuffix (default: promoter): Artifactory promoter suffix
-- dryRun (default: false): perform a dry run execution
+- `publishToBinaries` (default: *false*): enable the publication to binaries
+- `publishJavadoc` (default: *false*): enable the publication of the javadoc to https://javadocs.sonarsource.org/
+- `javadocDestinationDirectory` (default: *use repository name*): define the subdir to use in https://javadocs.sonarsource.org/
+- `binariesS3Bucket` (default: *downloads-cdn-eu-central-1-prod*): target bucket
+- `mavenCentralSync` (default: *false*): enable synchronization to Maven Central, **for OSS projects only**
+- `mavenCentralSyncExclusions` (default: *none*): exclude some artifacts from synchronization
+- `publishToPyPI` (default: *false*): Publish pypi artifacts to https://pypi.org/, **for OSS projects only**
+- `publishToTestPyPI` (default: *false*): Publish pypi artifacts to https://test.pypi.org/, **for OSS projects only**
+- `skipPythonReleasabilityChecks` (default: *false*): Skip releasability checks **for Python projects only**
+- `slackChannel` (default: *build*): notification Slack channel
+- `artifactoryRoleSuffix` (default: *promoter*): Artifactory promoter suffix
+- `dryRun` (default: *false*): perform a dry run execution
 
 ## Releasability check
 
 To perform a releasability check for a given version without performing an actual release, run the [releasability_check workflow](https://github.com/SonarSource/gh-action_releasability/actions/workflows/releasability_checks.yml).
+The releasability checks execute the lambdas deployed from the https://github.com/SonarSource/ops-releasability project.
 
 ## Requirements
 
-[the repository needs to be onboarded to the Vault](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/2466316312/HashiCorp+Vault#Onboarding-a-Repository-on-Vault).
+### Onboarding to ops-releasability
 
-The following secrets and permissions are required:
+The repository needs to be onboarded to [ops-releasability/projects.json](https://github.com/SonarSource/ops-releasability/blob/master/infra/projects.json).
 
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
-- development/kv/data/slack
-- development/kv/data/repox
-- secrets.GITHUB_TOKEN (provided by the GitHub Action runner)
+### Onboarding to Vault
 
-Additionally,
+[The repository needs to be onboarded to the Vault](https://xtranet-sonarsource.atlassian.net/wiki/spaces/RE/pages/2466316312/HashiCorp+Vault#Onboarding-a-Repository-on-Vault).
 
-If using `publishToBinaries` option:
+#### Required permissions
 
-- development/aws/sts/downloads
+```
+development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
+development/kv/data/slack
+development/kv/data/repox
+```
 
-If using `mavenCentralSync` option:
+#### Additional permissions if using `publishToBinaries`
 
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
-- development/kv/data/ossrh
+```
+development/aws/sts/downloads
+```
 
-If using `publishToPyPI` option:
+#### Additional permissions if using `mavenCentralSync`
 
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
-- development/kv/data/pypi
+```
+development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+development/kv/data/ossrh
+```
 
-If using `publishToTestPyPI` option:
+#### Additional permissions if using `publishToPyPI`
+```
+development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+development/kv/data/pypi
+```
 
-- development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
-- development/kv/data/pypi-test
+#### Additional permissions if using `publishToTestPyPI`
+
+```
+development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+development/kv/data/pypi-test
+```
 
 ## Versioning
 
