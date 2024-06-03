@@ -23,6 +23,10 @@ name: Javadoc publication
         description: Artifactory reader suffix specified in vault repo config
         default: private-reader
         required: false
+      publicRelease:
+        type: boolean
+        description: Indicate if the project is generating a public release or not
+        required: true
 
 jobs:
   javadoc-publication:
@@ -68,6 +72,7 @@ jobs:
           flat-download: true
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
+          remote-repo:  ${{ inputs.publicRelease == true && 'sonarsource-public-releases' || 'sonarsource-private-releases'}}
       - name: Keep only javadoc.jar
         run: find ${{ steps.local_repo.outputs.dir }} -type f ! -name "*-javadoc.jar" -delete
       - name: List artifacts

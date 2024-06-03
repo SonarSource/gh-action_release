@@ -24,6 +24,11 @@ on:
         type: string
         description: Name of the directory to use at https://javadocs.sonarsource.org/ when publishJavadoc is set to true
         required: false
+      publicRelease:
+        type: boolean
+        description: Indicate if the project is generating a public release or not
+        required: false
+        default: false
       binariesS3Bucket:
         type: string
         description: Target bucket
@@ -243,6 +248,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
+      publicRelease: ${{ inputs.publicRelease }}
 
   testPypi:
     name: TestPyPI
