@@ -29,7 +29,9 @@ Available options:
 
 - `publishToBinaries` (default: *false*): enable the publication to binaries
 - `publishJavadoc` (default: *false*): enable the publication of the javadoc to https://javadocs.sonarsource.org/
+  > Note: When the project is releasing a public release, `publicRelease: true` has to be set.
 - `javadocDestinationDirectory` (default: *use repository name*): define the subdir to use in https://javadocs.sonarsource.org/
+- `publicRelease` (default: *false*): define if the release is public or private (used by `publishJavadoc`)
 - `binariesS3Bucket` (default: *downloads-cdn-eu-central-1-prod*): target bucket
 - `mavenCentralSync` (default: *false*): enable synchronization to Maven Central, **for OSS projects only**
 - `mavenCentralSyncExclusions` (default: *none*): exclude some artifacts from synchronization
@@ -67,6 +69,12 @@ development/kv/data/repox
 
 ```
 development/aws/sts/downloads
+```
+
+#### Additional permissions if using `publishJavadoc`
+
+```
+development/aws/sts/javadocs
 ```
 
 #### Additional permissions if using `mavenCentralSync`
