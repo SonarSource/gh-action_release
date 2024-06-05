@@ -38,6 +38,11 @@ jobs:
           python -m pip install --upgrade pip pipenv
           make test
           sed -i "s|<source>${GITHUB_WORKSPACE}|<source>/github/workspace|g" "${GITHUB_WORKSPACE}/main/build/coverage.xml"
+      - name: Test
+        working-directory: datadog-ingest
+        run: |
+          python -m pip install --upgrade requests
+          python main_test.py
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
