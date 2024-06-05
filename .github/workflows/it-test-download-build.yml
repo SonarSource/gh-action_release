@@ -13,7 +13,7 @@ jobs:
       contents: write
     steps:
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@07e5b6565744517aaf475a63bb09217dc0a5956e # 3.2.4
+        uses: SonarSource/jfrog-setup-wrapper@05c795b02e0490b83bf8d16d9b938dc6a4352f95 # 3.2.5
         with:
           artifactoryRoleSuffix: "private-reader"
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6 (Necessary to access local action)
@@ -42,7 +42,7 @@ jobs:
       contents: write
     steps:
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@07e5b6565744517aaf475a63bb09217dc0a5956e # 3.2.4
+        uses: SonarSource/jfrog-setup-wrapper@05c795b02e0490b83bf8d16d9b938dc6a4352f95 # 3.2.5
         with:
           artifactoryRoleSuffix: "private-reader"
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6 (Necessary to access local action)
