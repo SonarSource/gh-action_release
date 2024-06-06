@@ -76,6 +76,11 @@ on:
         description: Skip releasability checks for Python projects
         default: false
         required: false
+      pushToDatadog:
+        type: boolean
+        description: Push results to datadog for monitoring
+        default: true
+        required: false
 
 jobs:
   release:
@@ -91,6 +96,16 @@ jobs:
       promote: ${{ steps.release.outputs.promote }}
       publish_to_binaries: ${{ steps.release.outputs.publish_to_binaries }}
       release: ${{ steps.release.outputs.release }}
+      releasabilityCheckDependencies: ${{ steps.releasability.outputs.releasabilityCheckDependencies }}
+      releasabilityQA: ${{ steps.releasability.outputs.releasabilityQA }}
+      releasabilityJira: ${{ steps.releasability.outputs.releasabilityJira }}
+      releasabilityWhiteSource: ${{ steps.releasability.outputs.releasabilityWhiteSource }}
+      releasabilityCheckPeacheeLanguagesStatistics: ${{ steps.releasability.outputs.releasabilityCheckPeacheeLanguagesStatistics }}
+      releasabilityQualityGate: ${{ steps.releasability.outputs.releasabilityQualityGate }}
+      releasabilityParentPOM: ${{ steps.releasability.outputs.releasabilityParentPOM }}
+      releasabilityGitHub: ${{ steps.releasability.outputs.releasabilityGitHub }}
+      releasabilityCheckManifestValues: ${{ steps.releasability.outputs.releasabilityCheckManifestValues }}
+
     steps:
       # Clone gh-action_release repository to run actions locally
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
@@ -166,7 +181,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@09378d1dfdd0127e1970695a2b2eaa91b202ced3 # v1.0.2
+      - uses: SonarSource/gh-action_releasability@36a32c49662d037659f0f62fe2c8383705b2f5a7 # v1.0.3
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
@@ -271,3 +286,56 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
+
+  datadog:
+    name: Push results to datadog
+    runs-on: ubuntu-latest
+    needs:
+      - release
+      - mavenCentral
+      - javadocPublication
+      - testPypi
+      - pypi
+    if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
+    steps:
+      # Clone gh-action_release repository to run actions locally
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+        with:
+          # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
+          # to directly reference the repository where the reusable workflow is defined
+          repository: SonarSource/gh-action_release
+          # This property is changed during the release process to reference the correct tag
+          # During development change this to your branch name to run it in another repository
+          ref: ${{ github.ref }}
+          path: gh-action_release
+
+      - name: Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@d0877ce7085bc313bd7a7b99c4e4489d42fb40e1 # tag=3.0.0
+        with:
+          url: ${{ inputs.vaultAddr }}
+          secrets:
+            development/kv/data/datadog token | datadog_token;
+
+      - name: Push to datadog
+        id: datadog
+        env:
+          datadog_token: ${{ fromJSON(steps.secrets.outputs.vault).datadog_token }}
+          releasabilityCheckDependencies: ${{ needs.release.outputs.releasabilityCheckDependencies }}
+          releasabilityQA: ${{ needs.release.outputs.releasabilityQA }}
+          releasabilityJira: ${{ needs.release.outputs.releasabilityJira }}
+          releasabilityWhiteSource: ${{ needs.release.outputs.releasabilityWhiteSource }}
+          releasabilityCheckPeacheeLanguagesStatistics: ${{ needs.release.outputs.releasabilityCheckPeacheeLanguagesStatistics }}
+          releasabilityQualityGate: ${{ needs.release.outputs.releasabilityQualityGate }}
+          releasabilityParentPOM: ${{ needs.release.outputs.releasabilityParentPOM }}
+          releasabilityGitHub: ${{ needs.release.outputs.releasabilityGitHub }}
+          releasabilityCheckManifestValues: ${{ needs.release.outputs.releasabilityCheckManifestValues }}
+          release_passed: ${{ needs.release.result }}
+          maven_central_published: ${{ needs.mavenCentral.result }}
+          javadoc_published: ${{ needs.javadocPublication.result }}
+          testpypi_published: ${{ needs.testPypi.result }}
+          pypi_published: ${{ needs.pypi.result }}
+          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' }}
+          repo: ${{ github.repository }}
+          run_id: ${{ github.run_id }}
+        run: python ./gh-action_release/datadog-ingest/main.py
