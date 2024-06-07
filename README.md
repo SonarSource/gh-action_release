@@ -41,6 +41,7 @@ Available options:
 - `slackChannel` (default: *build*): notification Slack channel
 - `artifactoryRoleSuffix` (default: *promoter*): Artifactory promoter suffix
 - `dryRun` (default: *false*): perform a dry run execution
+- `pushToDatadog` (default: *true*): push results to Datadog for monitoring
 
 ## Releasability check
 
@@ -63,6 +64,7 @@ The repository needs to be onboarded to [ops-releasability/projects.json](https:
 development/artifactory/token/{REPO_OWNER_NAME_DASH}-promoter
 development/kv/data/slack
 development/kv/data/repox
+development/kv/data/datadog
 ```
 
 #### Additional permissions if using `publishToBinaries`
