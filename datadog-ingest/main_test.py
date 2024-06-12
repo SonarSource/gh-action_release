@@ -27,6 +27,7 @@ class TestDatadogIngest(unittest.TestCase):
         os.environ['testpypi_published'] = 'success'
         os.environ['pypi_published'] = 'success'
         os.environ['status'] = 'true'
+        os.environ['is_dummy_project'] = 'true'
 
         actual = prepare_logs()
         expected = [{
@@ -52,6 +53,7 @@ class TestDatadogIngest(unittest.TestCase):
             'testpypi_published': 'success',
             'pypi_published': 'success',
             'status': 'true',
+            'is_dummy_project': 'true',
             }]
 
         self.assertEqual(expected, actual, 'Invalid log structure')

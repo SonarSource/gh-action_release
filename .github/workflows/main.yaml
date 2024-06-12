@@ -81,6 +81,13 @@ on:
         description: Push results to datadog for monitoring
         default: true
         required: false
+      # This flag allows us to treat this project differently, eg: In Datadog,
+      # stats from dummy projects can be excluded from dashboards
+      isDummyProject:
+        type: boolean
+        description: Indicate whether this project is a dummy project used for testing purposes.
+        default: false
+        required: false
 
 jobs:
   release:
@@ -338,4 +345,5 @@ jobs:
           status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' }}
           repo: ${{ github.repository }}
           run_id: ${{ github.run_id }}
+          is_dummy_project: ${{ inputs.isDummyProject }}
         run: python ./gh-action_release/datadog-ingest/main.py
