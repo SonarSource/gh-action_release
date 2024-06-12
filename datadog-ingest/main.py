@@ -26,7 +26,8 @@ def prepare_logs():
         "javadoc_published": os.environ.get('javadoc_published'),
         "testpypi_published": os.environ.get('testpypi_published'),
         "pypi_published": os.environ.get('pypi_published'),
-        "status": os.environ.get('status')
+        "status": os.environ.get('status'),
+        "is_dummy_project": os.environ.get('is_dummy_project')
       }
     ]
 
