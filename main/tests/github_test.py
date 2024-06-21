@@ -132,6 +132,30 @@ def test_must_succeed_with_target_commitish_containing_a_commit(mock_release_eve
         mock_release_event.assert_called_once()
 
 
+@patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha'}, clear=True)
+@patch('release.utils.github.json.load',
+       return_value={
+           'repository': {
+               'full_name': 'org/project'
+           },
+           'release': {
+               'tag_name': '1.0.0+42',
+               'target_commitish': 'c747bee7bf5cfc8c0ad5fbc126d516c0a1aa42ef'
+           },
+       })
+def test_must_succeed_with_plus_version_separator(mock_release_event):
+    with patch('release.utils.github.open', mock_open()) as open_mock:
+        release_request = GitHub().get_release_request()
+        assert release_request.org == 'org'
+        assert release_request.project == 'project'
+        assert release_request.version == '1.0.0+42'
+        assert release_request.buildnumber == '42'
+        assert release_request.branch == 'master'
+        assert release_request.sha == 'sha'
+        open_mock.assert_called_once()
+        mock_release_event.assert_called_once()
+
+
 @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha', 'GITHUB_TOKEN': 'token'}, clear=True)
 @patch('requests.delete')
 @patch('requests.patch')
