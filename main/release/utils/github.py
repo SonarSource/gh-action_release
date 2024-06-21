@@ -43,12 +43,13 @@ class GitHub:
             release = self._get_release()
             version = self.event['inputs']['version'] if release is None else release['tag_name']
 
+            # This is an explicit requirement for project SLVSCODE
+            # see https://sonarsource.atlassian.net/browse/BUILD-4915
             version_pattern = re.compile(
-                r'^'                  # Start of the string
-                r'(?:[a-zA-Z]+-)?'    # Optional ProjectName- prefix in a non-capturing group
+                r'^(?:[a-zA-Z]+-)?'   # Optional ProjectName- prefix (required by sonar-scanner-azdo; see https://sonarsource.atlassian.net/browse/BUILD-5293)
                 r'\d+\.\d+\.\d+'      # Major.Minor.Patch version
-                r'(?:-M\d+)?'         # Optional -Mx suffix in a non-capturing group
-                r'[.+]'               # Separator, either . or +
+                r'(?:-M\d+)?'         # Optional -Mx suffix
+                r'[.+]'               # Separator (+ is required by sonarlint-vscode; see https://sonarsource.atlassian.net/browse/BUILD-4915)
                 r'(\d+)$'             # Build number in a captured group
             )
             version_match = version_pattern.match(version)
