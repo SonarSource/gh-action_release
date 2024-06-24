@@ -65,6 +65,48 @@ def test_must_succeed_with_correct_tag(mock_release_event):
         open_mock.assert_called_once()
         mock_release_event.assert_called_once()
 
+@patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha'}, clear=True)
+@patch('release.utils.github.json.load',
+       return_value={
+           'repository': {
+               'full_name': 'org/project'
+           },
+           'release': {
+               'tag_name': 'proj-1.0.0.42',
+               'target_commitish': 'branch'
+           },
+       })
+def test_must_succeed_with_correct_project_name_tag(mock_release_event):
+    with patch('release.utils.github.open', mock_open()) as open_mock:
+        release_request = GitHub().get_release_request()
+        assert release_request.org == 'org'
+        assert release_request.project == 'project'
+        assert release_request.version == 'proj-1.0.0.42'
+        assert release_request.buildnumber == '42'
+        assert release_request.branch == 'branch'
+        assert release_request.sha == 'sha'
+        open_mock.assert_called_once()
+        mock_release_event.assert_called_once()
+
+
+@patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha'}, clear=True)
+@patch('release.utils.github.json.load',
+       return_value={
+           'repository': {
+               'full_name': 'org/project'
+           },
+           'release': {
+               'tag_name': 'org-project-1.0.0.42',
+               'target_commitish': 'branch'
+           },
+       })
+def test_must_fail_with_incorrect_project_name_tag(mock_release_event):
+    with patch('release.utils.github.open', mock_open()) as open_mock:
+        with pytest.raises(GitHubException, match='The tag must follow this pattern: '):
+            GitHub().get_release_request()
+            open_mock.assert_called_once()
+            mock_release_event.assert_called_once()
+
 
 @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha'}, clear=True)
 @patch('release.utils.github.json.load',
@@ -83,6 +125,30 @@ def test_must_succeed_with_target_commitish_containing_a_commit(mock_release_eve
         assert release_request.org == 'org'
         assert release_request.project == 'project'
         assert release_request.version == '1.0.0.42'
+        assert release_request.buildnumber == '42'
+        assert release_request.branch == 'master'
+        assert release_request.sha == 'sha'
+        open_mock.assert_called_once()
+        mock_release_event.assert_called_once()
+
+
+@patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha'}, clear=True)
+@patch('release.utils.github.json.load',
+       return_value={
+           'repository': {
+               'full_name': 'org/project'
+           },
+           'release': {
+               'tag_name': '1.0.0+42',
+               'target_commitish': 'c747bee7bf5cfc8c0ad5fbc126d516c0a1aa42ef'
+           },
+       })
+def test_must_succeed_with_plus_version_separator(mock_release_event):
+    with patch('release.utils.github.open', mock_open()) as open_mock:
+        release_request = GitHub().get_release_request()
+        assert release_request.org == 'org'
+        assert release_request.project == 'project'
+        assert release_request.version == '1.0.0+42'
         assert release_request.buildnumber == '42'
         assert release_request.branch == 'master'
         assert release_request.sha == 'sha'

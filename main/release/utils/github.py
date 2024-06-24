@@ -1,7 +1,6 @@
 import json
 import os
 import re
-from typing import Union
 import requests
 import logging
 
@@ -44,11 +43,26 @@ class GitHub:
             release = self._get_release()
             version = self.event['inputs']['version'] if release is None else release['tag_name']
 
-            # tag shall be like X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER (SEMVER)
-            version_pattern = re.compile(r'^\d+\.\d+\.\d+(?:-M\d+)?[.+](\d+)$')
+            # This is an explicit requirement for project SLVSCODE
+            # see https://sonarsource.atlassian.net/browse/BUILD-4915
+            version_pattern = re.compile(
+                r'^(?:[a-zA-Z]+-)?'   # Optional ProjectName- prefix (required by sonar-scanner-azdo; see https://sonarsource.atlassian.net/browse/BUILD-5293)
+                r'\d+\.\d+\.\d+'      # Major.Minor.Patch version
+                r'(?:-M\d+)?'         # Optional -Mx suffix
+                r'[.+]'               # Separator (+ is required by sonarlint-vscode; see https://sonarsource.atlassian.net/browse/BUILD-4915)
+                r'(\d+)$'             # Build number in a captured group
+            )
             version_match = version_pattern.match(version)
             if version_match is None:
-                raise GitHubException('The tag must follow this pattern: X.X.X.BUILD_NUMBER or X.X.X-MX.BUILD_NUMBER or X.X.X+BUILD_NUMBER')
+                raise GitHubException(
+                    'The tag must follow this pattern: [ProjectName-]Major.Minor.Patch[-Mx][.+]BuildNumber\n'
+                    'Where:\n'
+                    '- "ProjectName-" is an optional prefix (any sequence of letters followed by a dash).\n'
+                    '- "Major.Minor.Patch" is the version number (three numbers separated by dots).\n'
+                    '- "-Mx" is an optional suffix (a dash followed by "M" and a number).\n'
+                    '- "[.+]" is a separator, either a dot or a plus sign.\n'
+                    '- "BuildNumber" is the build number (a number at the end of the string).'
+                )
             DEFAULT_BRANCH = self.event.get('repository', {}).get('default_branch', 'master')
             if release is None:
                 branch_name = DEFAULT_BRANCH

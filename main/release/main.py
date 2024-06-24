@@ -71,7 +71,7 @@ def main():
 
         notify_slack(f"Successfully released {release_request.project}:{release_request.version}")
     except Exception as e:
-        notify_slack(f"Released {release_request.project}:{release_request.version} failed")
+        notify_slack(f"Failed to release {release_request.project}:{release_request.version}")
         abort_release(github, artifactory, binaries, release_request)
         raise e
 
