@@ -122,7 +122,7 @@ jobs:
           repository: SonarSource/gh-action_release
           # This property is changed during the release process to reference the correct tag
           # During development change this to your branch name to run it in another repository
-          ref: a1dee60ae224efb84367344c390f50f476192f01
+          ref: ${{ github.ref }}
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
@@ -313,7 +313,7 @@ jobs:
           repository: SonarSource/gh-action_release
           # This property is changed during the release process to reference the correct tag
           # During development change this to your branch name to run it in another repository
-          ref: a1dee60ae224efb84367344c390f50f476192f01
+          ref: ${{ github.ref }}
           path: gh-action_release
 
       - name: Vault
