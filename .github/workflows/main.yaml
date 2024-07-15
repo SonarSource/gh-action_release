@@ -188,7 +188,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@23c9ad31b2d613bade88da898dfdca0b5c65ac69 # v1.2.1
+      - uses: SonarSource/gh-action_releasability@0295eda42f8c7d4ca68648e510189255b36ed7d9 # 1.2.3
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
