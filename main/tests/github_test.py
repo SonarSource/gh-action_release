@@ -72,7 +72,7 @@ def test_must_succeed_with_correct_tag(mock_release_event):
                'full_name': 'org/project'
            },
            'release': {
-               'tag_name': 'proj-1.0.0.42',
+               'tag_name': 'ab-1.0.0.42',
                'target_commitish': 'branch'
            },
        })
@@ -80,8 +80,8 @@ def test_must_succeed_with_correct_project_name_tag(mock_release_event):
     with patch('release.utils.github.open', mock_open()) as open_mock:
         release_request = GitHub().get_release_request()
         assert release_request.org == 'org'
-        assert release_request.project == 'project'
-        assert release_request.version == 'proj-1.0.0.42'
+        assert release_request.project == 'project-ab'
+        assert release_request.version == 'ab-1.0.0.42'
         assert release_request.buildnumber == '42'
         assert release_request.branch == 'branch'
         assert release_request.sha == 'sha'

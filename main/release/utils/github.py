@@ -46,11 +46,11 @@ class GitHub:
             # This is an explicit requirement for project SLVSCODE
             # see https://sonarsource.atlassian.net/browse/BUILD-4915
             version_pattern = re.compile(
-                r'^(?:[a-zA-Z]+-)?'   # Optional ProjectName- prefix (required by sonar-scanner-azdo; see https://sonarsource.atlassian.net/browse/BUILD-5293)
-                r'\d+\.\d+\.\d+'      # Major.Minor.Patch version
-                r'(?:-M\d+)?'         # Optional -Mx suffix
-                r'[.+]'               # Separator (+ is required by sonarlint-vscode; see https://sonarsource.atlassian.net/browse/BUILD-4915)
-                r'(\d+)$'             # Build number in a captured group
+                r'^(?P<prefix>[a-zA-Z]+-)?'   # Optional ProjectName- prefix (required by sonar-scanner-azdo; see https://sonarsource.atlassian.net/browse/BUILD-5293)
+                r'\d+\.\d+\.\d+'              # Major.Minor.Patch version
+                r'(?:-M\d+)?'                 # Optional -Mx suffix
+                r'[.+]'                       # Separator (+ is required by sonarlint-vscode; see https://sonarsource.atlassian.net/browse/BUILD-4915)
+                r'(?P<build>\d+)$'            # Build number in a captured group
             )
             version_match = version_pattern.match(version)
             if version_match is None:
@@ -71,8 +71,14 @@ class GitHub:
                 if re.compile("^([a-f0-9]{40})$").match(branch_name):
                     branch_name = DEFAULT_BRANCH
 
+            prefix = version_match.group("prefix")
+            if prefix:
+                # Required for sonar-scanner-azdo to support two artifacts in repox
+                # https://sonarsource.atlassian.net/browse/BUILD-5506
+                project = f'{project}-{prefix[:-1]}'
+
             return ReleaseRequest(organisation, project,
-                                  version, version_match.groups()[0],
+                                  version, version_match.group("build"),
                                   branch_name, os.environ.get('GITHUB_SHA'))
 
     def __fake_release_request(self) -> ReleaseRequest:
