@@ -17,7 +17,7 @@ open="$MVN_NEXUS_STAGING_CMD:rc-open $DEFAULT_OPTS $PROFILE_OPT"
 # Deploy to the staging repository
 deploy="$MVN_NEXUS_STAGING_CMD:deploy-staged-repository $DEFAULT_OPTS $PROFILE_OPT"
 # Close the staging repository after deployment and perform checks
-close="$MVN_NEXUS_STAGING_CMD:rc-close -DstagingProgressTimeoutMinutes=30 $DEFAULT_OPTS"
+close="$MVN_NEXUS_STAGING_CMD:rc-close -DstagingProgressTimeoutMinutes=60 $DEFAULT_OPTS"
 # Release the artifacts to the public repository
 release="$MVN_NEXUS_STAGING_CMD:rc-release $DEFAULT_OPTS"
 
