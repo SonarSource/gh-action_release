@@ -27,7 +27,7 @@ jobs:
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release
-    timeout-minutes: 30
+    timeout-minutes: 60
     if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
     outputs:
       maven-central: ${{ steps.maven-central-sync.outcome }}
