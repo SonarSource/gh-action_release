@@ -35,9 +35,6 @@ class Artifactory:
             # We compute the source and target repositories using metadata from the Artifactory
             # This is the normal case where promotion was done by JFrog integration such as CLI, Rest API or AzureDevOps
             sourcerepo, targetrepo = buildinfo.get_source_and_target_repos(revoke)
-            print(f"Promoting build {release_request.project}#{release_request.buildnumber} from {sourcerepo} to "
-                  f"{targetrepo}")
-
             url = f"{self.url}/api/build/promote/{release_request.project}/{release_request.buildnumber}"
             if revoke:
                 status = "it-passed"
@@ -46,6 +43,7 @@ class Artifactory:
                 "sourceRepo": f"{sourcerepo}",
                 "targetRepo": f"{targetrepo}"
             }
+            print(f"Promoting {release_request.project}/{release_request.buildnumber} with {json_payload}")
             r = requests.post(url, data=json.dumps(json_payload), headers=self.headers)
         except KeyError:
             # The promotion was not done by a JFrog integration (the homemade user plugin multipromote was used instead)
@@ -73,11 +71,12 @@ class Artifactory:
             }
             params.update(moreparams)
 
-            print(f"Promoting multi repositories: {moreparams}")
+            print(f"Promoting to multiple repositories with {params}")
 
             url = f"{self.url}/api/plugins/execute/multiRepoPromote?params=" + ";".join(
                 "{!s}={!s}".format(key, val) for (key, val) in params.items())
             r = requests.get(url, headers=self.headers)
+            print(f"Successful promotion. Response: {r.text}")
         if not r.ok:
             raise Exception(f"Promotion failed with code: {r.status_code}. Response was: {r.text}")
 
