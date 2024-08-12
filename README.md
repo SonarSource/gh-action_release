@@ -27,7 +27,7 @@ jobs:
 
 Available options:
 
-- `publishToBinaries` (default: *false*): enable the publication to binaries
+- `publishToBinaries` (default: *false*): enable the publication to binaries (Used only if the binaries are delivered to customers - binaries is an AWS S3 bucket)
 - `publishJavadoc` (default: *false*): enable the publication of the javadoc to https://javadocs.sonarsource.org/
   > Note: When the project is releasing a public release, `publicRelease: true` has to be set.
 - `javadocDestinationDirectory` (default: *use repository name*): define the subdir to use in https://javadocs.sonarsource.org/
