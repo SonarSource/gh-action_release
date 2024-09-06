@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from _pytest.fixtures import fixture
+from pytest import fixture
 
 from release.utils.binaries import Binaries
 from release.utils.buildinfo import BuildInfo

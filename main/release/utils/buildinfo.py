@@ -4,14 +4,17 @@ class BuildInfo:
     def __init__(self, json):
         self.json = json
 
-    def get_property(self, property_name, default=""):
+    def get_property(self, property_name, default=None):
         try:
             return self.json['buildInfo']['properties'][property_name]
-        except BaseException:
+        except KeyError:
             return default
 
-    def get_module_property(self, property_name):
-        return self.json['buildInfo']['modules'][0]['properties'][property_name]
+    def get_module_property(self, property_name, default=None):
+        try:
+            return self.json['buildInfo']['modules'][0]['properties'][property_name]
+        except KeyError:
+            return default
 
     def get_version(self):
         return self.json['buildInfo']['modules'][0]['id'].split(":")[-1]
@@ -28,14 +31,9 @@ class BuildInfo:
         return sourcerepo, targetrepo
 
     def get_artifacts_to_publish(self):
-        artifacts = None
-        try:
-            artifacts = self.get_module_property('artifactsToPublish')
-        except:
-            try:
-                artifacts = self.get_property('buildInfo.env.ARTIFACTS_TO_PUBLISH')
-            except:
-                print("no artifacts to publish")
+        artifacts = self.get_module_property('artifactsToPublish', self.get_property('buildInfo.env.ARTIFACTS_TO_PUBLISH'))
+        if not artifacts:
+            print("No artifacts to publish")
         return artifacts
 
     def is_public(self):
