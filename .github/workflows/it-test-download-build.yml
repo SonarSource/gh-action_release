@@ -16,7 +16,7 @@ jobs:
         uses: SonarSource/jfrog-setup-wrapper@98472723a26566d4a3bf0ebee76c7e65cc5bfe3c # 3.3.0
         with:
           artifactoryRoleSuffix: "private-reader"
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7 (Necessary to access local action)
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0 (Necessary to access local action)
       - uses: ./download-build/
         name: Given download-build is used with default values and dryRun enabled
         id: test-data
@@ -45,7 +45,7 @@ jobs:
         uses: SonarSource/jfrog-setup-wrapper@98472723a26566d4a3bf0ebee76c7e65cc5bfe3c # 3.3.0
         with:
           artifactoryRoleSuffix: "private-reader"
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7 (Necessary to access local action)
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # v4.2.0 (Necessary to access local action)
       - uses: ./download-build/
         name: Given download-build is used with flat-download=true, exclusions and dryRun enabled
         id: test-data
