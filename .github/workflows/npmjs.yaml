@@ -1,0 +1,132 @@
+name: NpmJS
+"on":
+  workflow_call:
+    inputs:
+      vaultAddr:
+        type: string
+        description: Custom Vault installation
+        default: https://vault.sonar.build:8200
+        required: false
+      vaultTokenKey:
+        type: string
+        description: Vault key to read the token from
+        default: npm
+        required: false
+      artifactoryRoleSuffix:
+        type: string
+        description: Artifactory reader suffix specified in vault repo config
+        default: private-reader
+        required: false
+      downloadExclusions:
+        type: string
+        description: Exclusions for the JFrog build download
+        default: "-"
+        required: false
+      npmRegistryUrl:
+        type: string
+        description: npm Registry URL for publishing the package
+        default: https://registry.npmjs.org/
+        required: false
+      slackChannel:
+        type: string
+        description: Slack channel to post notifications
+        default: build
+        required: false
+
+jobs:
+  publish-to-npm:
+    name: Publish to npmjs
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    timeout-minutes: 30
+    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+    steps:
+      - name: Get the version
+        id: get_version
+        run: |
+          IFS=. read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
+          version="${major}.${minor}.${patch}"          echo "build=${build}" >> $GITHUB_OUTPUT
+          echo "build=${build}" >> $GITHUB_OUTPUT
+          echo "patch=${patch}" >> $GITHUB_OUTPUT
+          echo "minor=${minor}" >> $GITHUB_OUTPUT
+          echo "major=${major}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      - name: Create Local Repository Directory
+        id: local_repo
+        run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
+
+      - name: Retrieve Secrets from Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@3996073b47b49ac5c58c750d27ab4edf469401c8 # 3.0.1
+        with:
+          url: ${{ inputs.vaultAddr }}
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
+            development/kv/data/${{ inputs.vaultTokenKey }} token | npm_token;
+            development/kv/data/slack webhook | slack_webhook;
+
+      - name: Setup JFrog
+        uses: SonarSource/jfrog-setup-wrapper@8405d759b287359e6d6ac7f4af8defb15d001a4f # 3.4.0
+        with:
+          jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+
+      - name: Download Artifacts from JFrog
+        uses: SonarSource/gh-action_release/download-build@master
+        with:
+          build-number: ${{ steps.get_version.outputs.build }}
+          local-repo-dir: ${{ steps.local_repo.outputs.dir }}
+          exclusions: ${{ inputs.downloadExclusions }}
+          remote-repo: sonarsource-npm-public-releases
+          flat-download: true
+          download-checksums: false
+
+      - name: Extract .tgz package
+        working-directory: ${{ steps.local_repo.outputs.dir }}
+        run: |
+          # Find the first .tgz file in the directory
+          file=$(find . -type f -name "*.tgz" | head -n 1)
+          if [ -z "$file" ]; then
+            echo "No .tgz package found in the repository."
+            exit 1
+          fi
+          echo "Found package: $file"
+          # Create a directory for the package
+          mkdir -p package
+          # Extract the .tgz file into the package directory, stripping the first component
+          tar -xzf "$file" -C package --strip-components=1
+          echo "Package extracted to ./package"
+
+      - name: Update package version
+        working-directory: ${{ steps.local_repo.outputs.dir }}/package
+        run: npm version --no-git-tag-version ${{ steps.get_version.outputs.version }}
+
+      - name: Configure npm registry
+        run: |
+          echo "always-auth=true" > ~/.npmrc
+          echo "email=helpdesk+npmjs@sonarsource.com" >> ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+        env:
+          NPM_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).npm_token }}
+
+      - name: Publish npm package to npmjs
+        working-directory: ${{ steps.local_repo.outputs.dir }}/package
+        env:
+          NPM_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).npm_token }}
+        run: |
+          npm publish
+      - name: Notify on Failure
+        if: ${{ failure() }}
+        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        with:
+          status: failure
+          fields: repo,author,eventName
+          channel: ${{ inputs.slackChannel }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+
+      - name: Exit with Error
+        if: ${{ failure() }}
+        run: exit 1
