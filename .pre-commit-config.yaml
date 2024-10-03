@@ -5,14 +5,14 @@ repos:
       - id: check-hooks-apply
       - id: check-useless-excludes
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9  # frozen: v4.4.0
+    rev: f71fa2c1f9cf5cb705f73dffe4b21f7c61470ba9  # v4.4.0
     hooks:
       - id: trailing-whitespace
       - id: check-yaml
       - id: check-added-large-files
       - id: check-executables-have-shebangs
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 20447075e31543a8b125f2df18d75f3b5e7d4d2e  # frozen: 0.22.0
+    rev: b4235fda059c7c36722a3f8c4b71c45a0826a8b7  # 0.29.3
     hooks:
       - id: check-github-actions
         files: .*/action.ya?ml
@@ -22,6 +22,6 @@ repos:
     hooks:
       - id: shellcheck
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 32ee411cf36142e6082f10870ae62172ce9af133  # frozen: 35.32.0
+    rev: 32ee411cf36142e6082f10870ae62172ce9af133  # 35.32.0
     hooks:
       - id: renovate-config-validator
