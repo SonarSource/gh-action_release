@@ -69,8 +69,11 @@ on:
         description: Publish Python artifacts to https://test.pypi.org
         default: false
         required: false
-      # Releasability checks are not fully implemented for Python projects
-      # This flag allows to skip releasability checks and allow releasing the artifacts. It is ignored for non-python projects
+      publishToNpmJS:
+        type: boolean
+        description: Publish Javascript artifacts to https://www.npmjs.com
+        default: false
+        required: false
       skipPythonReleasabilityChecks:
         type: boolean
         description: Skip releasability checks for Python projects
@@ -294,6 +297,17 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
 
+  npmjs:
+    name: NpmJS
+    needs: release
+    if: ${{ inputs.publishToNpmJS && inputs.dryRun != true }}
+    uses: ./.github/workflows/npmjs.yaml
+    with:
+      vaultAddr: ${{ inputs.vaultAddr }}
+      vaultTokenKey: npmjs
+      artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
+      slackChannel: ${{ inputs.slackChannel }}
+
   datadog:
     name: Push results to datadog
     runs-on: ubuntu-latest
@@ -303,6 +317,7 @@ jobs:
       - javadocPublication
       - testPypi
       - pypi
+      - npmjs
     if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
     steps:
       # Clone gh-action_release repository to run actions locally
@@ -342,7 +357,8 @@ jobs:
           javadoc_published: ${{ needs.javadocPublication.result }}
           testpypi_published: ${{ needs.testPypi.result }}
           pypi_published: ${{ needs.pypi.result }}
-          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' }}
+          npmjs_published: ${{ needs.npmjs.result }}
+          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' }}
           repo: ${{ github.repository }}
           run_id: ${{ github.run_id }}
           is_dummy_project: ${{ inputs.isDummyProject }}

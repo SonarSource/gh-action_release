@@ -26,6 +26,7 @@ class TestDatadogIngest(unittest.TestCase):
         os.environ['javadoc_published'] = 'success'
         os.environ['testpypi_published'] = 'success'
         os.environ['pypi_published'] = 'success'
+        os.environ['npm_published'] = 'success'
         os.environ['status'] = 'true'
         os.environ['is_dummy_project'] = 'true'
 
@@ -52,6 +53,7 @@ class TestDatadogIngest(unittest.TestCase):
             'javadoc_published': 'success',
             'testpypi_published': 'success',
             'pypi_published': 'success',
+            'npm_published': 'success',
             'status': 'true',
             'is_dummy_project': 'true',
             }]
