@@ -37,6 +37,7 @@ Available options:
 - `mavenCentralSyncExclusions` (default: *none*): exclude some artifacts from synchronization
 - `publishToPyPI` (default: *false*): Publish pypi artifacts to https://pypi.org/, **for OSS projects only**
 - `publishToTestPyPI` (default: *false*): Publish pypi artifacts to https://test.pypi.org/, **for OSS projects only**
+- `publishToNpmJS` (default: *false*): Publish npm artifacts to https://www.npmjs.com/, **for OSS projects only**
 - `skipPythonReleasabilityChecks` (default: *false*): Skip releasability checks **for Python projects only**
 - `slackChannel` (default: *build*): notification Slack channel
 - `artifactoryRoleSuffix` (default: *promoter*): Artifactory promoter suffix
@@ -97,6 +98,13 @@ development/kv/data/pypi
 ```
 development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 development/kv/data/pypi-test
+```
+
+#### Additional permissions if using `publishToNpmJS`
+
+```
+development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+development/kv/data/npmjs
 ```
 
 ## Versioning
