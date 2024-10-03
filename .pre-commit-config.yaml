@@ -12,7 +12,7 @@ repos:
       - id: check-added-large-files
       - id: check-executables-have-shebangs
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 20447075e31543a8b125f2df18d75f3b5e7d4d2e  # 0.22.0
+    rev: b4235fda059c7c36722a3f8c4b71c45a0826a8b7  # 0.29.3
     hooks:
       - id: check-github-actions
         files: .*/action.ya?ml
