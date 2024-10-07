@@ -39,6 +39,7 @@ Available options:
 - `publishToTestPyPI` (default: *false*): Publish pypi artifacts to https://test.pypi.org/, **for OSS projects only**
 - `publishToNpmJS` (default: *false*): Publish npm artifacts to https://www.npmjs.com/, **for OSS projects only**
 - `skipPythonReleasabilityChecks` (default: *false*): Skip releasability checks **for Python projects only**
+- `skipJavascriptReleasabilityChecks` (default: *false*): Skip releasability checks **for Javascript projects only**
 - `slackChannel` (default: *build*): notification Slack channel
 - `artifactoryRoleSuffix` (default: *promoter*): Artifactory promoter suffix
 - `dryRun` (default: *false*): perform a dry run execution
