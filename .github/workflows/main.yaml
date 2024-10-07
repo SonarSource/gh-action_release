@@ -79,6 +79,11 @@ on:
         description: Skip releasability checks for Python projects
         default: false
         required: false
+      skipJavascriptReleasabilityChecks:
+        type: boolean
+        description: Skip releasability checks for javascript projects
+        default: false
+        required: false
       pushToDatadog:
         type: boolean
         description: Push results to datadog for monitoring
@@ -183,9 +188,12 @@ jobs:
         id: releasability_prerequisites
         env:
           SKIP_PYTHON_RELEASABILITY_CHECKS: ${{ inputs.skipPythonReleasabilityChecks }}
+          SKIP_JAVASCRIPT_RELEASABILITY_CHECKS: ${{ inputs.skipJavascriptReleasabilityChecks }}
         run: |
           # Skip releasability checks if the project contains pyproject.toml file
           if test -f "${{ github.event.repository.name }}/pyproject.toml" && "$SKIP_PYTHON_RELEASABILITY_CHECKS" == "true"  ; then
+            echo "skip_releasability_checks=true" >> "${GITHUB_OUTPUT}"
+          elif test -f "${{ github.event.repository.name }}/package.json" && "$SKIP_JAVASCRIPT_RELEASABILITY_CHECKS" == "true"  ; then
             echo "skip_releasability_checks=true" >> "${GITHUB_OUTPUT}"
           else
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
