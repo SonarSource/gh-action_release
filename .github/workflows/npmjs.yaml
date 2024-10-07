@@ -10,7 +10,7 @@ name: NpmJS
       vaultTokenKey:
         type: string
         description: Vault key to read the token from
-        default: npm
+        default: npmjs
         required: false
       artifactoryRoleSuffix:
         type: string
@@ -46,8 +46,8 @@ jobs:
       - name: Get the version
         id: get_version
         run: |
-          IFS=. read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
-          version="${major}.${minor}.${patch}"          echo "build=${build}" >> $GITHUB_OUTPUT
+          IFS='.-' read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
+          version="${major}.${minor}.${patch}"
           echo "build=${build}" >> $GITHUB_OUTPUT
           echo "patch=${patch}" >> $GITHUB_OUTPUT
           echo "minor=${minor}" >> $GITHUB_OUTPUT
@@ -65,7 +65,7 @@ jobs:
           url: ${{ inputs.vaultAddr }}
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
-            development/kv/data/${{ inputs.vaultTokenKey }} token | npm_token;
+            development/kv/data/${{ inputs.vaultTokenKey }} sonartech_npm_token | npm_token;
             development/kv/data/slack webhook | slack_webhook;
 
       - name: Setup JFrog
