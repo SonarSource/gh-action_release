@@ -49,7 +49,7 @@ class GitHub:
                 r'^(?P<prefix>[a-zA-Z]+-)?'   # Optional ProjectName- prefix (required by sonar-scanner-azdo; see https://sonarsource.atlassian.net/browse/BUILD-5293)
                 r'\d+\.\d+\.\d+'              # Major.Minor.Patch version
                 r'(?:-M\d+)?'                 # Optional -Mx suffix
-                r'[.+]'                       # Separator (+ is required by sonarlint-vscode; see https://sonarsource.atlassian.net/browse/BUILD-4915)
+                r'[-.+]'                       # Separator (+ is required by sonarlint-vscode; see https://sonarsource.atlassian.net/browse/BUILD-4915)
                 r'(?P<build>\d+)$'            # Build number in a captured group
             )
             version_match = version_pattern.match(version)
@@ -60,7 +60,7 @@ class GitHub:
                     '- "ProjectName-" is an optional prefix (any sequence of letters followed by a dash).\n'
                     '- "Major.Minor.Patch" is the version number (three numbers separated by dots).\n'
                     '- "-Mx" is an optional suffix (a dash followed by "M" and a number).\n'
-                    '- "[.+]" is a separator, either a dot or a plus sign.\n'
+                    '- "[-.+]" is a separator, either a dot, a dash or a plus sign.\n'
                     '- "BuildNumber" is the build number (a number at the end of the string).'
                 )
             DEFAULT_BRANCH = self.event.get('repository', {}).get('default_branch', 'master')
