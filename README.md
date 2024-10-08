@@ -45,6 +45,10 @@ Available options:
 - `dryRun` (default: *false*): perform a dry run execution
 - `pushToDatadog` (default: *true*): push results to Datadog for monitoring
 
+## Custom .npmrc File for NpmJS
+
+When releasing an npm project using this action, you can specify a custom .npmrc file. To do this, place your .npmrc file in the .github/workflows/ directory of the repository you wish to release. The action will automatically use this configuration.
+
 ## Releasability check
 
 To perform a releasability check for a given version without performing an actual release, run the [releasability_check workflow](https://github.com/SonarSource/gh-action_releasability/actions/workflows/releasability_checks.yml).
