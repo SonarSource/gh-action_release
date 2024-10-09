@@ -208,6 +208,7 @@ jobs:
           organization: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
           version: ${{ github.event.release.tag_name }}
+          releasabily-env: staging
 
       - name: Revoke release on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
