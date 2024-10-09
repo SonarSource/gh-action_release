@@ -47,7 +47,7 @@ jobs:
         id: get_version
         run: |
           IFS='.-' read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
-          version="${major}.${minor}.${patch}"
+          version="${major}.${minor}.${patch}-${build}"
           echo "build=${build}" >> $GITHUB_OUTPUT
           echo "patch=${patch}" >> $GITHUB_OUTPUT
           echo "minor=${minor}" >> $GITHUB_OUTPUT
