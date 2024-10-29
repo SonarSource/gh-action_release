@@ -69,7 +69,7 @@ jobs:
             development/kv/data/slack webhook | slack_webhook;
 
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@8405d759b287359e6d6ac7f4af8defb15d001a4f # 3.4.0
+        uses: SonarSource/jfrog-setup-wrapper@58546d2106f9d38c37590b7f125f85b0d1fa4cee # 3.5.0
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
 
