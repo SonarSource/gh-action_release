@@ -18,20 +18,20 @@
     "default": {
         "boto3": {
             "hashes": [
-                "sha256:14724b905fd13f26d9d8f7cdcea0fa65a9acad79f60f41f7662667f4e233d97c",
-                "sha256:4f15d1ccb481d66f6925b8c91c970ce41b956b6ecf7c479f23e2159531b37eec"
+                "sha256:2d5e160b614db55fbee7981001c54476cb827c441cef65b2fcb2c52a62019909",
+                "sha256:7d9c359bbbc858a60b51c86328db813353c8bd1940212cdbd0a7da835291c2e1"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.8'",
-            "version": "==1.35.50"
+            "version": "==1.35.54"
         },
         "botocore": {
             "hashes": [
-                "sha256:136ecef8d5a1088f1ba485c0bbfca40abd42b9f9fe9e11d8cde4e53b4c05b188",
-                "sha256:965d3b99179ac04aa98e4c4baf4a970ebce77a5e02bb2a0a21cb6304e2bc0955"
+                "sha256:131bb59ce59c8a939b31e8e647242d70cf11d32d4529fa4dca01feea1e891a76",
+                "sha256:9cca1811094b6cdc144c2c063a3ec2db6d7c88194b04d4277cd34fc8e3473aff"
             ],
             "markers": "python_version >= '3.8'",
-            "version": "==1.35.50"
+            "version": "==1.35.54"
         },
         "certifi": {
             "hashes": [
@@ -226,12 +226,12 @@
         },
         "slack-sdk": {
             "hashes": [
-                "sha256:34c51cfb9c254553219a0bba7a741c913f5d4d372d6278c3e7e10fe7bb667724",
-                "sha256:8107912488028f5a3f04ee9c58524418d3a2763a843db25530375b7733e6ec0a"
+                "sha256:0515fb93cd03b18de61f876a8304c4c3cef4dd3c2a3bad62d7394d2eb5a3c8e6",
+                "sha256:4cc44c9ffe4bb28a01fbe3264c2f466c783b893a4eca62026ab845ec7c176ff1"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.6'",
-            "version": "==3.33.2"
+            "version": "==3.33.3"
         },
         "urllib3": {
             "hashes": [
@@ -349,12 +349,12 @@
         },
         "pytest-cov": {
             "hashes": [
-                "sha256:4f0764a1219df53214206bf1feea4633c3b558a2925c8b59f144f682861ce652",
-                "sha256:5837b58e9f6ebd335b0f8060eecce69b662415b16dc503883a02f45dfeb14857"
+                "sha256:eee6f1b9e61008bd34975a4d5bab25801eb31898b032dd55addc93e96fcaaa35",
+                "sha256:fde0b595ca248bb8e2d76f020b465f3b107c9632e6a1d1705f17834c89dcadc0"
             ],
             "index": "pypi",
-            "markers": "python_version >= '3.8'",
-            "version": "==5.0.0"
+            "markers": "python_version >= '3.9'",
+            "version": "==6.0.0"
         }
     }
 }
