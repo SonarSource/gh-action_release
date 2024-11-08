@@ -22,25 +22,14 @@ close="$MVN_NEXUS_STAGING_CMD:rc-close -DstagingProgressTimeoutMinutes=60 $DEFAU
 release="$MVN_NEXUS_STAGING_CMD:rc-release $DEFAULT_OPTS"
 
 # R3P0 is a magic string to ensure that the correct line is grepped
-echo "Opening staging repository..."
-STAGING_REPO=$($open -DopenedRepositoryMessageFormat="R3P0:%s" 2>&1 | grep "R3P0:" | cut -d: -f2 | tee /dev/stdout)
-if [ -z "$STAGING_REPO" ]; then
-  echo "Failed to open staging repository."
-  exit 1
-fi
+STAGING_REPO=$($open -DopenedRepositoryMessageFormat="R3P0:%s" | grep "R3P0:" | cut -d: -f2)
 
-echo "Opened staging repository: $STAGING_REPO"
 echo "repo=${STAGING_REPO}" >> "$GITHUB_OUTPUT"
 
-echo "Deploying to staging repository..."
-$deploy -DstagingRepositoryId="$STAGING_REPO" -DrepositoryDirectory="$LOCAL_REPO_DIR" 2>&1 | tee /dev/stdout
+$deploy -DstagingRepositoryId="$STAGING_REPO" -DrepositoryDirectory="$LOCAL_REPO_DIR"
 
-echo "Closing staging repository..."
-$close -DstagingRepositoryId="$STAGING_REPO" 2>&1 | tee /dev/stdout
+$close -DstagingRepositoryId="$STAGING_REPO"
 
 if [ "$DO_RELEASE" = true ]; then
-  echo "Releasing the artifacts..."
-  $release -DstagingRepositoryId="$STAGING_REPO" 2>&1 | tee /dev/stdout
+    $release -DstagingRepositoryId="$STAGING_REPO"
 fi
-
-echo "Action completed successfully."
