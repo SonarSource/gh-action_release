@@ -79,7 +79,7 @@ jobs:
       - name: Publish to PyPI
         id: publish-pypi
         continue-on-error: true
-        uses: pypa/gh-action-pypi-publish@f7600683efdcb7656dec5b29656edb7bc586e597 # v1.10.3
+        uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc # v1.12.2
         with:
           packages-dir: ${{ steps.local_repo.outputs.dir }}
           password: ${{ fromJSON(steps.secrets.outputs.vault).pypi_token }}
