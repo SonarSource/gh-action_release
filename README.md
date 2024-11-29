@@ -4,7 +4,10 @@ GitHub Action implementing the common release steps for SonarSource projects. It
 
 ## Usage
 
-Add `.github/workflows/release.yml` to the repository
+Add `.github/workflows/release.yml` to the repository.
+
+All the `with` parameters are optional and have default values which are shown below.
+
 ```yaml
 name: Release
 
@@ -21,44 +24,46 @@ jobs:
       contents: write
     uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
     with:
-      publishToBinaries: true
-      mavenCentralSync: true # for OSS projects only
+      publishToBinaries: false # enable the publication to binaries
+      binariesS3Bucket: downloads-cdn-eu-central-1-prod # define the target bucket
+      publishJavadoc: false # enable the publication of the Javadoc to https://javadocs.sonarsource.org/
+      publicRelease: false # define if the Javadoc is stored in 'sonarsource-public-releases' (or 'sonarsource-private-releases' if false)
+      javadocDestinationDirectory: <repository name> # define the subdir to use in https://javadocs.sonarsource.org/
+      mavenCentralSync: false # for OSS projects only, enable synchronization to Maven Central
+      mavenCentralSyncExclusions: '' # exclude some artifacts from synchronization
+      publishToPyPI: false # for OSS projects only, publish PyPI artifacts to https://pypi.org/
+      publishToTestPyPI: false # for OSS projects only, publish PyPI artifacts to https://test.pypi.org/
+      publishToNpmJS: false # for OSS projects only, publish npm artifacts to https://www.npmjs.com/
+      skipPythonReleasabilityChecks: false # skip releasability checks for Python projects
+      skipJavascriptReleasabilityChecks: false # skip releasability checks for Javascript projects
+      slackChannel: build # define the Slack channel to use for notifications
+      artifactoryRoleSuffix: promoter # define the Artifactory promoter role suffix
+      dryRun: false # perform a dry run execution
+      pushToDatadog: true # push results to Datadog for monitoring
 ```
 
-Available options:
+Notes:
 
-- `publishToBinaries` (default: *false*): enable the publication to binaries (Used only if the binaries are delivered to customers - binaries is an AWS S3 bucket)
-- `publishJavadoc` (default: *false*): enable the publication of the javadoc to https://javadocs.sonarsource.org/
-  > Note: When the project is releasing a public release, `publicRelease: true` has to be set.
-- `javadocDestinationDirectory` (default: *use repository name*): define the subdir to use in https://javadocs.sonarsource.org/
-- `publicRelease` (default: *false*): define if the release is public or private (used by `publishJavadoc`)
-- `binariesS3Bucket` (default: *downloads-cdn-eu-central-1-prod*): target bucket
-- `mavenCentralSync` (default: *false*): enable synchronization to Maven Central, **for OSS projects only**
-- `mavenCentralSyncExclusions` (default: *none*): exclude some artifacts from synchronization
-- `publishToPyPI` (default: *false*): Publish pypi artifacts to https://pypi.org/, **for OSS projects only**
-- `publishToTestPyPI` (default: *false*): Publish pypi artifacts to https://test.pypi.org/, **for OSS projects only**
-- `publishToNpmJS` (default: *false*): Publish npm artifacts to https://www.npmjs.com/, **for OSS projects only**
-- `skipPythonReleasabilityChecks` (default: *false*): Skip releasability checks **for Python projects only**
-- `skipJavascriptReleasabilityChecks` (default: *false*): Skip releasability checks **for Javascript projects only**
-- `slackChannel` (default: *build*): notification Slack channel
-- `artifactoryRoleSuffix` (default: *promoter*): Artifactory promoter suffix
-- `dryRun` (default: *false*): perform a dry run execution
-- `pushToDatadog` (default: *true*): push results to Datadog for monitoring
+- `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO`
+  environment variable is required in the release Build Info.
 
 ## Custom .npmrc File for NpmJS
 
-When releasing an npm project using this action, you can specify a custom .npmrc file. To do this, place your .npmrc file in the .github/workflows/ directory of the repository you wish to release. The action will automatically use this configuration.
+When releasing a npm project using this action, you can specify a custom .npmrc file. To do this, place your .npmrc file in the
+.github/workflows/ directory of the repository you wish to release. The action will automatically use this configuration.
 
 ## Releasability check
 
-To perform a releasability check for a given version without performing an actual release, run the [releasability_check workflow](https://github.com/SonarSource/gh-action_releasability/actions/workflows/releasability_checks.yml).
+To perform a releasability check for a given version without performing an actual release, run
+the [releasability_check workflow](https://github.com/SonarSource/gh-action_releasability/actions/workflows/releasability_checks.yml).
 The releasability checks execute the lambdas deployed from the https://github.com/SonarSource/ops-releasability project.
 
 ## Requirements
 
 ### Onboarding to ops-releasability
 
-The repository needs to be onboarded to [ops-releasability/projects.json](https://github.com/SonarSource/ops-releasability/blob/master/infra/projects.json).
+The repository needs to be onboarded
+to [ops-releasability/projects.json](https://github.com/SonarSource/ops-releasability/blob/master/infra/projects.json).
 
 ### Onboarding to Vault
 
@@ -93,6 +98,7 @@ development/kv/data/ossrh
 ```
 
 #### Additional permissions if using `publishToPyPI`
+
 ```
 development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 development/kv/data/pypi
@@ -145,10 +151,12 @@ been performed based on the provided inputs defined in `with:` section.
 
 ### Releasing
 
-To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml). The workflow will create the GitHub Release.
+To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml). The workflow
+will create the GitHub Release.
 
-To update the v-branch run the [Update v-branch workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/update-v-branch.yml). The workflow will update the v-branch to the specified tag.
-
+To update the v-branch run
+the [Update v-branch workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/update-v-branch.yml). The workflow will
+update the v-branch to the specified tag.
 
 For more deails see [RELEASE.md](./RELEASE.md)
 
