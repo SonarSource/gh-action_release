@@ -11,6 +11,7 @@ from release.exceptions.invalid_input_parameters_exception import InvalidInputPa
 from release.main import main, set_output, check_params, MANDATORY_ENV_VARIABLES
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
+from release.utils.buildinfo import BuildInfo
 from release.utils.github import GitHub
 
 
@@ -149,49 +150,46 @@ class MainTest(unittest.TestCase):
         for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
         del os.environ[parameter_not_provided]
-
         with self.assertRaises(InvalidInputParametersException):
             check_params()
 
     def test_check_params_should_raise_an_exception_given_slack_channel_is_provided_and_slack_token_is_not(self):
-
         for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
-
         os.environ["INPUT_SLACK_CHANNEL"] = "some channel"
-
         # ensure slack api token is not provided:
         os.environ["SLACK_API_TOKEN"] = ""
         del os.environ["SLACK_API_TOKEN"]
-
         with self.assertRaises(InvalidInputParametersException):
             check_params()
 
-    def test_check_params_should_raise_an_exception_given_publish_to_binaries_is_true_and_binaries_aws_is_undefined(self):
-
+    def test_check_params_should_raise_an_exception_given_publish_to_binaries_is_true_and_missing_params(self):
         for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
-
         os.environ["INPUT_PUBLISH_TO_BINARIES"] = "true"
-
         # ensure binaries_aws_deploy is not provided:
         os.environ["BINARIES_AWS_DEPLOY"] = ""
         del os.environ["BINARIES_AWS_DEPLOY"]
-
-        with self.assertRaises(InvalidInputParametersException):
+        with self.assertRaises(InvalidInputParametersException) as context:
             check_params()
+        self.assertEqual(str(context.exception), """The execution were aborted due to the following error(s):
+env BINARIES_AWS_DEPLOY is empty but required as INPUT_PUBLISH_TO_BINARIES is true
+buildInfo.env.ARTIFACTORY_DEPLOY_REPO is required as INPUT_PUBLISH_TO_BINARIES is true
+If needed, please contact the DevInfra squad.""")
 
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
         for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
-
         os.environ["INPUT_SLACK_CHANNEL"] = "some channel"
         os.environ["SLACK_API_TOKEN"] = "some channel"
-
         os.environ["INPUT_PUBLISH_TO_BINARIES"] = "true"
         os.environ["BINARIES_AWS_DEPLOY"] = "bin"
-
         try:
-            check_params()
+            check_params(BuildInfo({
+                'buildInfo': {
+                    'properties': {'buildInfo.env.ARTIFACTORY_DEPLOY_REPO': 'deploy-repo-qa'},
+                    'modules': [{}]
+                }
+            }))
         except InvalidInputParametersException:
             self.fail("check_params() raised an Exception")

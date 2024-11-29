@@ -38,8 +38,7 @@ class GitHub:
             repo = self._get_repository()["full_name"]
             organisation, project = repo.split("/")
 
-            # Attempt to get the version number. Depending on the event type, it
-            # can be the release tag or an user provided input.
+            # Attempt to get the version number. Depending on the event type, it can be the release tag or a user provided input.
             release = self._get_release()
             version = self.event['inputs']['version'] if release is None else release['tag_name']
 
