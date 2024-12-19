@@ -16,6 +16,9 @@ inputs:
   build-number:
     description: 'Build number'
     required: true
+  filter:
+    description: 'Path to the artifacts to download'
+    required: false
   exclusions:
     description: 'Exclude pattern from downloaded files'
     required: false
@@ -70,7 +73,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
       env:
-        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
+        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}${{ inputs.filter }}
       run: >
         find . -type f
         -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \)
