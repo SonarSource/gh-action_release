@@ -16,6 +16,9 @@ inputs:
   build-number:
     description: 'Build number'
     required: true
+  filter:
+    description: 'Path to the artifacts to download'
+    required: false
   exclusions:
     description: 'Exclude pattern from downloaded files'
     required: false
@@ -61,10 +64,16 @@ runs:
         JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
-      run: jfrog rt download
-        --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }}
-        --build "${JFROG_DL_BUILD}"
-        "${JFROG_DL_REMOTE_REPO}"
+        groupIdPath: ${{ inputs.filter }}
+      run: |
+        if [ -n "$groupIdPath" ]; then
+          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$groupIdPath/"
+        fi
+        echo "$JFROG_DL_REMOTE_REPO"
+        jfrog rt download \
+          --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }} \
+          --build "${JFROG_DL_BUILD}" \
+          "${JFROG_DL_REMOTE_REPO}"
     - name: Download checksums
       if: ${{ inputs.dryRun != 'true' && inputs.download-checksums == 'true' }}
       shell: bash
