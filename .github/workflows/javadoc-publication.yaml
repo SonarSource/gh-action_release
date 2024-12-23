@@ -72,6 +72,7 @@ jobs:
           jfrog rt curl -X GET "/api/build/${{ steps.get_version.outputs.build }}" > build-info.json
           groupId=$(jq -r '.buildInfo.modules[0].id' build-info.json | cut -d':' -f1)
           groupIdPath=$(echo "${groupId}" | tr '.' '/')
+          echo $groupIdPath
           echo "groupIdPath=${groupIdPath}" >> $GITHUB_ENV
         env:
           JFROG_CLI_OFFER_CONFIG: "false"
