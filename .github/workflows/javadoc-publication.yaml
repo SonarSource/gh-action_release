@@ -69,7 +69,7 @@ jobs:
       - name: Create a path filter from the groupId for artifactory build search
         id: filter
         run: |
-          jfrog rt curl -X GET "/api/build/${{ steps.get_version.outputs.build }}/latest" > build-info.json
+          jfrog rt curl -X GET "/api/build/${{ steps.get_version.outputs.build }}" > build-info.json
           groupId=$(jq -r '.buildInfo.modules[0].id' build-info.json | cut -d':' -f1)
           groupIdPath=$(echo "${groupId}" | tr '.' '/')
           echo "groupIdPath=${groupIdPath}" >> $GITHUB_ENV
