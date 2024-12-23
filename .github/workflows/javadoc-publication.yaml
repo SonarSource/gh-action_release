@@ -81,7 +81,7 @@ jobs:
           JFROG_CLI_USER: ${{ secrets.JFROG_USER }}
           JFROG_CLI_PASSWORD: ${{ secrets.JFROG_PASSWORD }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@master
+        uses: SonarSource/gh-action_release/download-build@BUILD-7128
         with:
           flat-download: true
           build-number: ${{ steps.get_version.outputs.build }}
