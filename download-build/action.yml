@@ -65,8 +65,8 @@ runs:
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
       run: |
-        if [ -n "${{ inputs.filter }}" ]; then
-          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/${{ inputs.filter }}"
+        if [ -n "$groupIdPath" ]; then
+          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$groupIdPath"
         fi
         jfrog rt download \
           --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }} \
@@ -79,8 +79,8 @@ runs:
       env:
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
       run: |
-        if [ -n "${{ inputs.filter }}" ]; then
-          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/${{ inputs.filter }}"
+        if [ -n "$groupIdPath" ]; then
+          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$groupIdPath"
         fi
         find . -type f
         -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \)
