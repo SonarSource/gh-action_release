@@ -63,17 +63,17 @@ runs:
       env:
         JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
-        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
+        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}/${{ inputs.filter }}
       run: jfrog rt download
         --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }}
         --build "${JFROG_DL_BUILD}"
-        "${JFROG_DL_REMOTE_REPO}"${{ inputs.filter }}
+        "${JFROG_DL_REMOTE_REPO}"
     - name: Download checksums
       if: ${{ inputs.dryRun != 'true' && inputs.download-checksums == 'true' }}
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
       env:
-        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}${{ inputs.filter }}
+        JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}/${{ inputs.filter }}
       run: >
         find . -type f
         -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \)
