@@ -67,7 +67,7 @@ runs:
       run: jfrog rt download
         --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }}
         --build "${JFROG_DL_BUILD}"
-        "${JFROG_DL_REMOTE_REPO}"
+        "${JFROG_DL_REMOTE_REPO}"${{ inputs.filter }}
     - name: Download checksums
       if: ${{ inputs.dryRun != 'true' && inputs.download-checksums == 'true' }}
       shell: bash
