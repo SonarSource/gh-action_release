@@ -16,6 +16,9 @@ inputs:
   build-number:
     description: 'Build number'
     required: true
+  filter:
+    description: 'Path to the artifacts to download'
+    required: false
   exclusions:
     description: 'Exclude pattern from downloaded files'
     required: false
@@ -61,17 +64,24 @@ runs:
         JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
-      run: jfrog rt download
-        --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }}
-        --build "${JFROG_DL_BUILD}"
-        "${JFROG_DL_REMOTE_REPO}"
+      run: |
+        if [ -n "$groupIdPath" ]; then
+          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$groupIdPath"
+        fi
+        jfrog rt download \
+          --fail-no-op ${{ steps.define-download-options.outputs.jfrog_dl_options }} \
+          --build "${JFROG_DL_BUILD}" \
+          "${JFROG_DL_REMOTE_REPO}"
     - name: Download checksums
       if: ${{ inputs.dryRun != 'true' && inputs.download-checksums == 'true' }}
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
       env:
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
-      run: >
+      run: |
+        if [ -n "$groupIdPath" ]; then
+          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$groupIdPath"
+        fi
         find . -type f
         -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \)
         -exec jfrog rt curl "${JFROG_DL_REMOTE_REPO}/{{}}.{md5,sha1,sha256}" --output "#1.#2" \;
