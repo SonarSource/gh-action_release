@@ -19,6 +19,7 @@ inputs:
   filter:
     description: 'Path to the artifacts to download'
     required: false
+    default: ''
   exclusions:
     description: 'Exclude pattern from downloaded files'
     required: false
@@ -64,10 +65,10 @@ runs:
         JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
-        groupIdPath: ${{ inputs.filter }}
+        FILTER: ${{ inputs.filter }}
       run: |
         if [ -n "$groupIdPath" ]; then
-          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$groupIdPath/"
+          JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$FILTER/"
         fi
         echo "$JFROG_DL_REMOTE_REPO"
         jfrog rt download \
