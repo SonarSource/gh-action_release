@@ -67,7 +67,7 @@ runs:
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
         FILTER: ${{ inputs.filter }}
       run: |
-        if [ -n "$groupIdPath" ]; then
+        if [ -n "$FILTER" ]; then
           JFROG_DL_REMOTE_REPO="${JFROG_DL_REMOTE_REPO}/$FILTER/"
         fi
         echo "$JFROG_DL_REMOTE_REPO"
