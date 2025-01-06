@@ -47,7 +47,7 @@ jobs:
         id: get_version
         run: |
           IFS='.-' read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
-          version="${major}.${minor}.${patch}-${build}"
+          version="${major}.${minor}.${patch}"
           echo "build=${build}" >> $GITHUB_OUTPUT
           echo "patch=${patch}" >> $GITHUB_OUTPUT
           echo "minor=${minor}" >> $GITHUB_OUTPUT
@@ -98,6 +98,10 @@ jobs:
           # Extract the .tgz file into the package directory, stripping the first component
           tar -xzf "$file" -C package --strip-components=1
           echo "Package extracted to ./package"
+
+      - name: Update package version
+        working-directory: ${{ steps.local_repo.outputs.dir }}/package
+        run: npm version --no-git-tag-version ${{ steps.get_version.outputs.version }}
 
       - name: Checkout developer repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
