@@ -175,7 +175,7 @@ class MainTest(unittest.TestCase):
         self.assertEqual(str(context.exception), """The execution were aborted due to the following error(s):
 env BINARIES_AWS_DEPLOY is empty but required as INPUT_PUBLISH_TO_BINARIES is true
 buildInfo.env.ARTIFACTORY_DEPLOY_REPO is required as INPUT_PUBLISH_TO_BINARIES is true
-If needed, please contact the DevInfra squad.""")
+If needed, please contact the Engineering Experience squad.""")
 
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
         for variable_name in MANDATORY_ENV_VARIABLES:
