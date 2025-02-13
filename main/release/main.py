@@ -50,7 +50,7 @@ def check_params(buildinfo=BuildInfo({})):
         new_line = "\n"
         raise InvalidInputParametersException(f'The execution were aborted due to the following error(s):\n'
                                               f'{new_line.join(errors)}\n'
-                                              f'If needed, please contact the DevInfra squad.'
+                                              f'If needed, please contact the Engineering Experience squad.'
                                               )
 
 
