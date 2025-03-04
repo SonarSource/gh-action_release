@@ -48,6 +48,19 @@ def buildinfo_sonarlint():
         }
     })
 
+@fixture
+def buildinfo_reddeer():
+    return BuildInfo({
+        "buildInfo": {
+            "modules": [{
+                "properties": {
+                    "artifactsToPublish": "org.sonarsource.eclipse.reddeer:org.eclipse.reddeer.site:zip",
+                },
+                "id": "org.sonarsource.eclipse.reddeer:org.eclipse.reddeer.core:4.7.0.53",
+            }]
+        }
+    })
+
 
 @fixture
 def buildinfo_sonarqube():
@@ -109,7 +122,7 @@ def test_publish_artifact_upload_file(buildinfo_com, buildinfo_org, capsys):
     with patch('boto3.Session', return_value=binaries_session):
         artifactory = MagicMock(**{'download.return_value': "/tmp/dummy-1.0.2.456.jar"})
         binaries = Binaries("test_bucket")
-        with patch.object(binaries, 'upload_sonarlint_unzip') as mock_upload_sonarlint_unzip, \
+        with patch.object(binaries, 'upload_eclipse_update_site_unzip') as mock_upload_eclipse_update_site_unzip, \
             patch.object(binaries, 'upload_sonarlint_p2_site') as mock_upload_sonarlint_p2_site, \
             patch.object(client, 'upload_file') as upload_file:
             # com
@@ -129,7 +142,7 @@ def test_publish_artifact_upload_file(buildinfo_com, buildinfo_org, capsys):
                    's3://test_bucket/CommercialDistribution/dummy/dummy-1.0.2.456.jar.sha256'
             assert captured[6] == 'uploaded /tmp/dummy-1.0.2.456.jar.asc to ' + \
                    's3://test_bucket/CommercialDistribution/dummy/dummy-1.0.2.456.jar.asc'
-            mock_upload_sonarlint_unzip.assert_not_called()
+            mock_upload_eclipse_update_site_unzip.assert_not_called()
             mock_upload_sonarlint_p2_site.assert_not_called()
             # org
             version = buildinfo_org.get_version()
@@ -148,7 +161,7 @@ def test_publish_artifact_upload_file(buildinfo_com, buildinfo_org, capsys):
                                   's3://test_bucket/Distribution/dummy/dummy-1.0.2.456-qualifier.jar.sha256'
             assert captured[6] == 'uploaded /tmp/dummy-1.0.2.456.jar.asc to ' \
                                   's3://test_bucket/Distribution/dummy/dummy-1.0.2.456-qualifier.jar.asc'
-            mock_upload_sonarlint_unzip.assert_not_called()
+            mock_upload_eclipse_update_site_unzip.assert_not_called()
             mock_upload_sonarlint_p2_site.assert_not_called()
 
 
@@ -159,7 +172,7 @@ def test_publish_artifact_upload_file_sonarlint(buildinfo_sonarlint, capsys):
     with patch('boto3.Session', return_value=binaries_session):
         artifactory = MagicMock(**{'download.return_value': "/tmp/org.sonarlint.eclipse.site-7.9.0.63244.zip"})
         binaries = Binaries("test_bucket")
-        with patch.object(binaries, 'upload_sonarlint_unzip') as mock_upload_sonarlint_unzip, \
+        with patch.object(binaries, 'upload_eclipse_update_site_unzip') as mock_upload_eclipse_update_site_unzip, \
             patch.object(binaries, 'upload_sonarlint_p2_site') as mock_upload_sonarlint_p2_site, \
             patch.object(client, 'upload_file') as upload_file:
             version = buildinfo_sonarlint.get_version()
@@ -179,9 +192,33 @@ def test_publish_artifact_upload_file_sonarlint(buildinfo_sonarlint, capsys):
                    's3://test_bucket/SonarLint-for-Eclipse/releases/org.sonarlint.eclipse.site-7.9.0.63244.zip.sha256'
             assert captured[6] == 'uploaded /tmp/org.sonarlint.eclipse.site-7.9.0.63244.zip.asc to ' + \
                    's3://test_bucket/SonarLint-for-Eclipse/releases/org.sonarlint.eclipse.site-7.9.0.63244.zip.asc'
-            mock_upload_sonarlint_unzip.assert_called_with('SonarLint-for-Eclipse/releases/7.9.0.63244',
+            mock_upload_eclipse_update_site_unzip.assert_called_with('SonarLint-for-Eclipse/releases/7.9.0.63244',
                                                            '/tmp/org.sonarlint.eclipse.site-7.9.0.63244.zip')
             mock_upload_sonarlint_p2_site.assert_called_with('SonarLint-for-Eclipse/releases', 'SonarLint-for-Eclipse/releases/7.9.0.63244')
+
+
+def test_publish_artifact_upload_file_reddeer(buildinfo_reddeer, capsys):
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
+        artifactory = MagicMock(**{'download.return_value': "/tmp/org.eclipse.reddeer.site-4.7.0.53.zip"})
+        binaries = Binaries("test_bucket")
+        with patch.object(binaries, 'upload_eclipse_update_site_unzip') as mock_upload_eclipse_update_site_unzip, \
+            patch.object(binaries, 'upload_sonarlint_p2_site') as mock_upload_sonarlint_p2_site, \
+            patch.object(client, 'upload_file') as upload_file:
+            version = buildinfo_reddeer.get_version()
+            publish_artifact(artifactory, binaries, buildinfo_reddeer.get_artifacts_to_publish(), version, "repo")
+            upload_file.assert_called_with('/tmp/org.eclipse.reddeer.site-4.7.0.53.zip.asc', 'test_bucket',
+                                           'RedDeer/releases/org.eclipse.reddeer.site-4.7.0.53.zip.asc')
+            captured = capsys.readouterr().out.split('\n')
+            assert captured[0] == 'publishing org.sonarsource.eclipse.reddeer:org.eclipse.reddeer.site:zip#4.7.0.53'
+            assert captured[1] == 'org.sonarsource.eclipse.reddeer org.eclipse.reddeer.site zip '
+            assert captured[2] == 'uploaded /tmp/org.eclipse.reddeer.site-4.7.0.53.zip to ' + \
+                   's3://test_bucket/RedDeer/releases/org.eclipse.reddeer.site-4.7.0.53.zip'
+            mock_upload_eclipse_update_site_unzip.assert_called_with('RedDeer/releases/4.7.0.53',
+                                                           '/tmp/org.eclipse.reddeer.site-4.7.0.53.zip')
+            mock_upload_sonarlint_p2_site.assert_not_called()
 
 
 def test_revoke_publish_artifact():

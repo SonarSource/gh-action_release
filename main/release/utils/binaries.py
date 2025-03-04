@@ -14,6 +14,7 @@ OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
 DISTRIBUTION_ID_PROD = 'E2WHX4O0Y6Z6C6'
 SONARLINT_AID = "org.sonarlint.eclipse.site"
+REDDEER_AID = "org.eclipse.reddeer.site"
 
 
 class Binaries:
@@ -47,23 +48,32 @@ class Binaries:
             self.s3_client.upload_file(f'{artifact_file}.{checksum}', self.binaries_bucket_name, f'{file_bucket_key}.{checksum}')
             print(f'uploaded {artifact_file}.{checksum} to s3://{self.binaries_bucket_name}/{file_bucket_key}.{checksum}')
 
-        # SonarLint
+        version_bucket_key = f"{root_bucket_key}/{version}"
+
         if aid == SONARLINT_AID:
-            version_bucket_key = f"{root_bucket_key}/{version}"
-            self.upload_sonarlint_unzip(version_bucket_key, artifact_file)
+            # SonarQube for IDE (formerly SonarLint)
+            self.upload_eclipse_update_site_unzip(version_bucket_key, artifact_file)
             self.upload_sonarlint_p2_site(root_bucket_key, version_bucket_key)
             self.update_sonarlint_p2_site(DISTRIBUTION_ID_PROD, version)
+        elif aid == REDDEER_AID:
+            # Eclipse RedDeer fork. Does not require the composite XML files as it is only used
+            # internally anyway and the update process inside SonarSource/sonarlint-eclipse is done
+            # manually to not break something by relying on the "latest" released artifact!
+            self.upload_eclipse_update_site_unzip(version_bucket_key, artifact_file)
 
     def get_file_bucket_key(self, aid, gid):
         # SonarLint Eclipse is uploaded to a special directory
         if aid == SONARLINT_AID:
             return "SonarLint-for-Eclipse/releases"
+        elif aid == REDDEER_AID:
+            return "RedDeer/releases"
         binaries_repo = Binaries.get_binaries_repo(gid)
         return f"{binaries_repo}/{aid}"
 
-    def upload_sonarlint_unzip(self, version_bucket_key, zip_file):
+    def upload_eclipse_update_site_unzip(self, version_bucket_key, zip_file):
         """
-        SonarLint Eclipse is also unzipped on binaries for compatibility with P2 client
+        An Eclipse Update Site is also unzipped on binaries for compatibility with P2 clients like
+        the "Installation Wizard" of the Eclipse IDE!
         """
         with tempfile.TemporaryDirectory() as tmpdirname, zipfile.ZipFile(zip_file, 'r') as zip_ref:
             zip_ref.extractall(tmpdirname)
