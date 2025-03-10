@@ -36,7 +36,7 @@ class Binaries:
             return COMMERCIAL_REPO
         else:
             return OSS_REPO
-    
+
     @staticmethod
     def get_actual_checksums(aid):
         if aid == REDDEER_AID:
