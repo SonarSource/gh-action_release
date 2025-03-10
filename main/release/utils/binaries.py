@@ -15,11 +15,10 @@ COMMERCIAL_REPO = "CommercialDistribution"
 DISTRIBUTION_ID_PROD = 'E2WHX4O0Y6Z6C6'
 SONARLINT_AID = "org.sonarlint.eclipse.site"
 REDDEER_AID = "org.eclipse.reddeer.site"
+UPLOAD_CHECKSUMS = ["md5", "sha1", "sha256", "asc"]
 
 
 class Binaries:
-    upload_checksums = ["md5", "sha1", "sha256", "asc"]
-
     def __init__(self, binaries_bucket_name: str):
         self.binaries_bucket_name = binaries_bucket_name
         self.binaries_session = boto3.Session(
@@ -37,6 +36,13 @@ class Binaries:
             return COMMERCIAL_REPO
         else:
             return OSS_REPO
+    
+    @staticmethod
+    def get_actual_checksums(aid):
+        if aid == REDDEER_AID:
+            # Eclipse RedDeer does not have a signature
+            return UPLOAD_CHECKSUMS[:-1]
+        return UPLOAD_CHECKSUMS
 
     def s3_upload(self, artifact_file, filename, gid, aid, version):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
@@ -44,7 +50,7 @@ class Binaries:
 
         self.s3_client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
         print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
-        for checksum in self.upload_checksums:
+        for checksum in Binaries.get_actual_checksums(aid):
             self.s3_client.upload_file(f'{artifact_file}.{checksum}', self.binaries_bucket_name, f'{file_bucket_key}.{checksum}')
             print(f'uploaded {artifact_file}.{checksum} to s3://{self.binaries_bucket_name}/{file_bucket_key}.{checksum}')
 

@@ -209,8 +209,8 @@ def test_publish_artifact_upload_file_reddeer(buildinfo_reddeer, capsys):
             patch.object(client, 'upload_file') as upload_file:
             version = buildinfo_reddeer.get_version()
             publish_artifact(artifactory, binaries, buildinfo_reddeer.get_artifacts_to_publish(), version, "repo")
-            upload_file.assert_called_with('/tmp/org.eclipse.reddeer.site-4.7.0.53.zip.asc', 'test_bucket',
-                                           'RedDeer/releases/org.eclipse.reddeer.site-4.7.0.53.zip.asc')
+            upload_file.assert_called_with('/tmp/org.eclipse.reddeer.site-4.7.0.53.zip.sha256', 'test_bucket',
+                                           'RedDeer/releases/org.eclipse.reddeer.site-4.7.0.53.zip.sha256')
             captured = capsys.readouterr().out.split('\n')
             assert captured[0] == 'publishing org.sonarsource.eclipse.reddeer:org.eclipse.reddeer.site:zip#4.7.0.53'
             assert captured[1] == 'org.sonarsource.eclipse.reddeer org.eclipse.reddeer.site zip '
