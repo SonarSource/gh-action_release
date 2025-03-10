@@ -4,6 +4,7 @@ from dryable import Dryable
 
 from release.steps import ReleaseRequest
 from release.utils.artifactory import Artifactory
+from release.utils.binaries import Binaries
 
 REVOKE = True
 
@@ -71,7 +72,7 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
     if revoke:
         binaries.s3_delete(filename, gid, s3_aid, version)
     else:
-        artifact_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, binaries.upload_checksums)
+        artifact_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, Binaries.get_actual_checksums(aid))
         binaries.s3_upload(artifact_file, filename, gid, s3_aid, version)
 
 
