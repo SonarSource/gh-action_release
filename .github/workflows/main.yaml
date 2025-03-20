@@ -195,6 +195,8 @@ jobs:
             echo "skip_releasability_checks=true" >> "${GITHUB_OUTPUT}"
           elif test -f "${{ github.event.repository.name }}/package.json" && "$SKIP_JAVASCRIPT_RELEASABILITY_CHECKS" == "true"  ; then
             echo "skip_releasability_checks=true" >> "${GITHUB_OUTPUT}"
+          elif [[ "${{ github.event.repository.name }}"  == "sonar-architecture" ]]; then
+            echo "skip_releasability_checks=true" >> "${GITHUB_OUTPUT}"
           else
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
