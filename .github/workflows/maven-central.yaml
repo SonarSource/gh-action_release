@@ -54,9 +54,12 @@ jobs:
             development/kv/data/ossrh password | ossrh_password;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@58546d2106f9d38c37590b7f125f85b0d1fa4cee # 3.5.0
+        uses: jfrog/setup-jfrog-cli@9fe0f98bd45b19e6e931d457f4e98f8f84461fb5 # v4.4.1
+        env:
+          JF_URL: https://repox.jfrog.io/
+          JF_ACCESS_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
         with:
-          jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+          disable-auto-build-publish: true
       - name: Download Artifacts
         uses: SonarSource/gh-action_release/download-build@master
         with:
