@@ -22,7 +22,10 @@ close="$MVN_NEXUS_STAGING_CMD:rc-close -DstagingProgressTimeoutMinutes=60 $DEFAU
 release="$MVN_NEXUS_STAGING_CMD:rc-release $DEFAULT_OPTS"
 
 # R3P0 is a magic string to ensure that the correct line is grepped
-STAGING_REPO=$($open -DopenedRepositoryMessageFormat="R3P0:%s" | grep "R3P0:" | cut -d: -f2)
+set -x
+STAGING_REPO=$($open -DopenedRepositoryMessageFormat="R3P0:%s")
+set +x
+STAGING_REPO=$(echo "$STAGING_REPO" | grep "R3P0:" | cut -d: -f2)
 
 echo "repo=${STAGING_REPO}" >> "$GITHUB_OUTPUT"
 
