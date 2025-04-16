@@ -54,7 +54,7 @@ jobs:
             development/kv/data/ossrh password | ossrh_password;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@58546d2106f9d38c37590b7f125f85b0d1fa4cee # 3.5.0
+        uses: SonarSource/jfrog-setup-wrapper@e0f353c7f1bcc7b2f663063d72b5fec7948f6815 # 3.6.0
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
@@ -74,7 +74,7 @@ jobs:
           OSSRH_PASSWORD: ${{ fromJSON(steps.secrets.outputs.vault).ossrh_password }}
       - name: Notify on failure
         if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
-        uses: 8398a7/action-slack@28ba43ae48961b90635b50953d216767a6bea486 # v3.16.2
+        uses: 8398a7/action-slack@1750b5085f3ec60384090fb7c52965ef822e869e # v3.18.0
         with:
           status: failure
           fields: repo,author,eventName

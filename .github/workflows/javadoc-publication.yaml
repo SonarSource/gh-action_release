@@ -63,7 +63,7 @@ jobs:
             development/aws/sts/javadocs secret_key | javadoc_aws_secret_access_key;
             development/aws/sts/javadocs security_token | javadoc_aws_security_token;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@58546d2106f9d38c37590b7f125f85b0d1fa4cee # 3.5.0
+        uses: SonarSource/jfrog-setup-wrapper@e0f353c7f1bcc7b2f663063d72b5fec7948f6815 # 3.6.0
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Create a path filter from the groupId for artifactory build search
