@@ -151,6 +151,8 @@ been performed based on the provided inputs defined in `with:` section.
 
 ### Releasing
 
+⚠️ At the moment, the release requires an exception in the GitHub ruleset: see [xtranet/Platform/Branch Protection Organization Ruleset - GitHub#Exception Record](https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/4008509456/Branch+Protection+Organization+Ruleset+-+GitHub#Exception-Record)
+
 To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml). The workflow
 will create the GitHub Release.
 
