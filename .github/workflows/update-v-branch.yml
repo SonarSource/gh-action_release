@@ -10,7 +10,7 @@ on:
 jobs:
   update-v-branch:
     name: Update v* branch to ${{ inputs.tag }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-large
     permissions:
       contents: read
       id-token: write

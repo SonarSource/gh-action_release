@@ -100,7 +100,7 @@ on:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-large
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
@@ -318,7 +318,7 @@ jobs:
 
   datadog:
     name: Push results to datadog
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-large
     needs:
       - release
       - mavenCentral

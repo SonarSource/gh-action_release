@@ -7,7 +7,7 @@ on:
 jobs:
   it-tests-default-values:
     name: IT Test - use default inputs values should generate expected output"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-large
     permissions:
       id-token: write
       contents: write
@@ -36,7 +36,7 @@ jobs:
 
   it-tests-use-flat-download-true:
     name: IT Test - use flat-download=true should generate expected output"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-large
     permissions:
       id-token: write
       contents: write
@@ -64,7 +64,7 @@ jobs:
 
   it-tests:
       name: "All IT Tests have to pass (download-build)"
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04-large
       if: always()
       needs:
         # Add your tests here so that they prevent the merge of broken changes
