@@ -4,26 +4,22 @@ inputs:
   local-repo-dir:
     description: "Directory of artifacts to sync"
     required: true
-  nexus-url:
-    description: "URL to the nexus instance"
-    required: true
-    default: "https://s01.oss.sonatype.org/"
-  staging-profile-id:
-    description: "Staging profile id of Nexus"
-    required: true
-    default: "13c1877339a4cf"
-  do-release:
-    description: "If false skip release, only close the staging repo"
-    required: true
+  central-url:
+    description: "URL to the Central Portal instance"
+    required: false
+    default: "https://central.sonatype.com"
+  auto-publish:
+    description: "If true, automatically publish after upload and validation"
+    required: false
     default: "true"
 outputs:
-  repo:
-    description: "Name of the staging repo"
+  deployment-id:
+    description: "ID of the deployment"
+    value: ${{ steps.upload.outputs.deployment-id }}
 runs:
-  using: "docker"
-  image: "Dockerfile"
-  args:
-    - ${{ inputs.local-repo-dir }}
-    - ${{ inputs.nexus-url }}
-    - ${{ inputs.staging-profile-id }}
-    - ${{ inputs.do-release }}
+  using: "composite"
+  steps:
+    - name: Upload to Central Portal
+      id: upload
+      shell: bash
+      run: ${{ github.action_path }}/maven-central-publish.sh "${{ inputs.local-repo-dir }}" "${{ inputs.central-url }}" "${{ inputs.auto-publish }}"
