@@ -89,11 +89,9 @@ on:
         description: Push results to datadog for monitoring
         default: true
         required: false
-      # This flag allows us to treat this project differently, eg: In Datadog,
-      # stats from dummy projects can be excluded from dashboards
       isDummyProject:
         type: boolean
-        description: Indicate whether this project is a dummy project used for testing purposes.
+        description: Indicate whether this is a dummy project.
         default: false
         required: false
 

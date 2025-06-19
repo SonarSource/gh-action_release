@@ -25,7 +25,7 @@ jobs:
     uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
     with:
       publishToBinaries: false # enable the publication to binaries
-      binariesS3Bucket: downloads-cdn-eu-central-1-prod # define the target bucket
+      binariesS3Bucket: downloads-cdn-eu-central-1-prod # S3 bucket to use for the binaries
       publishJavadoc: false # enable the publication of the Javadoc to https://javadocs.sonarsource.org/
       publicRelease: false # define if the Javadoc is stored in 'sonarsource-public-releases' (or 'sonarsource-private-releases' if false)
       javadocDestinationDirectory: <repository name> # define the subdir to use in https://javadocs.sonarsource.org/
@@ -40,12 +40,15 @@ jobs:
       artifactoryRoleSuffix: promoter # define the Artifactory promoter role suffix
       dryRun: false # perform a dry run execution
       pushToDatadog: true # push results to Datadog for monitoring
+      isDummyProject: false # set to true if this is a dummy project (e.g. sonar-dummy)
 ```
 
 Notes:
 
 - `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO`
   environment variable is required in the release Build Info.
+- `isDummyProject`: The _dummy_ projects are treated differently regarding alerts and metrics. E.g.: in Datadog, the stats from dummy
+  projects are excluded from some dashboards.
 
 ## Custom .npmrc File for NpmJS
 
@@ -151,7 +154,8 @@ been performed based on the provided inputs defined in `with:` section.
 
 ### Releasing
 
-⚠️ At the moment, the release requires an exception in the GitHub ruleset: see [xtranet/Platform/Branch Protection Organization Ruleset - GitHub#Exception Record](https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/4008509456/Branch+Protection+Organization+Ruleset+-+GitHub#Exception-Record)
+⚠️ At the moment, the release requires an exception in the GitHub ruleset:
+see [xtranet/Platform/Branch Protection Organization Ruleset - GitHub#Exception Record](https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/4008509456/Branch+Protection+Organization+Ruleset+-+GitHub#Exception-Record)
 
 To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml). The workflow
 will create the GitHub Release.
