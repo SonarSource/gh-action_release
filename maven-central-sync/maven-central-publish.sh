@@ -86,5 +86,61 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "deployment-id=${DEPLOYMENT_ID}" >> "$GITHUB_OUTPUT"
 fi
 
-echo "If needed, check deployment status manually using /api/v1/publisher/status?id=$DEPLOYMENT_ID"
+# Poll for deployment status until it's processed
+echo "Polling deployment status..."
+MAX_ATTEMPTS=720 # 2 hours (720 * 10s)
+POLL_INTERVAL=10  # 10 seconds
+ATTEMPT=1
+
+while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+    echo "Checking deployment status (attempt $ATTEMPT/$MAX_ATTEMPTS)..."
+
+    STATUS_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
+        -X POST \
+        -H "$AUTH_HEADER" \
+        "$CENTRAL_URL/api/v1/publisher/status?id=$DEPLOYMENT_ID")
+
+    HTTP_STATUS=$(echo "$STATUS_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    RESPONSE_BODY="${STATUS_RESPONSE%HTTPSTATUS:*}"
+
+    echo "Status check HTTP: $HTTP_STATUS"
+
+    if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+        # Extract deployment state from response
+        DEPLOYMENT_STATE=$(echo "$RESPONSE_BODY" | grep -o '"deploymentState":"[^"]*"' | cut -d'"' -f4)
+        echo "Current deployment state: $DEPLOYMENT_STATE"
+
+        case "$DEPLOYMENT_STATE" in
+            "VALIDATED"|"PUBLISHING"|"PUBLISHED")
+                echo "✅ Deployment successful with state: $DEPLOYMENT_STATE"
+                exit 0
+                ;;
+            "FAILED")
+                echo "❌ Deployment failed validation"
+                echo "Status response: $RESPONSE_BODY"
+                exit 1
+                ;;
+            "PENDING"|"VALIDATING")
+                echo "⏳ Deployment is still being processed (state: $DEPLOYMENT_STATE)..."
+                ;;
+            *)
+                echo "Unknown deployment state: $DEPLOYMENT_STATE"
+                echo "Full response: $RESPONSE_BODY"
+                ;;
+        esac
+    else
+        echo "Warning: Status check failed with HTTP $HTTP_STATUS"
+        echo "Response: $RESPONSE_BODY"
+    fi
+
+    if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+        echo "Waiting $POLL_INTERVAL seconds before next check..."
+        sleep $POLL_INTERVAL
+    fi
+
+    ATTEMPT=$((ATTEMPT + 1))
+done
+
+echo "❌ Timeout: Deployment did not reach a final state within $((MAX_ATTEMPTS * POLL_INTERVAL / 3600)) hours"
+echo "Check deployment status manually using: $CENTRAL_URL/api/v1/publisher/status?id=$DEPLOYMENT_ID"
 exit 1
