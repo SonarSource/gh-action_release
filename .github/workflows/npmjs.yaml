@@ -73,8 +73,18 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
 
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
+          # to directly reference the repository where the reusable workflow is defined
+          repository: SonarSource/gh-action_release
+          # This property is changed during the release process to reference the correct tag
+          # During development change this to your branch name to run it in another repository
+          ref: master
+          path: gh-action_release
+
       - name: Download Artifacts from JFrog
-        uses: SonarSource/gh-action_release/download-build@master
+        uses: ./download-build
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}

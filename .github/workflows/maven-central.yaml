@@ -56,6 +56,15 @@ jobs:
         uses: SonarSource/jfrog-setup-wrapper@e0f353c7f1bcc7b2f663063d72b5fec7948f6815 # 3.6.0
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
+          # to directly reference the repository where the reusable workflow is defined
+          repository: SonarSource/gh-action_release
+          # This property is changed during the release process to reference the correct tag
+          # During development change this to your branch name to run it in another repository
+          ref: master
+          path: gh-action_release
       - name: Download Artifacts
         uses: ./download-build  # Local action
         with:
