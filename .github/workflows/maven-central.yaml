@@ -19,6 +19,10 @@ name: Maven Central
         description: exclusions for the JFrog build download
         default: "-"
         required: false
+      projectName:
+        type: string
+        description: Project name for build info (may be different from repository name for multi-artifact repos)
+        required: false
 
 jobs:
   maven-central:
@@ -62,10 +66,11 @@ jobs:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
           exclusions: ${{ inputs.downloadExclusions }}
-      - name: Sync to Maven Central
-        uses: ./maven-central-sync  # Local action
+          project-name: ${{ inputs.projectName }}
+      - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
+        uses: ./maven-central-sync  # Local action
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
           central-url: https://central.sonatype.com
