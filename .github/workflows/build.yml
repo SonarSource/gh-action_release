@@ -44,6 +44,6 @@ jobs:
           python -m pip install --upgrade requests
           python main_test.py
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master  # First-party SonarSource action
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
