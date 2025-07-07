@@ -109,6 +109,7 @@ jobs:
       promote: ${{ steps.release.outputs.promote }}
       publish_to_binaries: ${{ steps.release.outputs.publish_to_binaries }}
       release: ${{ steps.release.outputs.release }}
+      project_name: ${{ steps.release.outputs.project_name }}
       releasabilityCheckDependencies: ${{ steps.releasability.outputs.releasabilityCheckDependencies }}
       releasabilityQA: ${{ steps.releasability.outputs.releasabilityQA }}
       releasabilityJira: ${{ steps.releasability.outputs.releasabilityJira }}
@@ -268,6 +269,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
+      projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
 
   javadocPublication:
     name: Javadoc publication
