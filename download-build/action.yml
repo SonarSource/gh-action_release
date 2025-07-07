@@ -16,6 +16,10 @@ inputs:
   build-number:
     description: 'Build number'
     required: true
+  project-name:
+    description: 'Project name for build info (defaults to repository name)'
+    required: false
+    default: ''
   filter:
     description: 'Path to the artifacts to download'
     required: false
@@ -62,7 +66,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.local-repo-dir }}
       env:
-        JFROG_DL_BUILD: ${{ github.event.repository.name }}/${{ inputs.build-number }}
+        JFROG_DL_BUILD: ${{ inputs.project-name != '' && inputs.project-name || github.event.repository.name }}/${{ inputs.build-number }}
         JFROG_DL_EXCLUSIONS: ${{ inputs.exclusions }}
         JFROG_DL_REMOTE_REPO: ${{ inputs.remote-repo }}
         FILTER: ${{ inputs.filter }}

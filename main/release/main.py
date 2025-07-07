@@ -62,6 +62,8 @@ def main():
     buildinfo = artifactory.receive_build_info(release_request)
     check_params(buildinfo)
     binaries = None
+    # Set the project name output for use by dependent workflows
+    set_output("project_name", release_request.project)
     try:
         artifactory.promote(release_request, buildinfo)
         set_output("promote", 'done')  # There is no value to do it except to not break existing workflows

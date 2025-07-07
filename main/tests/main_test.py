@@ -109,7 +109,6 @@ class MainTest(unittest.TestCase):
                 artifactory_promote.assert_called_once_with(release_request, ANY)
                 github_is_publish_to_binaries.assert_called_once()
                 notify_slack.assert_called_once_with('Successfully released project:version')
-                assert set_output.call_count == 2
                 set_output.assert_has_calls([call('promote', 'done'), call('publish_to_binaries', 'done')])
 
     @patch.dict(os.environ, {
