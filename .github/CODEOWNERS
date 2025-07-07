@@ -1,5 +1,4 @@
-# Default owners for everything in the repo
 * @sonarsource/platform-eng-xp-squad
 
-# Protect the CODEOWNERS file itself
-.github/CODEOWNERS @sonarsource/platform-eng-xp-squad
+# No review needed for documentation changes
+*.md
