@@ -1,0 +1,25 @@
+name: Test Javadoc Extraction Logic
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/extract-javadoc.sh'
+      - 'spec/extract_javadoc_spec.sh'
+      - '.github/workflows/javadoc-publication.yaml'
+
+jobs:
+  test:
+    name: Test Javadoc Script
+    runs-on: sonar-xs
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install shellspec
+        run: |
+          curl -fsSL https://git.io/shellspec | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Run tests
+        run: shellspec --format documentation
