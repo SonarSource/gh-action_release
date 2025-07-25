@@ -40,6 +40,8 @@ jobs:
     outputs:
       javadoc-publication: ${{ steps.javadoc-publication-output.outcome }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Get the version
         id: get_version
         run: |
@@ -85,10 +87,8 @@ jobs:
         run: find ${{ steps.local_repo.outputs.dir }} -type f ! -name "*-javadoc.jar" -delete
       - name: List artifacts
         run: ls ${{ steps.local_repo.outputs.dir }}
-      - name: Create javadoc dir
-        run: mkdir -p ${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}
       - name: Extract javadoc.jar
-        run: cd ${{ steps.local_repo.outputs.dir }} && mv *javadoc.jar javadoc.zip && unzip javadoc.zip -d javadoc/${{ github.event.release.tag_name }}
+        run: ./scripts/extract-javadoc.sh "${{ steps.local_repo.outputs.dir }}" "${{ github.event.release.tag_name }}"
       - name: List javadoc files
         run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
