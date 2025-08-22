@@ -31,7 +31,7 @@ name: Javadoc publication
 jobs:
   javadoc-publication:
     name: Publish javadoc
-    runs-on: ubuntu-24.04-large
+    runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release
