@@ -27,7 +27,7 @@ name: Maven Central
 jobs:
   maven-central:
     name: Push to maven Central
-    runs-on: ubuntu-24.04-large
+    runs-on: github-ubuntu-latest-s
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release
