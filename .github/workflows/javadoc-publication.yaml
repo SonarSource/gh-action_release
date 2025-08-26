@@ -4,6 +4,10 @@ name: Javadoc publication
 "on":
   workflow_call:
     inputs:
+      version:
+        type: string
+        description: Version (alternative to release event)
+        required: false
       dryRun:
         type: boolean
         description: Flag to enable the dry-run execution
@@ -36,7 +40,7 @@ jobs:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release
     timeout-minutes: 5
-    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+    if: ${{ (github.event_name == 'release' && github.event.action == 'published') || inputs.version != '' }}
     outputs:
       javadoc-publication: ${{ steps.javadoc-publication-output.outcome }}
     steps:
@@ -45,7 +49,7 @@ jobs:
       - name: Get the version
         id: get_version
         run: |
-          IFS=. read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
+          IFS=. read -r major minor patch build <<< "${{ inputs.version || github.event.release.tag_name }}"
           echo "build=${build}" >> $GITHUB_OUTPUT
           echo "patch=${patch}" >> $GITHUB_OUTPUT
           echo "minor=${minor}" >> $GITHUB_OUTPUT
@@ -88,9 +92,9 @@ jobs:
       - name: List artifacts
         run: ls ${{ steps.local_repo.outputs.dir }}
       - name: Extract javadoc.jar
-        run: ./scripts/extract-javadoc.sh "${{ steps.local_repo.outputs.dir }}" "${{ github.event.release.tag_name }}"
+        run: ./scripts/extract-javadoc.sh "${{ steps.local_repo.outputs.dir }}" "${{ inputs.version || github.event.release.tag_name }}"
       - name: List javadoc files
-        run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}"
+        run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ inputs.version || github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
         uses: SonarSource/gh-action_release/aws-s3@master
         with:
@@ -117,7 +121,7 @@ jobs:
         with:
           command: cp
           flags: --recursive
-          source: ${{ steps.local_repo.outputs.dir }}/javadoc/${{ github.event.release.tag_name }}/
+          source: ${{ steps.local_repo.outputs.dir }}/javadoc/${{ inputs.version || github.event.release.tag_name }}/
           destination: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory || github.event.repository.name }}/latest
           aws_access_key_id: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_access_key_id }}
           aws_secret_access_key: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_secret_access_key }}

@@ -5,6 +5,14 @@ name: Release reusable workflow
 on:
   workflow_call:
     inputs:
+      version:
+        type: string
+        description: Version (alternative to release event)
+        required: false
+      releaseId:
+        type: string
+        description: Release ID (alternative to release event)
+        required: false
       dryRun:
         type: boolean
         description: Flag to enable the dry-run execution
@@ -103,7 +111,7 @@ jobs:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
     timeout-minutes: 30
-    if: ${{ inputs.dryRun == true || github.event_name == 'release' && github.event.action == 'published' }}
+    if: ${{ inputs.dryRun == true || (github.event_name == 'release' && github.event.action == 'published') || (inputs.version != '' && inputs.releaseId != '') }}
     outputs:
       releasability: ${{ steps.release.outputs.releasability }}
       promote: ${{ steps.release.outputs.promote }}
@@ -206,15 +214,15 @@ jobs:
           commit-sha: ${{ github.sha }}
           organization: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
-          version: ${{ github.event.release.tag_name }}
+          version: ${{ inputs.version || github.event.release.tag_name }}
 
       - name: Revoke release on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api repos/${{ github.repository }}/releases/${{ github.event.release.id }} -X PATCH -F draft=true
-          gh api repos/${{ github.repository }}/git/refs/tags/${{ github.event.release.tag_name }} -X DELETE
+          gh api repos/${{ github.repository }}/releases/${{ inputs.releaseId || github.event.release.id }} -X PATCH -F draft=true
+          gh api repos/${{ github.repository }}/git/refs/tags/${{ inputs.version || github.event.release.tag_name }} -X DELETE
 
       - name: Send Slack notification on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
@@ -229,12 +237,12 @@ jobs:
               "attachments": [
                 {
                   "color": "#ff0000",
-                  "text": "Releasability checks failed in `${{ github.repository }}`. Release `${{ github.event.release.tag_name }}` was revoked. Publish the release again after resolving the issue. \n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
+                  "text": "Releasability checks failed in `${{ github.repository }}`. Release `${{ inputs.version || github.event.release.tag_name }}` was revoked. Publish the release again after resolving the issue. \n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
                 }
               ]
             }
 
-      - name: Release ${{ github.event.release.tag_name }}
+      - name: Release ${{ inputs.version || github.event.release.tag_name }}
         id: release
         uses: ./gh-action_release/main
         with:
@@ -266,6 +274,7 @@ jobs:
     if: ${{ inputs.mavenCentralSync && inputs.dryRun != true }}
     uses: ./.github/workflows/maven-central.yaml
     with:
+      version: ${{ inputs.version }}
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
@@ -277,6 +286,7 @@ jobs:
     if: ${{ inputs.publishJavadoc && inputs.dryRun != true }}
     uses: ./.github/workflows/javadoc-publication.yaml
     with:
+      version: ${{ inputs.version }}
       dryRun: ${{ inputs.dryRun }}
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
@@ -289,6 +299,7 @@ jobs:
     if: ${{ inputs.publishToTestPyPI && inputs.dryRun != true }}
     uses: ./.github/workflows/pypi.yaml
     with:
+      version: ${{ inputs.version }}
       vaultAddr: ${{ inputs.vaultAddr }}
       vaultTokenKey: pypi-test
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
@@ -301,6 +312,7 @@ jobs:
     if: ${{ inputs.publishToPyPI && inputs.dryRun != true }}
     uses: ./.github/workflows/pypi.yaml
     with:
+      version: ${{ inputs.version }}
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
@@ -312,6 +324,7 @@ jobs:
     if: ${{ inputs.publishToNpmJS && inputs.dryRun != true }}
     uses: ./.github/workflows/npmjs.yaml
     with:
+      version: ${{ inputs.version }}
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
