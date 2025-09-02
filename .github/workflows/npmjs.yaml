@@ -2,6 +2,10 @@ name: NpmJS
 "on":
   workflow_call:
     inputs:
+      version:
+        type: string
+        description: Version (alternative to release event)
+        required: false
       vaultAddr:
         type: string
         description: Custom Vault installation
@@ -41,12 +45,12 @@ jobs:
       id-token: write
       contents: read
     timeout-minutes: 30
-    if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+    if: ${{ (github.event_name == 'release' && github.event.action == 'published') || inputs.version != '' }}
     steps:
       - name: Get the version
         id: get_version
         run: |
-          IFS='.-' read -r major minor patch build <<< "${{ github.event.release.tag_name }}"
+          IFS='.-' read -r major minor patch build <<< "${{ inputs.version || github.event.release.tag_name }}"
           version="${major}.${minor}.${patch}"
           echo "build=${build}" >> $GITHUB_OUTPUT
           echo "patch=${patch}" >> $GITHUB_OUTPUT
