@@ -130,7 +130,7 @@ jobs:
 
     steps:
       # Clone gh-action_release repository to run actions locally
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
           # to directly reference the repository where the reusable workflow is defined
@@ -140,18 +140,18 @@ jobs:
           ref: ${{ github.ref }}
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           path: ${{ github.event.repository.name }}
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1
         with:
           aws-region: eu-central-1
           role-to-assume: "arn:aws:iam::064493320159:role/ReleasbilityChecksCICDRole"
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
-        uses: SonarSource/vault-action-wrapper@d6d745ffdbc82b040df839b903bc33b5592cd6b0 # 3.0.2
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32 # 3.1.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -162,7 +162,7 @@ jobs:
       - name: Vault Binaries AWS Secrets
         id: secrets-binaries-aws
         if: ${{ inputs.dryRun != true && inputs.publishToBinaries }}
-        uses: SonarSource/vault-action-wrapper@d6d745ffdbc82b040df839b903bc33b5592cd6b0 # 3.0.2
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32 # 3.1.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -206,7 +206,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@48220006021661f66278901a369cfede25b1d458 # 2.2.0
+      - uses: SonarSource/gh-action_releasability@fde561300ff9a75051c135e7fc2c2a87e62d5fb7 # 2.2.3
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
@@ -342,7 +342,7 @@ jobs:
     if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
     steps:
       # Clone gh-action_release repository to run actions locally
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
           # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
           # to directly reference the repository where the reusable workflow is defined
@@ -354,7 +354,7 @@ jobs:
 
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@d6d745ffdbc82b040df839b903bc33b5592cd6b0 # 3.0.2
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32 # 3.1.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
