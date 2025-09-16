@@ -12,7 +12,6 @@ class TestDatadogIngest(unittest.TestCase):
     def test_prepare_logs(self):
         os.environ['run_id'] = 'run_id1'
         os.environ['repo'] = 'repo1'
-        os.environ['releasabilityWhiteSource'] = 'PASSED'
         os.environ['releasabilityCheckDependencies'] = 'PASSED'
         os.environ['releasabilityQualityGate'] = 'PASSED'
         os.environ['releasabilityGitHub'] = 'PASSED'
@@ -38,7 +37,6 @@ class TestDatadogIngest(unittest.TestCase):
             'service': 'gh-action_release',
             'repo': 'repo1',
             'releasability_checks': {
-                'whitesource': 'PASSED',
                 'dependencies': 'PASSED',
                 'qualitygate': 'PASSED',
                 'github': 'PASSED',
