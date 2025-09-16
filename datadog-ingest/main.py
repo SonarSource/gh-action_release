@@ -11,7 +11,6 @@ def prepare_logs():
         "service": "gh-action_release",
         "repo": os.environ.get('repo'),
         "releasability_checks": {
-          "whitesource": os.environ.get('releasabilityWhiteSource'),
           "dependencies": os.environ.get('releasabilityCheckDependencies'),
           "qualitygate": os.environ.get('releasabilityQualityGate'),
           "github": os.environ.get('releasabilityGitHub'),

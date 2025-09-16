@@ -121,7 +121,6 @@ jobs:
       releasabilityCheckDependencies: ${{ steps.releasability.outputs.releasabilityCheckDependencies }}
       releasabilityQA: ${{ steps.releasability.outputs.releasabilityQA }}
       releasabilityJira: ${{ steps.releasability.outputs.releasabilityJira }}
-      releasabilityWhiteSource: ${{ steps.releasability.outputs.releasabilityWhiteSource }}
       releasabilityCheckPeacheeLanguagesStatistics: ${{ steps.releasability.outputs.releasabilityCheckPeacheeLanguagesStatistics }}
       releasabilityQualityGate: ${{ steps.releasability.outputs.releasabilityQualityGate }}
       releasabilityParentPOM: ${{ steps.releasability.outputs.releasabilityParentPOM }}
@@ -206,7 +205,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@48220006021661f66278901a369cfede25b1d458 # 2.2.0
+      - uses: SonarSource/gh-action_releasability@61b5cf5e635cedc6ffd092576109773c31441d5b # 3.0.0
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
@@ -367,7 +366,6 @@ jobs:
           releasabilityCheckDependencies: ${{ needs.release.outputs.releasabilityCheckDependencies }}
           releasabilityQA: ${{ needs.release.outputs.releasabilityQA }}
           releasabilityJira: ${{ needs.release.outputs.releasabilityJira }}
-          releasabilityWhiteSource: ${{ needs.release.outputs.releasabilityWhiteSource }}
           releasabilityCheckPeacheeLanguagesStatistics: ${{ needs.release.outputs.releasabilityCheckPeacheeLanguagesStatistics }}
           releasabilityQualityGate: ${{ needs.release.outputs.releasabilityQualityGate }}
           releasabilityParentPOM: ${{ needs.release.outputs.releasabilityParentPOM }}
