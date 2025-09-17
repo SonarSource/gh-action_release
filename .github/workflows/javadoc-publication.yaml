@@ -92,7 +92,7 @@ jobs:
       - name: List artifacts
         run: ls ${{ steps.local_repo.outputs.dir }}
       - name: Extract javadoc.jar
-        run: ./scripts/extract-javadoc.sh "${{ steps.local_repo.outputs.dir }}" "${{ inputs.version || github.event.release.tag_name }}"
+        run: $GITHUB_ACTION_PATH/scripts/extract-javadoc.sh "${{ steps.local_repo.outputs.dir }}" "${{ inputs.version || github.event.release.tag_name }}"
       - name: List javadoc files
         run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ inputs.version || github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
