@@ -42,10 +42,14 @@ jobs:
     timeout-minutes: 5
     if: ${{ (github.event_name == 'release' && github.event.action == 'published') || inputs.version != '' }}
     outputs:
-      javadoc-publication: ${{ steps.javadoc-publication-output.outcome }}
+      javadoc-publication: ${{ steps.upload-latest.outcome }}
     steps:
-      - name: Checkout
+      - name: Checkout gh-action_release for scripts
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: SonarSource/gh-action_release
+          ref: ${{ github.ref }}
+          path: gh-action_release
       - name: Get the version
         id: get_version
         run: |
@@ -92,7 +96,7 @@ jobs:
       - name: List artifacts
         run: ls ${{ steps.local_repo.outputs.dir }}
       - name: Extract javadoc.jar
-        run: $GITHUB_ACTION_PATH/scripts/extract-javadoc.sh "${{ steps.local_repo.outputs.dir }}" "${{ inputs.version || github.event.release.tag_name }}"
+        run: ./gh-action_release/scripts/extract-javadoc.sh "${{ steps.local_repo.outputs.dir }}" "${{ inputs.version || github.event.release.tag_name }}"
       - name: List javadoc files
         run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ inputs.version || github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
@@ -117,6 +121,7 @@ jobs:
           aws_region: eu-central-1
         continue-on-error: true # the first time a project publish javadoc, there is no latest dir available
       - name: Upload to dir named latest in S3
+        id: upload-latest
         uses: SonarSource/gh-action_release/aws-s3@master
         with:
           command: cp
