@@ -1,0 +1,3 @@
+[tools]
+shellcheck = "0.10.0"
+shellspec = "0.28.1"
