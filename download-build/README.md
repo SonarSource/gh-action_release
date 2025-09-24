@@ -19,7 +19,7 @@ jobs:
     name: "pre-commit"
     runs-on: ubuntu-latest
     steps:
-      - uses: SonarSource/gh-action_release/download-build@v5
+      - uses: SonarSource/gh-action_release/download-build@v6
         with:
           exclusions: '-'
 ```
@@ -36,7 +36,7 @@ jobs:
     name: "pre-commit"
     runs-on: ubuntu-latest
     steps:
-      - uses: SonarSource/gh-action_release/download-build@v5
+      - uses: SonarSource/gh-action_release/download-build@v6
         with:
           flat-download: true
 ```

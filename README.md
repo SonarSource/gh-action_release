@@ -22,7 +22,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v5
+    uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v6
     with:
       publishToBinaries: false # enable the publication to binaries
       binariesS3Bucket: downloads-cdn-eu-central-1-prod # S3 bucket to use for the binaries
@@ -130,7 +130,7 @@ ie: [`5.0.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0.
 
 ### Branches
 
-Branches prefixed with a `v` are pointers to the last major versions, ie: [`v5`](https://github.com/SonarSource/gh-action_release/tree/v5).
+Branches prefixed with a `v` are pointers to the last major versions, ie: [`v6`](https://github.com/SonarSource/gh-action_release/tree/v6).
 
 > Note: the `master` branch is used for development and can not be referenced directly. Use a `v` branch or a tag instead.
 
