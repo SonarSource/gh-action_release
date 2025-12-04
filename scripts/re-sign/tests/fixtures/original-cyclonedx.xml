@@ -1,0 +1,884 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bom serialNumber="urn:uuid:02d6e056-1b6e-36cc-a93c-2b31b3a48ae0" version="1" xmlns="http://cyclonedx.org/schema/bom/1.3">
+  <metadata>
+    <timestamp>2025-09-18T06:24:56Z</timestamp>
+    <tools>
+      <tool>
+        <vendor>OWASP Foundation</vendor>
+        <name>CycloneDX Maven plugin</name>
+        <version>2.9.1</version>
+        <hashes>
+          <hash alg="MD5">9c7a565cf28cce58557d0c621c5ea4b1</hash>
+          <hash alg="SHA-1">be882d5a22050bfa9d19090b1420c188617d0e1c</hash>
+          <hash alg="SHA-256">698e0f37184a5b28c245c4065fd036dfce253b52f82fbb7113d81d36326cc249</hash>
+          <hash alg="SHA-512">c0f0b11026858166f872a2eb54719492e5cecaa0bc9cd6b30b3ecb4a174eed220f4a1b5829d18d6734128e778d3cb3db7ffed177c92866133129cb29081814a0</hash>
+          <hash alg="SHA-384">d80964707dfe5caca8c70521d5066f57589304c0a657e6fbc7c0614ea0fc7b3b3dbe7778361eee0f54ba111e9cb0ffcb</hash>
+          <hash alg="SHA3-384">80bc3a275d9514bc457461ff52a72add8c7ecbbc01d8912efce57139016c544ee776981851be0a58fa977ab4221f703f</hash>
+          <hash alg="SHA3-256">142317d6f245390f4fd2d0c100b16281b8dfc5c0c2cff86943bdcc97039cb699</hash>
+          <hash alg="SHA3-512">af0fb9137c90b65d1a07f72e4d51ae509956cdb8800f35c961b037cdda1fe4a14ce3b496cef71ba85f1621affcfe29cd42704ae4191ff0b090a9602087c8997b</hash>
+        </hashes>
+      </tool>
+    </tools>
+    <component type="library" bom-ref="pkg:maven/com.sonarsource.dummy/dummy@15.0.2.8567?type=pom">
+      <publisher>SonarSource</publisher>
+      <group>com.sonarsource.dummy</group>
+      <name>dummy</name>
+      <version>15.0.2.8567</version>
+      <licenses>
+        <license>
+          <name>SonarSource</name>
+        </license>
+      </licenses>
+      <purl>pkg:maven/com.sonarsource.dummy/dummy@15.0.2.8567?type=pom</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarsource.com/dummy</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>https://jira.sonarsource.com/browse/TP</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonar-dummy</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <properties>
+      <property name="maven.goal">makeAggregateBom</property>
+      <property name="maven.scopes">compile,provided,runtime,system</property>
+    </properties>
+  </metadata>
+  <components>
+    <component type="library" bom-ref="pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin">
+      <publisher>SonarSource</publisher>
+      <group>com.sonarsource.dummy</group>
+      <name>sonar-dummy-plugin</name>
+      <version>15.0.2.8567</version>
+      <description>dummy project for testing releaseAuto</description>
+      <licenses>
+        <license>
+          <name>SonarSource</name>
+        </license>
+      </licenses>
+      <purl>pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarsource.com/products/plugins/languages/dummy/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>https://jira.sonarsource.com/browse/TP</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonar-dummy/sonar-dummy-plugin</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar">
+      <publisher>SonarSource</publisher>
+      <group>org.codehaus.sonar</group>
+      <name>sonar-plugin-api</name>
+      <version>5.1</version>
+      <description>Open source platform for continuous inspection of code quality</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">c88ee4329deb5b4d700a635ee7643c8c</hash>
+        <hash alg="SHA-1">77c9205e53961137ab54efeb5e1feb7eb17876d9</hash>
+        <hash alg="SHA-256">89b37b072b6557f86eb4e44c81cb8d354c940df10a41c841d89585b462e97a7c</hash>
+        <hash alg="SHA-512">10de4f7b7224d8f7cc43cb80dd1364cc7c48a9b3bcd221b630c6d77c084dfe0a7ddb13ada94fd9a6d48168a77a17becc9bd9070ef2e7d3869f038716fba7e975</hash>
+        <hash alg="SHA-384">0cdcb6fdd59c85e66ac377d9221ee81a2808042a3a611fc4dfce5bc6a03b621de61bfb11752adbfcacc698798454e5e0</hash>
+        <hash alg="SHA3-384">346a00a059b648b4d6cf839c86a1ade154d458cba97e91966c1bd8df5cd2d507e98d9edb683c2d5d180704df10720918</hash>
+        <hash alg="SHA3-256">2e27a66715e13fbaba4f6ad77b99958608687d1f96177c6a4f8f306a39c9019e</hash>
+        <hash alg="SHA3-512">394acfdc8399fff6cbb9e9b9350679ced8670e78a6a691118e346a4e25cd8c9abc15840893fbb1b847972b28c366f5a48b2c98fb1cff2853d43cf914d41febf8</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU LGPL 3</name>
+          <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarqube.org/sonar-plugin-api/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://bamboo.ci.codehaus.org/browse/SONAR-DEF</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/SONAR</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://www.nabble.com/Sonar-f30151.html</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonarqube/sonar-plugin-api</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar">
+      <group>com.google.code.findbugs</group>
+      <name>jsr305</name>
+      <version>2.0.3</version>
+      <description>JSR305 Annotations for Findbugs</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">195d5db8981fbec5fa18d5df9fad95ed</hash>
+        <hash alg="SHA-1">5871fb60dc68d67da54a663c3fd636a10a532948</hash>
+        <hash alg="SHA-256">bec0b24dcb23f9670172724826584802b80ae6cbdaba03bdebdef9327b962f6a</hash>
+        <hash alg="SHA-512">399510f759fb48255c6298f3545c9b644372fbc9d7245e80e6b51f49da0ac9275d104092c537ac047d5a1312c7d191dee8d655ca8d760b59ce1452bf4370a6e0</hash>
+        <hash alg="SHA-384">a7fa7a0b69f41518fdb70e847148e17d0909fb657cee127308fb6cd14f913c63c82608aeae3955f10b48d358a8addfee</hash>
+        <hash alg="SHA3-384">e55c3626a26119f465822e95c33266304bd87755e5e5865833dc10f4e2c1105c6c3ddc9efd889b1e43b346663627745b</hash>
+        <hash alg="SHA3-256">dbd709e4edb2fe0ebd9b0d993e35f9fbf8bdb21cce13139bc6986c829c03aed6</hash>
+        <hash alg="SHA3-512">a7cd693c969c8f9f6417030e987a4dda020c6a35d2b4174935baacf91619fc239fdf15a0af9a64d05855c872600c9744ee2755ad705b6d59fe099deea1e439bd</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>https://code.google.com/p/jsr-305/</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://code.google.com/p/jsr-305/</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar">
+      <publisher>SonarSource</publisher>
+      <group>org.codehaus.sonar</group>
+      <name>sonar-check-api</name>
+      <version>5.1</version>
+      <description>Check API</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">f9bb04bd45195f4a3165a093b7ca09c0</hash>
+        <hash alg="SHA-1">9d6faca892e9c5d753db67f2f5583207cd2a6a46</hash>
+        <hash alg="SHA-256">4450dc18acf48308796baac65ba69b82e195675bf7ad44deb4ccf68b4734e012</hash>
+        <hash alg="SHA-512">ac649b7e0487ff0ca4f3ad133590f91377e335d3d7e28dff9845e6e57d26a86fdaf318b1e05a05c802c6656205bbb58746dd1be41ce39dcabc5b737aa3fb5dba</hash>
+        <hash alg="SHA-384">71da5d806ba86f69d01d038232ca9d9b8be768982bfa118a486c465a370e2db133413a678eabf2102b0814f638e562b6</hash>
+        <hash alg="SHA3-384">35ffaa8ec12b026df5a4753bf609f485b95f1c068a50dd16dd0cf31391ea3a38d4c979d22e2f791438e543eed8883e08</hash>
+        <hash alg="SHA3-256">6cdf19666ac501d651e405b15984c85549176c90b51bb59400e2cf35051f20a2</hash>
+        <hash alg="SHA3-512">2311ed09292749a45fc454ba95783a1afaaaa4e9436521ef7a412f314e3d4e12ac3b22923e8df4ed989a495d036292cb10ad1c0f35c43fcb19d73409a1bcdced</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU LGPL 3</name>
+          <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarqube.org/sonar-check-api/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://bamboo.ci.codehaus.org/browse/SONAR-DEF</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/SONAR</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://www.nabble.com/Sonar-f30151.html</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonarqube/sonar-check-api</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar">
+      <publisher>SonarSource</publisher>
+      <group>org.codehaus.sonar</group>
+      <name>sonar-colorizer</name>
+      <version>5.1</version>
+      <description>Code syntax highlighter</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">bbf8b72124b48184fa2f1920eb1f9f96</hash>
+        <hash alg="SHA-1">fdb6640fd2160fe07b1c24b113c50ee60b8cf321</hash>
+        <hash alg="SHA-256">9ca67e5a7514565d73c8d2523ca9c7d648c70f9734d04fdea55e7a784160b733</hash>
+        <hash alg="SHA-512">51d5331b0e97f072196918ec2723d38f34a13f2be31a4730dd13519f16131464fce9dc7812ca608319c30df67c3b85fd4f8cf78afde5f215a23eb39ed9ea0b7a</hash>
+        <hash alg="SHA-384">3ba62e84a3fba6c09bed282cf5cb3018c9e78f631b4789d81a9adea9da183f781cc389c2984972fd10dc99222e689b74</hash>
+        <hash alg="SHA3-384">c41567aaa4f384251278934184a884d604676ce63cbde8d51ecd78b188394684131b0d84c4abd812f60e844e5ff18745</hash>
+        <hash alg="SHA3-256">8426efbae9c4223de83c25fb7d402d55c1b8f4d9742d74af90ab6c6f3929679d</hash>
+        <hash alg="SHA3-512">51b41e6ec4f88703a3a56b6e39de00b658f348efd0141cc928e72eda8e969477d21673f80931050909a19270b792cc33bfe5f15570220213e37f968a1c601e57</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU LGPL 3</name>
+          <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarqube.org/sonar-colorizer/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://bamboo.ci.codehaus.org/browse/SONAR-DEF</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/SONAR</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://www.nabble.com/Sonar-f30151.html</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonarqube/sonar-colorizer</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar">
+      <publisher>SonarSource</publisher>
+      <group>org.codehaus.sonar</group>
+      <name>sonar-channel</name>
+      <version>4.1</version>
+      <description>Code Channel</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">2e267d2af833bc3192754569d050c5c2</hash>
+        <hash alg="SHA-1">70b9204fbea44ba4c05b3491a058e11bda06be0e</hash>
+        <hash alg="SHA-256">edc377f6b79c46cb3909f6bfd7e88464de508f0afb552ff9756c3878c31b41b5</hash>
+        <hash alg="SHA-512">2c0e51816191247026f4d178b28dbff779710f9453ba2928c8346fa1ce0c0e5f19ee40999d47247ccc6f5dcc03810a8bb5cf338177ecd2ce96acd821c5c20121</hash>
+        <hash alg="SHA-384">92ba07f3a77f4b29d1d58767af71442ab32083958b7d04c073f204fe22773ee21a12cbe1f245e64d916359232c40423b</hash>
+        <hash alg="SHA3-384">e3fdf366ba6719677f9598ac715a143870ac47b3872215cf47e059fcd5b4070527843515d2d13856147be66431394931</hash>
+        <hash alg="SHA3-256">dc9f269ce10763977c151fe56afbb7bf50cab3fe246e47f75fd467d77728e2d5</hash>
+        <hash alg="SHA3-512">a12801008cd6c71249e8603f1315aba49c6bb0f5051d0582a0d1ab808645f4f458ddae0c41ccf99ed95fee36f21b4b0adccb4236cb4fc83c20a2eb269af0574c</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU LGPL 3</name>
+          <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarqube.org/sonar-channel/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://bamboo.ci.codehaus.org/browse/SONAR-DEF</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/SONAR</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://www.nabble.com/Sonar-f30151.html</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonar/sonar-channel</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar">
+      <publisher>SonarSource</publisher>
+      <group>org.codehaus.sonar</group>
+      <name>sonar-duplications</name>
+      <version>5.1</version>
+      <description>Detect duplicated code</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">ca22c650ff0cb6ca8345d37ba0dd88f8</hash>
+        <hash alg="SHA-1">c89d368792f71591272b08769c3f8b9c9bbd2b34</hash>
+        <hash alg="SHA-256">0524243bdb6b6138d1319f621891d275714062f0c3a520474bf5ac163092ea70</hash>
+        <hash alg="SHA-512">79ae15fc2922cb7e44467d39d81ad173a63766fdf6bd96044fdbe0200617b996821e1b069c1eaeaaee4136e0fcbb126ae8e268fcb723f90151533378fdaf7f24</hash>
+        <hash alg="SHA-384">c371b49f3302b90ed7a67582f6d725e041b312118f16813c16da937aef5159fdde5d402de6700e1be0dfaa597331d8bd</hash>
+        <hash alg="SHA3-384">116d9a3556dea44b9d3ad48948323ff1680dff628f384705ca4ee45edd7911d5761f7668fad0fddfdb3297fd812ee7e1</hash>
+        <hash alg="SHA3-256">dd34c46c16deab89df889fecdb8bdb1ff5406f95a22a7dfef93494329fab5d5f</hash>
+        <hash alg="SHA3-512">af3870dd0a2ff7fca4e642b50b0b157755fc6d1480bf3ed925fae910275b269c84ca49c5e156b72bb28d336fffdb7a8de0a53df3e98b0179f481541f0c933b51</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU LGPL 3</name>
+          <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarqube.org/sonar-duplications/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://bamboo.ci.codehaus.org/browse/SONAR-DEF</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/SONAR</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://www.nabble.com/Sonar-f30151.html</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonarqube/sonar-duplications</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar">
+      <publisher>SonarSource</publisher>
+      <group>org.codehaus.sonar</group>
+      <name>sonar-graph</name>
+      <version>5.1</version>
+      <description>Open source platform for continuous inspection of code quality</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">86a139e9df99cec3dd70d8cf004cf34d</hash>
+        <hash alg="SHA-1">5199f1ce19f69ed4f5187b28a466ad8bdd9178cc</hash>
+        <hash alg="SHA-256">105f070e4df04c64e240d7cd7d4b146aa568bdd4084044cfffd4c3342ebf0360</hash>
+        <hash alg="SHA-512">a2b225113f109f2345224bbcb7e36df73231cea40931b831860ae41a65fd0898dc9c546ebeaf212705fc218f8576333826012e2082fd238d5f41cfaa285d776f</hash>
+        <hash alg="SHA-384">952b97c2578ba6f3f8c6ebac4c23f3d8b1f1408d20894e50f3178c9a3fbc01598d87b8ba138e8176c435785a79c7fe80</hash>
+        <hash alg="SHA3-384">cd832f04476d24d7ae430f198445469c94264dc8f63ea4957701d986d1343a83bf0d8ce72b0d8995f2f20111fbe975b9</hash>
+        <hash alg="SHA3-256">4987c1fb5dc12fbf76a00e31708d62906814eb858e7f560dedf32b085bb545de</hash>
+        <hash alg="SHA3-512">9c9dcac77cc9e06a1a9b8d504b7523cd7ec49d60907036969cb9624bc77fc3568d9d685d826f0a734ce82bdfb38580bc47c292b78fbfbc5a99b39c3d635440bc</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU LGPL 3</name>
+          <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarqube.org/sonar-graph/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://bamboo.ci.codehaus.org/browse/SONAR-DEF</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/SONAR</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://www.nabble.com/Sonar-f30151.html</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonarqube/sonar-graph</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar">
+      <publisher>SonarSource</publisher>
+      <group>org.codehaus.sonar</group>
+      <name>sonar-squid</name>
+      <version>4.1</version>
+      <description>Open source platform for continuous inspection of code quality</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">119836707c9e7fe4a04e82674f7812fa</hash>
+        <hash alg="SHA-1">dfeaea3ac128302f890d3cfc30a6852d23d130a1</hash>
+        <hash alg="SHA-256">7cbd27ddfacabc5bfc3e839c4294df55a175a0405cb178e9185b5e82ee34e4dc</hash>
+        <hash alg="SHA-512">c507b833aae89f08e56ebdcc7b61bdc289f245bcc262d0f3a25d7a255545ebf953b11118454492a8c8b3ea6ad50bd1b0b96146e30bde579795bf0dbbdba92f37</hash>
+        <hash alg="SHA-384">0cba41c7c422c9e24cb4101996ba668d26ad8cd53ecefb7a785e0103a2375bfa4df2e63d95bca975e84a97836d75998c</hash>
+        <hash alg="SHA3-384">0fc869f7d99ef10d1a21d73c6b3115e8c6ed8a6e1d52aa87955fdbd94126a9158d061cb19095ffc737a60455c0495a42</hash>
+        <hash alg="SHA3-256">ad0e2733af6b17029a38e22a8331f2181b5aa501088f683f433001e296ebdbea</hash>
+        <hash alg="SHA3-512">46efce52ddd35d42a53bd21260d5fa25edbfa2da790a8097c07c799fba66d0de7a1a03d3b6a831337c57abb0708d45a6e7b66c8baccdd97a2a76bcdc059b3623</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU LGPL 3</name>
+          <url>http://www.gnu.org/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.sonarqube.org/sonar-squid/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://bamboo.ci.codehaus.org/browse/SONAR-DEF</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/SONAR</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://www.nabble.com/Sonar-f30151.html</url>
+        </reference>
+        <reference type="vcs">
+          <url>https://github.com/SonarSource/sonar/sonar-squid</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/commons-io/commons-io@2.4?type=jar">
+      <publisher>The Apache Software Foundation</publisher>
+      <group>commons-io</group>
+      <name>commons-io</name>
+      <version>2.4</version>
+      <description>The Commons IO library contains utility classes, stream implementations, file filters,
+file comparators, endian transformation classes, and much more.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">7f97854dc04c119d461fed14f5d8bb96</hash>
+        <hash alg="SHA-1">b1b6ea3b7e4aa4f492509a4952029cd8e48019ad</hash>
+        <hash alg="SHA-256">cc6a41dc3eaacc9e440a6bd0d2890b20d36b4ee408fe2d67122f328bb6e01581</hash>
+        <hash alg="SHA-512">957a438894a196e534af9ae1e61fb21e16f273952b55a81abb8faf0b139fc031ea940cf477f81704db417d1ce6ff2d9ddd4a2cbf316903b0e2dc1aeaef24f292</hash>
+        <hash alg="SHA-384">af8a3e210cb1dd5475d497249acf1a86266077f5c7df0ded76d92467ab7f69e445f79dcfacfd7375085ad24f49625955</hash>
+        <hash alg="SHA3-384">96ad8ffd01492835e0f0d0d19b0414950f487603caa7bbbed28bd3dc41721077c871eb534399aa178ed97aa01d743983</hash>
+        <hash alg="SHA3-256">78a19109fbcc47fcdd9486c1906e244d1cfad3172d7497d4f0009cdf100ff97b</hash>
+        <hash alg="SHA3-512">171ce4f320389faf73f95242098be01116709a9eaa88e770ef4aa63e249076dc9133f4c228809bd6989d657dabd6100d34a61232232adf19bbeea82482f46b29</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/commons-io/commons-io@2.4?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://commons.apache.org/io/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://vmbuild.apache.org/continuum/</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://issues.apache.org/jira/browse/IO</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://mail-archives.apache.org/mod_mbox/commons-user/</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://svn.apache.org/viewvc/commons/proper/io/trunk</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar">
+      <publisher>Codehaus</publisher>
+      <group>org.picocontainer</group>
+      <name>picocontainer</name>
+      <version>2.14.3</version>
+      <description>A small Java embeddable Dependency Injection container</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">248c980fc9de4fecaef8ff6ed2b738a3</hash>
+        <hash alg="SHA-1">87a4b5dab45564109c2a369c2dcf84f8e5a4c919</hash>
+        <hash alg="SHA-256">ca903f57ee7398c9188475db4671d6949ab9a12ece8b594795666b6fb2dabc4b</hash>
+        <hash alg="SHA-512">5f4d5b1252783cb24658131c08a8d2c9967232511cac8f88ea1eede07864723b4dc783d61b16ade246c5c95fba62fc22e0d8112c59524ec2155216ec8b07f8b9</hash>
+        <hash alg="SHA-384">23683431749a7a6aa764552ada3bd540b71d5a9556fcb5eff02b9157f5fec08a2e7d7ab9a56e796d750d7544b9a3a3a2</hash>
+        <hash alg="SHA3-384">06fbab38b6307faee463b9a5b4f6eb70d99ed8186899be8fc1fd54cf8d87ed609b74a375c9c39d8c24c3e1c3977761c1</hash>
+        <hash alg="SHA3-256">22ee2f64a6f92ec4a27c2df5ab944216022e962e60429997597fcf7aeb95e43d</hash>
+        <hash alg="SHA3-512">bc6f44a3e5e4bcb77eb080875f0c63ae16474c11a44ed9c99a5cf033faaafb9ce1765cd5d3e450575393943d42c9744bf381e4a421e9b30afeb094249afd299b</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>BSD-4-Clause</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://www.picocontainer.org/picocontainer</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://nexus.codehaus.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/PICO</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://svn.codehaus.org/picocontainer/java/2.x/tags/picocontainer-2.14.3/picocontainer</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/com.google.guava/guava@10.0.1?type=jar">
+      <group>com.google.guava</group>
+      <name>guava</name>
+      <version>10.0.1</version>
+      <description>Guava is a suite of core and expanded libraries that include
+    utility classes, google's collections, io classes, and much
+    much more.
+
+    This project is a complete packaging of all the Guava libraries
+    into a single jar.  Individual portions of Guava can be used
+    by downloading the appropriate module and its dependencies.
+
+    Guava (complete) has only one code dependency - javax.annotation,
+    per the JSR-305 spec.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">d05cd8b0a7ee4466994d64779eb28190</hash>
+        <hash alg="SHA-1">292c96f9cb18231528cac4b0bf17d28149d14809</hash>
+        <hash alg="SHA-256">7d228a16b9cd0d78ac7cc1a45cd6b65c9423c32c5e26f99f9bd2577d37396baa</hash>
+        <hash alg="SHA-512">22e576453ba72f4b0628782c85ba630a5be677738dc766d67f3b28c950381f86f6521a79c8bfcc5a5c86646e58cb8c48c996f1d41a39dcb1533edf9ba4918210</hash>
+        <hash alg="SHA-384">4d854090204ad8c1e47e5420141bba01696aa0a1508edbec9a721b06946b760acb2a77f3e55de906c316d4750cc331f2</hash>
+        <hash alg="SHA3-384">3afc2b6198e37e256d8d5686d4e1ba91e0552489c1099a88804b95a4193fa6d41608963c8602bcfa95cb8133b51c052f</hash>
+        <hash alg="SHA3-256">d474f3b419dfa7f192162741f7ea241ac6d02471eb3e747f026009f2f50949c9</hash>
+        <hash alg="SHA3-512">e3063128ff42cf5a5142014438e338a07c7545fe8594341d89dc6affd2ac77e9d6f04304ff7c96ad90d5d531f4c821847a224d9fce294b8057753f7a0dac0806</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/com.google.guava/guava@10.0.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://code.google.com/p/guava-libraries/guava</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://code.google.com/p/guava-libraries/issues</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://code.google.com/p/guava-libraries/source/browse/guava</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/commons-codec/commons-codec@1.8?type=jar">
+      <publisher>The Apache Software Foundation</publisher>
+      <group>commons-codec</group>
+      <name>commons-codec</name>
+      <version>1.8</version>
+      <description>The codec package contains simple encoder and decoders for
+     various formats such as Base64 and Hexadecimal.  In addition to these
+     widely used encoders and decoders, the codec package also maintains a
+     collection of phonetic encoding utilities.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">b87aa66fe75685c82d082e750ab51b2e</hash>
+        <hash alg="SHA-1">af3be3f74d25fc5163b54f56a0d394b462dafafd</hash>
+        <hash alg="SHA-256">599b40b94b4a39c2550a4b5106df071aa03199b71ad5423207e2e7356aa4f8bb</hash>
+        <hash alg="SHA-512">fb43d6184495bd21fc70e3c847d06183deed3e9cefcb28a4442dab51cac58c52c86f33117b23c589bd97c65c157632f5a96071e9f87eaae0c6c205e3d6e691e3</hash>
+        <hash alg="SHA-384">28bda1b4815ce25054c871014267c73cfd198b506c0176a2ba06e7d9a40411b66a09821dfde59a7fc319fc4be2afcac1</hash>
+        <hash alg="SHA3-384">e14deb58a4ae5c201563616b5c52078f09e6d0ead4656994525d58a17b0b68cffbee91f61e327619bb6cf49a701de3e8</hash>
+        <hash alg="SHA3-256">a628b1468a0249b7412d655fbde3179cca7a5b8906589c71d4a0bf08afa7c3ba</hash>
+        <hash alg="SHA3-512">16e50ed2b16d41180ba37d9c1c0eecb023dfa1782d886a161b1e2f46a964473cc76fd20c84fc927e7709736b1fd8b290a9c82e0ece32e2ef8610bf0e4c9157ba</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/commons-codec/commons-codec@1.8?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://commons.apache.org/proper/commons-codec/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://vmbuild.apache.org/continuum/</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://issues.apache.org/jira/browse/CODEC</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://mail-archives.apache.org/mod_mbox/commons-user/</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://svn.apache.org/viewvc/commons/proper/codec/trunk</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/commons-lang/commons-lang@2.6?type=jar">
+      <publisher>The Apache Software Foundation</publisher>
+      <group>commons-lang</group>
+      <name>commons-lang</name>
+      <version>2.6</version>
+      <description>Commons Lang, a package of Java utility classes for the
+        classes that are in java.lang's hierarchy, or are considered to be so
+        standard as to justify existence in java.lang.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">4d5c1693079575b362edf41500630bbd</hash>
+        <hash alg="SHA-1">0ce1edb914c94ebc388f086c6827e8bdeec71ac2</hash>
+        <hash alg="SHA-256">50f11b09f877c294d56f24463f47d28f929cf5044f648661c0f0cfbae9a2f49c</hash>
+        <hash alg="SHA-512">4a5a3dbe4941c645e2cca068cca5c1882cfe988b02e7cd981d1e51784900767d1deab0e0e0566f559c9fcabb4a180e436d5bb948902d4f4106f37360466afb42</hash>
+        <hash alg="SHA-384">9725bc421adc1dbcd6f937eca0f3075d186a2b353ece4cef66b0fe81bb8d3f7d7641c43e86d657ef526c719f0c2a8c90</hash>
+        <hash alg="SHA3-384">4bc4eaaf2580ded6d552b96ae5261c936de95f69a1d137c47279c51bf2aa1406ae44f69ccc94486267b8441e53c4bd74</hash>
+        <hash alg="SHA3-256">b68d49ef037d428ea0c3e67a7a20f3d68a134bef30a1639ec08d28886b9f5629</hash>
+        <hash alg="SHA3-512">2e9ffc0608827cffc0b48b7a0f35d371c66586c99fea2910f7c2a237c7c57d9ae4d65de7c8e018362c2e4f963c2f70a9196cebf35457f1dd0cea6c65c256f673</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/commons-lang/commons-lang@2.6?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://commons.apache.org/lang/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://vmbuild.apache.org/continuum/</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://issues.apache.org/jira/browse/LANG</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://mail-archives.apache.org/mod_mbox/commons-user/</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://svn.apache.org/viewvc/commons/proper/lang/branches/LANG_2_X</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/commons-collections/commons-collections@3.2.1?type=jar">
+      <publisher>The Apache Software Foundation</publisher>
+      <group>commons-collections</group>
+      <name>commons-collections</name>
+      <version>3.2.1</version>
+      <description>Types that extend and augment the Java Collections Framework.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">13bc641afd7fd95e09b260f69c1e4c91</hash>
+        <hash alg="SHA-1">761ea405b9b37ced573d2df0d1e3a4e0f9edc668</hash>
+        <hash alg="SHA-256">87363a4c94eaabeefd8b930cb059f66b64c9f7d632862f23de3012da7660047b</hash>
+        <hash alg="SHA-512">8d0aa0e4e328c2e391d4d972f361a19ff085f508cb0478f5967280953abd3520ee92cc1d19b21cb4e29e4a7bc557487ddbaee9807b751824241269367b9e92cb</hash>
+        <hash alg="SHA-384">e5beca0365f4158cdab72a904eef2abcc88f5604bc52fce08b3439a5f1bef45bd64d715d733e624b58056f8d1c4707c3</hash>
+        <hash alg="SHA3-384">d67a56ba126fdc5151037460a4c1a1a1ddc5baed26cbece512ed9d125e473f4a1bcc424bcbde0196a2798d417067e09e</hash>
+        <hash alg="SHA3-256">536ed1f3dd481b746e571caaee9b1e19c7a462e1c633dc139583371a179ac852</hash>
+        <hash alg="SHA3-512">e80564b2b7a9771cffb50d45e06a8ca94aa4d8c992c63a0191f5a2a20d287d9f6cbb14571144b66a62adab0c5763a681a6d1c2b95d4a0a5e84b5ed80565424b6</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/commons-collections/commons-collections@3.2.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://commons.apache.org/collections/</url>
+        </reference>
+        <reference type="build-system">
+          <url>http://vmbuild.apache.org/continuum/</url>
+        </reference>
+        <reference type="distribution">
+          <url>scp://people.apache.org/www/people.apache.org/repo/m2-ibiblio-rsync-repository</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://issues.apache.org/jira/browse/COLLECTIONS</url>
+        </reference>
+        <reference type="mailing-list">
+          <url>http://mail-archives.apache.org/mod_mbox/commons-user/</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://svn.apache.org/viewvc/commons/proper/collections/trunk</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar">
+      <publisher>Codehaus</publisher>
+      <group>org.codehaus.woodstox</group>
+      <name>woodstox-core-lgpl</name>
+      <version>4.4.0</version>
+      <description>Woodstox is a high-performance XML processor that
+implements Stax (JSR-173) and SAX2 APIs</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">75bc0ca905b1c875474b92f71c764284</hash>
+        <hash alg="SHA-1">06c0f1a39ebe751a7900cd2f999fca9ca512adcf</hash>
+        <hash alg="SHA-256">a685975fff4f8a29b578dacd53529ee18065e8aa78f06cb992a97a41681dc8b3</hash>
+        <hash alg="SHA-512">04be9353be32442a3c188756a9c00ecaa8fb92cce81db4b195b23aed484e5d3f4437756b3a23539dd014693fa8f42c577544b7b0ea879cddf4a1a697675538d9</hash>
+        <hash alg="SHA-384">8ab2a957be7fb49141de2f7ea17d32a7c55f8300818ff586b5c028e4f52d60084ff934485661d1466410c15aff8f75bf</hash>
+        <hash alg="SHA3-384">a60c218ae723c436b7b03cfdb3897d2f99ce3ad39843bd6adb00c28e3ffe55f2ba2d36fc2a2d331f086471cc11d316bd</hash>
+        <hash alg="SHA3-256">77900f2e626d23f28665851c560767abc7983e6c76fdebc865294f2b1b232e50</hash>
+        <hash alg="SHA3-512">ceffa9b673f98dc81c988be31671332b56e1ed2ca9cfc17be2a41de76c04af7cedea422e060f7bfaeb3693972feb07ff3b9e073cbbc70211e43e9854d1becb7e</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU Lesser General Public License (LGPL), Version 2.1</name>
+          <url>http://www.fsf.org/licensing/licenses/lgpl.txt</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://woodstox.codehaus.org</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/WSTX</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://xircles.codehaus.org/projects/woodstox/repos/primary/repo</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar">
+      <group>javax.xml.stream</group>
+      <name>stax-api</name>
+      <version>1.0-2</version>
+      <description>StAX is a standard XML processing API that allows you to stream XML data from and to your application.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">7d18b63063580284c3f5734081fdc99f</hash>
+        <hash alg="SHA-1">d6337b0de8b25e53e81b922352fbea9f9f57ba0b</hash>
+        <hash alg="SHA-256">e8c70ebd76f982c9582a82ef82cf6ce14a7d58a4a4dca5cb7b7fc988c80089b7</hash>
+        <hash alg="SHA-512">a7f337735100356f72639053734506982329015693677fafd4d2ca74c4e412caae077999cb42dee2402cc641a80c8fb027deb9d2dc6c4e141d94c9184baa9dc5</hash>
+        <hash alg="SHA-384">005b7398b0a42fe2f11d2a0e65f638c4479c843bedecf691b6c1795d9f95ec8b3ff629b4e8b5d62c79082e762c4b488c</hash>
+        <hash alg="SHA3-384">642519112968caa20b366e9f6e0cd7c3092d7da9dfe5cb47111e4dab7f025b6abf44c14805aa7d45df995a15b1c7525a</hash>
+        <hash alg="SHA3-256">92a2eb0720aee125f29b1340a5571222bb6d2a50b441f839ec543a609845c68b</hash>
+        <hash alg="SHA3-512">5be6d4726be02b83fd12db1e5c5ff871a33b097dd4b9a8d40a4466dcc194860cf76b1cbc399e4d3fe8b1e63e9b3c5f9d294fa9d85db5766b7933c346d65585b6</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <name>GNU General Public Library</name>
+          <url>http://www.gnu.org/licenses/gpl.txt</url>
+        </license>
+        <license>
+          <id>CDDL-1.0</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar</purl>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar">
+      <publisher>fasterxml.com</publisher>
+      <group>org.codehaus.woodstox</group>
+      <name>stax2-api</name>
+      <version>3.1.4</version>
+      <description>tax2 API is an extension to basic Stax 1.0 API that adds significant new functionality, such as full-featured bi-direction validation interface and high-performance Typed Access API.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">c08e89de601b0a78f941b2c29db565c3</hash>
+        <hash alg="SHA-1">ac19014b1e6a7c08aad07fe114af792676b685b7</hash>
+        <hash alg="SHA-256">86d7c0b775a7c9b454cc6ba61d40a8eb3b99cc129f832eb9b977a3755b4b338e</hash>
+        <hash alg="SHA-512">911e3e250c9ac9098899f12db584b83f36d91e8cca1afeef38c19952a168647dbbc88cb1cbdd5919769342ed09267263a142b12e71cab465b25daeedf2255cb7</hash>
+        <hash alg="SHA-384">83c42936c43d6d6826edea636cf315924cdf52a7201bf07f1cf87a30d2b2855088306c94f39dea55529fed0360cf563f</hash>
+        <hash alg="SHA3-384">905976003ae70127f2c6142070da5736fc4a01b7a98008fefa1270fc9096691c1307e002f3b6381da462a92f2f31478e</hash>
+        <hash alg="SHA3-256">308d5a1692fd0135e5af967b0b83803a2fd835429ac83401124a0357f99cbb84</hash>
+        <hash alg="SHA3-512">ac3d87dab7f1e89c83f039557557536433c52a0d3201a2f514b82bb8b4f454eb9fc28b02b46a45a9caf983239612cf270085270421e4fd79eccfce0fd01f99da</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>BSD-4-Clause</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://wiki.fasterxml.com/WoodstoxStax2</url>
+        </reference>
+        <reference type="distribution">
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </reference>
+        <reference type="vcs">
+          <url>http://github.com/FasterXML/stax2-api</url>
+        </reference>
+      </externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar">
+      <publisher>Codehaus</publisher>
+      <group>org.codehaus.staxmate</group>
+      <name>staxmate</name>
+      <version>2.0.1</version>
+      <description>StaxMate is a light-weight framework that adds convenience to streaming XML-processing  without significant additional overhead.
+It builds on top of a Stax (JSR-173) compliant XML processors such as Woodstox or Sjsxp (default Stax implementation of JDK 1.6) and offers two basic abstractions: Cursors, which build on XMLStreamReaders and Output objects, which build on XMLStreamWriters.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">cbc599b621abdb9fd93d0c0527b6e273</hash>
+        <hash alg="SHA-1">b0b767fbc22683d7bf26a14ae1c5817561e21d00</hash>
+        <hash alg="SHA-256">18c8e8b0507afe307be25c825e058fe91514cb3d8616a11b37225bbb760a143e</hash>
+        <hash alg="SHA-512">8d8a336b79c83b8c229aba7cc56738271f7ca0b5387b09c246a18992299d0061015cde1f07da07b0ca6da8ac66eca4846269c48fd090968cf9f4f398d923dcb2</hash>
+        <hash alg="SHA-384">6f61dce2306717d3ba910ef8657977cfcc83d5e6f87b4fca30c96bb52feb416f187227963a5007f73ea120a93f7b4684</hash>
+        <hash alg="SHA3-384">165746fc80503b39ff6c3ecf7bd9516a30bb961270bb3ed1b2d009654d2c8ae1986261adadf6e7426eb00b283d8580bb</hash>
+        <hash alg="SHA3-256">dc24cc41221fbcb753a407f0713ca0648861c7935e4ba2cf7e95accfb72ef434</hash>
+        <hash alg="SHA3-512">bd029443e45d4a57e9d36587b0155cca05324282c48d259c1eae7e34a999dcff4ccd44590ca6fea208cce07d7034dac87d3155e46d2241c9f09b8de530d60a5b</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>BSD-4-Clause</id>
+        </license>
+      </licenses>
+      <purl>pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar</purl>
+      <externalReferences>
+        <reference type="website">
+          <url>http://staxmate.codehaus.org</url>
+        </reference>
+        <reference type="distribution">
+          <url>dav:https://dav.codehaus.org/repository/staxmate</url>
+        </reference>
+        <reference type="issue-tracker">
+          <url>http://jira.codehaus.org/browse/STAXMATE</url>
+        </reference>
+      </externalReferences>
+    </component>
+  </components>
+  <dependencies>
+    <dependency ref="pkg:maven/com.sonarsource.dummy/dummy@15.0.2.8567?type=pom">
+      <dependency ref="pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin"/>
+    </dependency>
+    <dependency ref="pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin">
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar">
+      <dependency ref="pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar"/>
+      <dependency ref="pkg:maven/com.google.guava/guava@10.0.1?type=jar"/>
+      <dependency ref="pkg:maven/commons-codec/commons-codec@1.8?type=jar"/>
+      <dependency ref="pkg:maven/commons-lang/commons-lang@2.6?type=jar"/>
+      <dependency ref="pkg:maven/commons-collections/commons-collections@3.2.1?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar">
+      <dependency ref="pkg:maven/com.google.guava/guava@10.0.1?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/com.google.guava/guava@10.0.1?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar">
+      <dependency ref="pkg:maven/commons-io/commons-io@2.4?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/commons-io/commons-io@2.4?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar">
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar"/>
+      <dependency ref="pkg:maven/com.google.guava/guava@10.0.1?type=jar"/>
+      <dependency ref="pkg:maven/commons-lang/commons-lang@2.6?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/commons-lang/commons-lang@2.6?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar">
+      <dependency ref="pkg:maven/commons-lang/commons-lang@2.6?type=jar"/>
+      <dependency ref="pkg:maven/com.google.guava/guava@10.0.1?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar">
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar"/>
+      <dependency ref="pkg:maven/commons-lang/commons-lang@2.6?type=jar"/>
+      <dependency ref="pkg:maven/commons-io/commons-io@2.4?type=jar"/>
+      <dependency ref="pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar"/>
+    <dependency ref="pkg:maven/commons-codec/commons-codec@1.8?type=jar"/>
+    <dependency ref="pkg:maven/commons-collections/commons-collections@3.2.1?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar">
+      <dependency ref="pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar"/>
+      <dependency ref="pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar"/>
+    <dependency ref="pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar"/>
+  </dependencies>
+</bom>

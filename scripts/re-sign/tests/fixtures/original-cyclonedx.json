@@ -1,0 +1,1565 @@
+{
+  "bomFormat" : "CycloneDX",
+  "specVersion" : "1.3",
+  "serialNumber" : "urn:uuid:02d6e056-1b6e-36cc-a93c-2b31b3a48ae0",
+  "version" : 1,
+  "metadata" : {
+    "timestamp" : "2025-09-18T06:24:56Z",
+    "tools" : [
+      {
+        "vendor" : "OWASP Foundation",
+        "name" : "CycloneDX Maven plugin",
+        "version" : "2.9.1",
+        "hashes" : [
+          {
+            "alg" : "MD5",
+            "content" : "9c7a565cf28cce58557d0c621c5ea4b1"
+          },
+          {
+            "alg" : "SHA-1",
+            "content" : "be882d5a22050bfa9d19090b1420c188617d0e1c"
+          },
+          {
+            "alg" : "SHA-256",
+            "content" : "698e0f37184a5b28c245c4065fd036dfce253b52f82fbb7113d81d36326cc249"
+          },
+          {
+            "alg" : "SHA-512",
+            "content" : "c0f0b11026858166f872a2eb54719492e5cecaa0bc9cd6b30b3ecb4a174eed220f4a1b5829d18d6734128e778d3cb3db7ffed177c92866133129cb29081814a0"
+          },
+          {
+            "alg" : "SHA-384",
+            "content" : "d80964707dfe5caca8c70521d5066f57589304c0a657e6fbc7c0614ea0fc7b3b3dbe7778361eee0f54ba111e9cb0ffcb"
+          },
+          {
+            "alg" : "SHA3-384",
+            "content" : "80bc3a275d9514bc457461ff52a72add8c7ecbbc01d8912efce57139016c544ee776981851be0a58fa977ab4221f703f"
+          },
+          {
+            "alg" : "SHA3-256",
+            "content" : "142317d6f245390f4fd2d0c100b16281b8dfc5c0c2cff86943bdcc97039cb699"
+          },
+          {
+            "alg" : "SHA3-512",
+            "content" : "af0fb9137c90b65d1a07f72e4d51ae509956cdb8800f35c961b037cdda1fe4a14ce3b496cef71ba85f1621affcfe29cd42704ae4191ff0b090a9602087c8997b"
+          }
+        ]
+      }
+    ],
+    "component" : {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.sonarsource.dummy/dummy@15.0.2.8567?type=pom",
+      "publisher" : "SonarSource",
+      "group" : "com.sonarsource.dummy",
+      "name" : "dummy",
+      "version" : "15.0.2.8567",
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "SonarSource"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.sonarsource.dummy/dummy@15.0.2.8567?type=pom",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarsource.com/dummy"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://jira.sonarsource.com/browse/TP"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonar-dummy"
+        }
+      ]
+    },
+    "properties" : [
+      {
+        "name" : "maven.goal",
+        "value" : "makeAggregateBom"
+      },
+      {
+        "name" : "maven.scopes",
+        "value" : "compile,provided,runtime,system"
+      }
+    ]
+  },
+  "components" : [
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin",
+      "publisher" : "SonarSource",
+      "group" : "com.sonarsource.dummy",
+      "name" : "sonar-dummy-plugin",
+      "version" : "15.0.2.8567",
+      "description" : "dummy project for testing releaseAuto",
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "SonarSource"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarsource.com/products/plugins/languages/dummy/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://jira.sonarsource.com/browse/TP"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonar-dummy/sonar-dummy-plugin"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar",
+      "publisher" : "SonarSource",
+      "group" : "org.codehaus.sonar",
+      "name" : "sonar-plugin-api",
+      "version" : "5.1",
+      "description" : "Open source platform for continuous inspection of code quality",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "c88ee4329deb5b4d700a635ee7643c8c"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "77c9205e53961137ab54efeb5e1feb7eb17876d9"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "89b37b072b6557f86eb4e44c81cb8d354c940df10a41c841d89585b462e97a7c"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "10de4f7b7224d8f7cc43cb80dd1364cc7c48a9b3bcd221b630c6d77c084dfe0a7ddb13ada94fd9a6d48168a77a17becc9bd9070ef2e7d3869f038716fba7e975"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "0cdcb6fdd59c85e66ac377d9221ee81a2808042a3a611fc4dfce5bc6a03b621de61bfb11752adbfcacc698798454e5e0"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "346a00a059b648b4d6cf839c86a1ade154d458cba97e91966c1bd8df5cd2d507e98d9edb683c2d5d180704df10720918"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "2e27a66715e13fbaba4f6ad77b99958608687d1f96177c6a4f8f306a39c9019e"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "394acfdc8399fff6cbb9e9b9350679ced8670e78a6a691118e346a4e25cd8c9abc15840893fbb1b847972b28c366f5a48b2c98fb1cff2853d43cf914d41febf8"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU LGPL 3",
+            "url" : "http://www.gnu.org/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarqube.org/sonar-plugin-api/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://bamboo.ci.codehaus.org/browse/SONAR-DEF"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/SONAR"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://www.nabble.com/Sonar-f30151.html"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonarqube/sonar-plugin-api"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar",
+      "group" : "com.google.code.findbugs",
+      "name" : "jsr305",
+      "version" : "2.0.3",
+      "description" : "JSR305 Annotations for Findbugs",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "195d5db8981fbec5fa18d5df9fad95ed"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "5871fb60dc68d67da54a663c3fd636a10a532948"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "bec0b24dcb23f9670172724826584802b80ae6cbdaba03bdebdef9327b962f6a"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "399510f759fb48255c6298f3545c9b644372fbc9d7245e80e6b51f49da0ac9275d104092c537ac047d5a1312c7d191dee8d655ca8d760b59ce1452bf4370a6e0"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "a7fa7a0b69f41518fdb70e847148e17d0909fb657cee127308fb6cd14f913c63c82608aeae3955f10b48d358a8addfee"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "e55c3626a26119f465822e95c33266304bd87755e5e5865833dc10f4e2c1105c6c3ddc9efd889b1e43b346663627745b"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "dbd709e4edb2fe0ebd9b0d993e35f9fbf8bdb21cce13139bc6986c829c03aed6"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "a7cd693c969c8f9f6417030e987a4dda020c6a35d2b4174935baacf91619fc239fdf15a0af9a64d05855c872600c9744ee2755ad705b6d59fe099deea1e439bd"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://code.google.com/p/jsr-305/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://code.google.com/p/jsr-305/"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar",
+      "publisher" : "SonarSource",
+      "group" : "org.codehaus.sonar",
+      "name" : "sonar-check-api",
+      "version" : "5.1",
+      "description" : "Check API",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "f9bb04bd45195f4a3165a093b7ca09c0"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "9d6faca892e9c5d753db67f2f5583207cd2a6a46"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "4450dc18acf48308796baac65ba69b82e195675bf7ad44deb4ccf68b4734e012"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "ac649b7e0487ff0ca4f3ad133590f91377e335d3d7e28dff9845e6e57d26a86fdaf318b1e05a05c802c6656205bbb58746dd1be41ce39dcabc5b737aa3fb5dba"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "71da5d806ba86f69d01d038232ca9d9b8be768982bfa118a486c465a370e2db133413a678eabf2102b0814f638e562b6"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "35ffaa8ec12b026df5a4753bf609f485b95f1c068a50dd16dd0cf31391ea3a38d4c979d22e2f791438e543eed8883e08"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "6cdf19666ac501d651e405b15984c85549176c90b51bb59400e2cf35051f20a2"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "2311ed09292749a45fc454ba95783a1afaaaa4e9436521ef7a412f314e3d4e12ac3b22923e8df4ed989a495d036292cb10ad1c0f35c43fcb19d73409a1bcdced"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU LGPL 3",
+            "url" : "http://www.gnu.org/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarqube.org/sonar-check-api/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://bamboo.ci.codehaus.org/browse/SONAR-DEF"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/SONAR"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://www.nabble.com/Sonar-f30151.html"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonarqube/sonar-check-api"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar",
+      "publisher" : "SonarSource",
+      "group" : "org.codehaus.sonar",
+      "name" : "sonar-colorizer",
+      "version" : "5.1",
+      "description" : "Code syntax highlighter",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "bbf8b72124b48184fa2f1920eb1f9f96"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "fdb6640fd2160fe07b1c24b113c50ee60b8cf321"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "9ca67e5a7514565d73c8d2523ca9c7d648c70f9734d04fdea55e7a784160b733"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "51d5331b0e97f072196918ec2723d38f34a13f2be31a4730dd13519f16131464fce9dc7812ca608319c30df67c3b85fd4f8cf78afde5f215a23eb39ed9ea0b7a"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "3ba62e84a3fba6c09bed282cf5cb3018c9e78f631b4789d81a9adea9da183f781cc389c2984972fd10dc99222e689b74"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "c41567aaa4f384251278934184a884d604676ce63cbde8d51ecd78b188394684131b0d84c4abd812f60e844e5ff18745"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "8426efbae9c4223de83c25fb7d402d55c1b8f4d9742d74af90ab6c6f3929679d"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "51b41e6ec4f88703a3a56b6e39de00b658f348efd0141cc928e72eda8e969477d21673f80931050909a19270b792cc33bfe5f15570220213e37f968a1c601e57"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU LGPL 3",
+            "url" : "http://www.gnu.org/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarqube.org/sonar-colorizer/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://bamboo.ci.codehaus.org/browse/SONAR-DEF"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/SONAR"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://www.nabble.com/Sonar-f30151.html"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonarqube/sonar-colorizer"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar",
+      "publisher" : "SonarSource",
+      "group" : "org.codehaus.sonar",
+      "name" : "sonar-channel",
+      "version" : "4.1",
+      "description" : "Code Channel",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "2e267d2af833bc3192754569d050c5c2"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "70b9204fbea44ba4c05b3491a058e11bda06be0e"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "edc377f6b79c46cb3909f6bfd7e88464de508f0afb552ff9756c3878c31b41b5"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "2c0e51816191247026f4d178b28dbff779710f9453ba2928c8346fa1ce0c0e5f19ee40999d47247ccc6f5dcc03810a8bb5cf338177ecd2ce96acd821c5c20121"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "92ba07f3a77f4b29d1d58767af71442ab32083958b7d04c073f204fe22773ee21a12cbe1f245e64d916359232c40423b"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "e3fdf366ba6719677f9598ac715a143870ac47b3872215cf47e059fcd5b4070527843515d2d13856147be66431394931"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "dc9f269ce10763977c151fe56afbb7bf50cab3fe246e47f75fd467d77728e2d5"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "a12801008cd6c71249e8603f1315aba49c6bb0f5051d0582a0d1ab808645f4f458ddae0c41ccf99ed95fee36f21b4b0adccb4236cb4fc83c20a2eb269af0574c"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU LGPL 3",
+            "url" : "http://www.gnu.org/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarqube.org/sonar-channel/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://bamboo.ci.codehaus.org/browse/SONAR-DEF"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/SONAR"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://www.nabble.com/Sonar-f30151.html"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonar/sonar-channel"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar",
+      "publisher" : "SonarSource",
+      "group" : "org.codehaus.sonar",
+      "name" : "sonar-duplications",
+      "version" : "5.1",
+      "description" : "Detect duplicated code",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "ca22c650ff0cb6ca8345d37ba0dd88f8"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "c89d368792f71591272b08769c3f8b9c9bbd2b34"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "0524243bdb6b6138d1319f621891d275714062f0c3a520474bf5ac163092ea70"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "79ae15fc2922cb7e44467d39d81ad173a63766fdf6bd96044fdbe0200617b996821e1b069c1eaeaaee4136e0fcbb126ae8e268fcb723f90151533378fdaf7f24"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "c371b49f3302b90ed7a67582f6d725e041b312118f16813c16da937aef5159fdde5d402de6700e1be0dfaa597331d8bd"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "116d9a3556dea44b9d3ad48948323ff1680dff628f384705ca4ee45edd7911d5761f7668fad0fddfdb3297fd812ee7e1"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "dd34c46c16deab89df889fecdb8bdb1ff5406f95a22a7dfef93494329fab5d5f"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "af3870dd0a2ff7fca4e642b50b0b157755fc6d1480bf3ed925fae910275b269c84ca49c5e156b72bb28d336fffdb7a8de0a53df3e98b0179f481541f0c933b51"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU LGPL 3",
+            "url" : "http://www.gnu.org/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarqube.org/sonar-duplications/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://bamboo.ci.codehaus.org/browse/SONAR-DEF"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/SONAR"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://www.nabble.com/Sonar-f30151.html"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonarqube/sonar-duplications"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar",
+      "publisher" : "SonarSource",
+      "group" : "org.codehaus.sonar",
+      "name" : "sonar-graph",
+      "version" : "5.1",
+      "description" : "Open source platform for continuous inspection of code quality",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "86a139e9df99cec3dd70d8cf004cf34d"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "5199f1ce19f69ed4f5187b28a466ad8bdd9178cc"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "105f070e4df04c64e240d7cd7d4b146aa568bdd4084044cfffd4c3342ebf0360"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "a2b225113f109f2345224bbcb7e36df73231cea40931b831860ae41a65fd0898dc9c546ebeaf212705fc218f8576333826012e2082fd238d5f41cfaa285d776f"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "952b97c2578ba6f3f8c6ebac4c23f3d8b1f1408d20894e50f3178c9a3fbc01598d87b8ba138e8176c435785a79c7fe80"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "cd832f04476d24d7ae430f198445469c94264dc8f63ea4957701d986d1343a83bf0d8ce72b0d8995f2f20111fbe975b9"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "4987c1fb5dc12fbf76a00e31708d62906814eb858e7f560dedf32b085bb545de"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "9c9dcac77cc9e06a1a9b8d504b7523cd7ec49d60907036969cb9624bc77fc3568d9d685d826f0a734ce82bdfb38580bc47c292b78fbfbc5a99b39c3d635440bc"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU LGPL 3",
+            "url" : "http://www.gnu.org/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarqube.org/sonar-graph/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://bamboo.ci.codehaus.org/browse/SONAR-DEF"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/SONAR"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://www.nabble.com/Sonar-f30151.html"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonarqube/sonar-graph"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar",
+      "publisher" : "SonarSource",
+      "group" : "org.codehaus.sonar",
+      "name" : "sonar-squid",
+      "version" : "4.1",
+      "description" : "Open source platform for continuous inspection of code quality",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "119836707c9e7fe4a04e82674f7812fa"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "dfeaea3ac128302f890d3cfc30a6852d23d130a1"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "7cbd27ddfacabc5bfc3e839c4294df55a175a0405cb178e9185b5e82ee34e4dc"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "c507b833aae89f08e56ebdcc7b61bdc289f245bcc262d0f3a25d7a255545ebf953b11118454492a8c8b3ea6ad50bd1b0b96146e30bde579795bf0dbbdba92f37"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "0cba41c7c422c9e24cb4101996ba668d26ad8cd53ecefb7a785e0103a2375bfa4df2e63d95bca975e84a97836d75998c"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "0fc869f7d99ef10d1a21d73c6b3115e8c6ed8a6e1d52aa87955fdbd94126a9158d061cb19095ffc737a60455c0495a42"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "ad0e2733af6b17029a38e22a8331f2181b5aa501088f683f433001e296ebdbea"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "46efce52ddd35d42a53bd21260d5fa25edbfa2da790a8097c07c799fba66d0de7a1a03d3b6a831337c57abb0708d45a6e7b66c8baccdd97a2a76bcdc059b3623"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU LGPL 3",
+            "url" : "http://www.gnu.org/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.sonarqube.org/sonar-squid/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://bamboo.ci.codehaus.org/browse/SONAR-DEF"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/SONAR"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://www.nabble.com/Sonar-f30151.html"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/SonarSource/sonar/sonar-squid"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/commons-io/commons-io@2.4?type=jar",
+      "publisher" : "The Apache Software Foundation",
+      "group" : "commons-io",
+      "name" : "commons-io",
+      "version" : "2.4",
+      "description" : "The Commons IO library contains utility classes, stream implementations, file filters, file comparators, endian transformation classes, and much more.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "7f97854dc04c119d461fed14f5d8bb96"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "b1b6ea3b7e4aa4f492509a4952029cd8e48019ad"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "cc6a41dc3eaacc9e440a6bd0d2890b20d36b4ee408fe2d67122f328bb6e01581"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "957a438894a196e534af9ae1e61fb21e16f273952b55a81abb8faf0b139fc031ea940cf477f81704db417d1ce6ff2d9ddd4a2cbf316903b0e2dc1aeaef24f292"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "af8a3e210cb1dd5475d497249acf1a86266077f5c7df0ded76d92467ab7f69e445f79dcfacfd7375085ad24f49625955"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "96ad8ffd01492835e0f0d0d19b0414950f487603caa7bbbed28bd3dc41721077c871eb534399aa178ed97aa01d743983"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "78a19109fbcc47fcdd9486c1906e244d1cfad3172d7497d4f0009cdf100ff97b"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "171ce4f320389faf73f95242098be01116709a9eaa88e770ef4aa63e249076dc9133f4c228809bd6989d657dabd6100d34a61232232adf19bbeea82482f46b29"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/commons-io/commons-io@2.4?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://commons.apache.org/io/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://vmbuild.apache.org/continuum/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository.apache.org/service/local/staging/deploy/maven2"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://issues.apache.org/jira/browse/IO"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://mail-archives.apache.org/mod_mbox/commons-user/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://svn.apache.org/viewvc/commons/proper/io/trunk"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar",
+      "publisher" : "Codehaus",
+      "group" : "org.picocontainer",
+      "name" : "picocontainer",
+      "version" : "2.14.3",
+      "description" : "A small Java embeddable Dependency Injection container",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "248c980fc9de4fecaef8ff6ed2b738a3"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "87a4b5dab45564109c2a369c2dcf84f8e5a4c919"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "ca903f57ee7398c9188475db4671d6949ab9a12ece8b594795666b6fb2dabc4b"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "5f4d5b1252783cb24658131c08a8d2c9967232511cac8f88ea1eede07864723b4dc783d61b16ade246c5c95fba62fc22e0d8112c59524ec2155216ec8b07f8b9"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "23683431749a7a6aa764552ada3bd540b71d5a9556fcb5eff02b9157f5fec08a2e7d7ab9a56e796d750d7544b9a3a3a2"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "06fbab38b6307faee463b9a5b4f6eb70d99ed8186899be8fc1fd54cf8d87ed609b74a375c9c39d8c24c3e1c3977761c1"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "22ee2f64a6f92ec4a27c2df5ab944216022e962e60429997597fcf7aeb95e43d"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "bc6f44a3e5e4bcb77eb080875f0c63ae16474c11a44ed9c99a5cf033faaafb9ce1765cd5d3e450575393943d42c9744bf381e4a421e9b30afeb094249afd299b"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-4-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://www.picocontainer.org/picocontainer"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://nexus.codehaus.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/PICO"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://svn.codehaus.org/picocontainer/java/2.x/tags/picocontainer-2.14.3/picocontainer"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.google.guava/guava@10.0.1?type=jar",
+      "group" : "com.google.guava",
+      "name" : "guava",
+      "version" : "10.0.1",
+      "description" : "Guava is a suite of core and expanded libraries that include utility classes, google's collections, io classes, and much much more. This project is a complete packaging of all the Guava libraries into a single jar. Individual portions of Guava can be used by downloading the appropriate module and its dependencies. Guava (complete) has only one code dependency - javax.annotation, per the JSR-305 spec.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "d05cd8b0a7ee4466994d64779eb28190"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "292c96f9cb18231528cac4b0bf17d28149d14809"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "7d228a16b9cd0d78ac7cc1a45cd6b65c9423c32c5e26f99f9bd2577d37396baa"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "22e576453ba72f4b0628782c85ba630a5be677738dc766d67f3b28c950381f86f6521a79c8bfcc5a5c86646e58cb8c48c996f1d41a39dcb1533edf9ba4918210"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "4d854090204ad8c1e47e5420141bba01696aa0a1508edbec9a721b06946b760acb2a77f3e55de906c316d4750cc331f2"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "3afc2b6198e37e256d8d5686d4e1ba91e0552489c1099a88804b95a4193fa6d41608963c8602bcfa95cb8133b51c052f"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "d474f3b419dfa7f192162741f7ea241ac6d02471eb3e747f026009f2f50949c9"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "e3063128ff42cf5a5142014438e338a07c7545fe8594341d89dc6affd2ac77e9d6f04304ff7c96ad90d5d531f4c821847a224d9fce294b8057753f7a0dac0806"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.google.guava/guava@10.0.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://code.google.com/p/guava-libraries/guava"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://code.google.com/p/guava-libraries/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://code.google.com/p/guava-libraries/source/browse/guava"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/commons-codec/commons-codec@1.8?type=jar",
+      "publisher" : "The Apache Software Foundation",
+      "group" : "commons-codec",
+      "name" : "commons-codec",
+      "version" : "1.8",
+      "description" : "The codec package contains simple encoder and decoders for various formats such as Base64 and Hexadecimal. In addition to these widely used encoders and decoders, the codec package also maintains a collection of phonetic encoding utilities.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "b87aa66fe75685c82d082e750ab51b2e"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "af3be3f74d25fc5163b54f56a0d394b462dafafd"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "599b40b94b4a39c2550a4b5106df071aa03199b71ad5423207e2e7356aa4f8bb"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "fb43d6184495bd21fc70e3c847d06183deed3e9cefcb28a4442dab51cac58c52c86f33117b23c589bd97c65c157632f5a96071e9f87eaae0c6c205e3d6e691e3"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "28bda1b4815ce25054c871014267c73cfd198b506c0176a2ba06e7d9a40411b66a09821dfde59a7fc319fc4be2afcac1"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "e14deb58a4ae5c201563616b5c52078f09e6d0ead4656994525d58a17b0b68cffbee91f61e327619bb6cf49a701de3e8"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "a628b1468a0249b7412d655fbde3179cca7a5b8906589c71d4a0bf08afa7c3ba"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "16e50ed2b16d41180ba37d9c1c0eecb023dfa1782d886a161b1e2f46a964473cc76fd20c84fc927e7709736b1fd8b290a9c82e0ece32e2ef8610bf0e4c9157ba"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/commons-codec/commons-codec@1.8?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://commons.apache.org/proper/commons-codec/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://vmbuild.apache.org/continuum/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository.apache.org/service/local/staging/deploy/maven2"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://issues.apache.org/jira/browse/CODEC"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://mail-archives.apache.org/mod_mbox/commons-user/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://svn.apache.org/viewvc/commons/proper/codec/trunk"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/commons-lang/commons-lang@2.6?type=jar",
+      "publisher" : "The Apache Software Foundation",
+      "group" : "commons-lang",
+      "name" : "commons-lang",
+      "version" : "2.6",
+      "description" : "Commons Lang, a package of Java utility classes for the classes that are in java.lang's hierarchy, or are considered to be so standard as to justify existence in java.lang.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "4d5c1693079575b362edf41500630bbd"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "0ce1edb914c94ebc388f086c6827e8bdeec71ac2"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "50f11b09f877c294d56f24463f47d28f929cf5044f648661c0f0cfbae9a2f49c"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "4a5a3dbe4941c645e2cca068cca5c1882cfe988b02e7cd981d1e51784900767d1deab0e0e0566f559c9fcabb4a180e436d5bb948902d4f4106f37360466afb42"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "9725bc421adc1dbcd6f937eca0f3075d186a2b353ece4cef66b0fe81bb8d3f7d7641c43e86d657ef526c719f0c2a8c90"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "4bc4eaaf2580ded6d552b96ae5261c936de95f69a1d137c47279c51bf2aa1406ae44f69ccc94486267b8441e53c4bd74"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "b68d49ef037d428ea0c3e67a7a20f3d68a134bef30a1639ec08d28886b9f5629"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "2e9ffc0608827cffc0b48b7a0f35d371c66586c99fea2910f7c2a237c7c57d9ae4d65de7c8e018362c2e4f963c2f70a9196cebf35457f1dd0cea6c65c256f673"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/commons-lang/commons-lang@2.6?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://commons.apache.org/lang/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://vmbuild.apache.org/continuum/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository.apache.org/service/local/staging/deploy/maven2"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://issues.apache.org/jira/browse/LANG"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://mail-archives.apache.org/mod_mbox/commons-user/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://svn.apache.org/viewvc/commons/proper/lang/branches/LANG_2_X"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/commons-collections/commons-collections@3.2.1?type=jar",
+      "publisher" : "The Apache Software Foundation",
+      "group" : "commons-collections",
+      "name" : "commons-collections",
+      "version" : "3.2.1",
+      "description" : "Types that extend and augment the Java Collections Framework.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "13bc641afd7fd95e09b260f69c1e4c91"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "761ea405b9b37ced573d2df0d1e3a4e0f9edc668"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "87363a4c94eaabeefd8b930cb059f66b64c9f7d632862f23de3012da7660047b"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "8d0aa0e4e328c2e391d4d972f361a19ff085f508cb0478f5967280953abd3520ee92cc1d19b21cb4e29e4a7bc557487ddbaee9807b751824241269367b9e92cb"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "e5beca0365f4158cdab72a904eef2abcc88f5604bc52fce08b3439a5f1bef45bd64d715d733e624b58056f8d1c4707c3"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "d67a56ba126fdc5151037460a4c1a1a1ddc5baed26cbece512ed9d125e473f4a1bcc424bcbde0196a2798d417067e09e"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "536ed1f3dd481b746e571caaee9b1e19c7a462e1c633dc139583371a179ac852"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "e80564b2b7a9771cffb50d45e06a8ca94aa4d8c992c63a0191f5a2a20d287d9f6cbb14571144b66a62adab0c5763a681a6d1c2b95d4a0a5e84b5ed80565424b6"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/commons-collections/commons-collections@3.2.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://commons.apache.org/collections/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "http://vmbuild.apache.org/continuum/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "scp://people.apache.org/www/people.apache.org/repo/m2-ibiblio-rsync-repository"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://issues.apache.org/jira/browse/COLLECTIONS"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "http://mail-archives.apache.org/mod_mbox/commons-user/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://svn.apache.org/viewvc/commons/proper/collections/trunk"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar",
+      "publisher" : "Codehaus",
+      "group" : "org.codehaus.woodstox",
+      "name" : "woodstox-core-lgpl",
+      "version" : "4.4.0",
+      "description" : "Woodstox is a high-performance XML processor that implements Stax (JSR-173) and SAX2 APIs",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "75bc0ca905b1c875474b92f71c764284"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "06c0f1a39ebe751a7900cd2f999fca9ca512adcf"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "a685975fff4f8a29b578dacd53529ee18065e8aa78f06cb992a97a41681dc8b3"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "04be9353be32442a3c188756a9c00ecaa8fb92cce81db4b195b23aed484e5d3f4437756b3a23539dd014693fa8f42c577544b7b0ea879cddf4a1a697675538d9"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "8ab2a957be7fb49141de2f7ea17d32a7c55f8300818ff586b5c028e4f52d60084ff934485661d1466410c15aff8f75bf"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "a60c218ae723c436b7b03cfdb3897d2f99ce3ad39843bd6adb00c28e3ffe55f2ba2d36fc2a2d331f086471cc11d316bd"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "77900f2e626d23f28665851c560767abc7983e6c76fdebc865294f2b1b232e50"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "ceffa9b673f98dc81c988be31671332b56e1ed2ca9cfc17be2a41de76c04af7cedea422e060f7bfaeb3693972feb07ff3b9e073cbbc70211e43e9854d1becb7e"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU Lesser General Public License (LGPL), Version 2.1",
+            "url" : "http://www.fsf.org/licensing/licenses/lgpl.txt"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://woodstox.codehaus.org"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/WSTX"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://xircles.codehaus.org/projects/woodstox/repos/primary/repo"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar",
+      "group" : "javax.xml.stream",
+      "name" : "stax-api",
+      "version" : "1.0-2",
+      "description" : "StAX is a standard XML processing API that allows you to stream XML data from and to your application.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "7d18b63063580284c3f5734081fdc99f"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "d6337b0de8b25e53e81b922352fbea9f9f57ba0b"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "e8c70ebd76f982c9582a82ef82cf6ce14a7d58a4a4dca5cb7b7fc988c80089b7"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "a7f337735100356f72639053734506982329015693677fafd4d2ca74c4e412caae077999cb42dee2402cc641a80c8fb027deb9d2dc6c4e141d94c9184baa9dc5"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "005b7398b0a42fe2f11d2a0e65f638c4479c843bedecf691b6c1795d9f95ec8b3ff629b4e8b5d62c79082e762c4b488c"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "642519112968caa20b366e9f6e0cd7c3092d7da9dfe5cb47111e4dab7f025b6abf44c14805aa7d45df995a15b1c7525a"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "92a2eb0720aee125f29b1340a5571222bb6d2a50b441f839ec543a609845c68b"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "5be6d4726be02b83fd12db1e5c5ff871a33b097dd4b9a8d40a4466dcc194860cf76b1cbc399e4d3fe8b1e63e9b3c5f9d294fa9d85db5766b7933c346d65585b6"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "GNU General Public Library",
+            "url" : "http://www.gnu.org/licenses/gpl.txt"
+          }
+        },
+        {
+          "license" : {
+            "id" : "CDDL-1.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar"
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar",
+      "publisher" : "fasterxml.com",
+      "group" : "org.codehaus.woodstox",
+      "name" : "stax2-api",
+      "version" : "3.1.4",
+      "description" : "tax2 API is an extension to basic Stax 1.0 API that adds significant new functionality, such as full-featured bi-direction validation interface and high-performance Typed Access API.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "c08e89de601b0a78f941b2c29db565c3"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "ac19014b1e6a7c08aad07fe114af792676b685b7"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "86d7c0b775a7c9b454cc6ba61d40a8eb3b99cc129f832eb9b977a3755b4b338e"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "911e3e250c9ac9098899f12db584b83f36d91e8cca1afeef38c19952a168647dbbc88cb1cbdd5919769342ed09267263a142b12e71cab465b25daeedf2255cb7"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "83c42936c43d6d6826edea636cf315924cdf52a7201bf07f1cf87a30d2b2855088306c94f39dea55529fed0360cf563f"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "905976003ae70127f2c6142070da5736fc4a01b7a98008fefa1270fc9096691c1307e002f3b6381da462a92f2f31478e"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "308d5a1692fd0135e5af967b0b83803a2fd835429ac83401124a0357f99cbb84"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "ac3d87dab7f1e89c83f039557557536433c52a0d3201a2f514b82bb8b4f454eb9fc28b02b46a45a9caf983239612cf270085270421e4fd79eccfce0fd01f99da"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-4-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://wiki.fasterxml.com/WoodstoxStax2"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "http://github.com/FasterXML/stax2-api"
+        }
+      ]
+    },
+    {
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar",
+      "publisher" : "Codehaus",
+      "group" : "org.codehaus.staxmate",
+      "name" : "staxmate",
+      "version" : "2.0.1",
+      "description" : "StaxMate is a light-weight framework that adds convenience to streaming XML-processing without significant additional overhead. It builds on top of a Stax (JSR-173) compliant XML processors such as Woodstox or Sjsxp (default Stax implementation of JDK 1.6) and offers two basic abstractions: Cursors, which build on XMLStreamReaders and Output objects, which build on XMLStreamWriters.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "cbc599b621abdb9fd93d0c0527b6e273"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "b0b767fbc22683d7bf26a14ae1c5817561e21d00"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "18c8e8b0507afe307be25c825e058fe91514cb3d8616a11b37225bbb760a143e"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "8d8a336b79c83b8c229aba7cc56738271f7ca0b5387b09c246a18992299d0061015cde1f07da07b0ca6da8ac66eca4846269c48fd090968cf9f4f398d923dcb2"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "6f61dce2306717d3ba910ef8657977cfcc83d5e6f87b4fca30c96bb52feb416f187227963a5007f73ea120a93f7b4684"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "165746fc80503b39ff6c3ecf7bd9516a30bb961270bb3ed1b2d009654d2c8ae1986261adadf6e7426eb00b283d8580bb"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "dc24cc41221fbcb753a407f0713ca0648861c7935e4ba2cf7e95accfb72ef434"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "bd029443e45d4a57e9d36587b0155cca05324282c48d259c1eae7e34a999dcff4ccd44590ca6fea208cce07d7034dac87d3155e46d2241c9f09b8de530d60a5b"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-4-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://staxmate.codehaus.org"
+        },
+        {
+          "type" : "distribution",
+          "url" : "dav:https://dav.codehaus.org/repository/staxmate"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://jira.codehaus.org/browse/STAXMATE"
+        }
+      ]
+    }
+  ],
+  "dependencies" : [
+    {
+      "ref" : "pkg:maven/com.sonarsource.dummy/dummy@15.0.2.8567?type=pom",
+      "dependsOn" : [
+        "pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/com.sonarsource.dummy/sonar-dummy-plugin@15.0.2.8567?type=sonar-plugin",
+      "dependsOn" : [
+        "pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.sonar/sonar-plugin-api@5.1?type=jar",
+      "dependsOn" : [
+        "pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar",
+        "pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar",
+        "pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar",
+        "pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar",
+        "pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar",
+        "pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar",
+        "pkg:maven/com.google.guava/guava@10.0.1?type=jar",
+        "pkg:maven/commons-codec/commons-codec@1.8?type=jar",
+        "pkg:maven/commons-lang/commons-lang@2.6?type=jar",
+        "pkg:maven/commons-collections/commons-collections@3.2.1?type=jar",
+        "pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar",
+        "pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar",
+        "pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/com.google.code.findbugs/jsr305@2.0.3?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.sonar/sonar-colorizer@5.1?type=jar",
+      "dependsOn" : [
+        "pkg:maven/com.google.guava/guava@10.0.1?type=jar",
+        "pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/com.google.guava/guava@10.0.1?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar",
+      "dependsOn" : [
+        "pkg:maven/commons-io/commons-io@2.4?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/commons-io/commons-io@2.4?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.sonar/sonar-duplications@5.1?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.codehaus.sonar/sonar-channel@4.1?type=jar",
+        "pkg:maven/com.google.guava/guava@10.0.1?type=jar",
+        "pkg:maven/commons-lang/commons-lang@2.6?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/commons-lang/commons-lang@2.6?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar",
+      "dependsOn" : [
+        "pkg:maven/commons-lang/commons-lang@2.6?type=jar",
+        "pkg:maven/com.google.guava/guava@10.0.1?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.sonar/sonar-squid@4.1?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.codehaus.sonar/sonar-check-api@5.1?type=jar",
+        "pkg:maven/org.codehaus.sonar/sonar-graph@5.1?type=jar",
+        "pkg:maven/commons-lang/commons-lang@2.6?type=jar",
+        "pkg:maven/commons-io/commons-io@2.4?type=jar",
+        "pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.picocontainer/picocontainer@2.14.3?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/commons-codec/commons-codec@1.8?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/commons-collections/commons-collections@3.2.1?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.woodstox/woodstox-core-lgpl@4.4.0?type=jar",
+      "dependsOn" : [
+        "pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar",
+        "pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/javax.xml.stream/stax-api@1.0-2?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.woodstox/stax2-api@3.1.4?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.codehaus.staxmate/staxmate@2.0.1?type=jar",
+      "dependsOn" : [ ]
+    }
+  ]
+}
