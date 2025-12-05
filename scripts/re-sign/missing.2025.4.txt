@@ -1,0 +1,5 @@
+  - https://binaries.sonarsource.com/Distribution/sonar-ruby-plugin/sonar-ruby-plugin-1.19.0.471.jar
+  - https://binaries.sonarsource.com/Distribution/sonar-scala-plugin/sonar-scala-plugin-1.19.1.1880.jar
+  - https://binaries.sonarsource.com/Distribution/sonar-go-plugin/sonar-go-plugin-1.26.1.4982.jar
+  - https://binaries.sonarsource.com/Distribution/sonar-java-symbolic-execution-plugin/sonar-java-symbolic-execution-plugin-8.16.0.131.jar
+  - https://binaries.sonarsource.com/Distribution/sonar-cayc-plugin/sonar-cayc-plugin-2.4.0.2018.jar

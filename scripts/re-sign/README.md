@@ -580,6 +580,123 @@ In dry-run mode:
 - ✅ Prints upload destinations
 - ❌ Does NOT upload to S3
 
+## Upload Missing Artifacts to Binaries Script
+
+A separate script `upload_missing_to_binaries.py` is available for uploading artifacts from Repox (Artifactory) to binaries.sonarsource.com (S3).
+
+### Purpose
+
+This script reads a file containing URLs to artifacts on binaries.sonarsource.com, downloads each artifact from Repox using JFrog CLI, signs it with the GPG key from Vault, and uploads both the artifact and its new signature to the S3 bucket maintaining the same path structure.
+
+### Usage
+
+**Process URLs from file:**
+
+```bash
+export VAULT_TOKEN="your-vault-token"
+export JFROG_CLI_URL="https://repox.jfrog.io"
+export JFROG_CLI_ACCESS_TOKEN="your-jfrog-access-token"
+export AWS_ACCESS_KEY_ID="your-aws-access-key-id"
+export AWS_SECRET_ACCESS_KEY="your-aws-secret-access-key"
+
+python3 scripts/re-sign/upload_missing_to_binaries.py \
+    --urls-file missing-artifacts.txt
+```
+
+**URLs file format** (one URL per line, supports list markers):
+
+```
+https://binaries.sonarsource.com/CommercialDistribution/sonar-ruby-plugin/sonar-ruby-plugin-1.19.0.471.jar
+  - https://binaries.sonarsource.com/Distribution/sonar-go-plugin/sonar-go-plugin-1.26.1.4982.jar
+# Comments are ignored
+  - https://binaries.sonarsource.com/CommercialDistribution/sonar-cayc-plugin/sonar-cayc-plugin-2.4.0.2018.jar
+```
+
+### Arguments
+
+- `--urls-file` (required): Path to a text file containing URLs (one URL per line)
+- `--bucket` (optional): AWS S3 bucket name (default: from `BINARIES_AWS_DEPLOY` env var or `downloads-cdn-eu-central-1-prod`)
+- `--vault-url` (optional): Vault URL (default: from `VAULT_ADDR` env var or `https://vault.sonar.build:8200`)
+- `--dry-run` (optional): Dry run mode - display Repox download URLs without actually downloading or uploading
+
+### Required Environment Variables
+
+**Vault Authentication:**
+- `VAULT_TOKEN` - Vault authentication token (required)
+- `VAULT_ADDR` - Vault URL (default: `https://vault.sonar.build:8200` or use `--vault-url` flag)
+
+The script will automatically retrieve:
+- GPG key from `development/kv/data/sign` (key: `key`)
+- GPG passphrase from `development/kv/data/sign` (key: `passphrase`)
+
+**JFrog CLI Authentication:**
+- `JFROG_CLI_URL` - JFrog Artifactory URL (e.g., `https://repox.jfrog.io`)
+- `JFROG_CLI_ACCESS_TOKEN` - JFrog access token
+- Or use `jfrog config add` to configure JFrog CLI
+
+**AWS Authentication (standard AWS env vars preferred):**
+- `AWS_ACCESS_KEY_ID` - AWS access key ID (or `BINARIES_AWS_ACCESS_KEY_ID`)
+- `AWS_SECRET_ACCESS_KEY` - AWS secret access key (or `BINARIES_AWS_SECRET_ACCESS_KEY`)
+- `AWS_SESSION_TOKEN` - AWS session token (optional, or `BINARIES_AWS_SESSION_TOKEN`)
+- `AWS_DEFAULT_REGION` - AWS region (or `AWS_REGION` or `BINARIES_AWS_DEFAULT_REGION`, default: `eu-central-1`)
+
+**S3 Bucket:**
+- `BINARIES_AWS_DEPLOY` - AWS S3 bucket name (default: `downloads-cdn-eu-central-1-prod`)
+
+### Examples
+
+**Upload artifacts from file:**
+
+```bash
+# Set required environment variables
+export VAULT_TOKEN="your-vault-token"
+export JFROG_CLI_URL="https://repox.jfrog.io"
+export JFROG_CLI_ACCESS_TOKEN="your-jfrog-token"
+export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+# Create URLs file
+cat > missing.txt << EOF
+https://binaries.sonarsource.com/CommercialDistribution/sonar-ruby-plugin/sonar-ruby-plugin-1.19.0.471.jar
+https://binaries.sonarsource.com/Distribution/sonar-go-plugin/sonar-go-plugin-1.26.1.4982.jar
+EOF
+
+# Upload artifacts
+python3 scripts/re-sign/upload_missing_to_binaries.py --urls-file missing.txt
+```
+
+**Dry Run Mode:**
+
+Test the script without downloading or uploading:
+
+```bash
+export VAULT_TOKEN="your-vault-token"
+export JFROG_CLI_URL="https://repox.jfrog.io"
+export JFROG_CLI_ACCESS_TOKEN="your-jfrog-token"
+# AWS credentials are optional in dry-run mode
+
+python3 scripts/re-sign/upload_missing_to_binaries.py \
+    --urls-file missing.txt \
+    --dry-run
+```
+
+In dry-run mode:
+- ✅ Parses URLs and determines Repox paths
+- ✅ Prints Repox download URLs
+- ✅ Prints S3 upload destinations
+- ❌ Does NOT download from Repox
+- ❌ Does NOT sign artifacts
+- ❌ Does NOT upload to S3
+
+### How It Works
+
+1. **Parse URL**: Extracts distribution (CommercialDistribution or Distribution), artifact name, and version from the binaries.sonarsource.com URL
+2. **Determine Repository**: Maps distribution to Repox repository (`sonarsource-private-releases` or `sonarsource-public-releases`)
+3. **Construct Repox Path**: Builds the artifact path in Repox based on artifact name and version
+4. **Download**: Uses `jfrog rt download` to fetch the artifact (excluding `.asc` files)
+5. **Sign**: Uses the GPG key from Vault to sign the artifact, creating a new `.asc` signature
+6. **Upload**: Uses boto3 to upload both the artifact and its new signature to S3, maintaining the original path structure
+
 ## Support
 
 For issues or questions:

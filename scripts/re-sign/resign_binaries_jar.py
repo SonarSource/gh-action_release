@@ -453,6 +453,7 @@ def main():
     # Process each URL
     successful = 0
     failed = 0
+    failed_urls = []
 
     for idx, jar_url in enumerate(urls, 1):
         print(f"\n{'='*70}")
@@ -472,6 +473,7 @@ def main():
             successful += 1
         else:
             failed += 1
+            failed_urls.append(jar_url)
 
     # Summary
     print(f"\n{'='*70}")
@@ -479,6 +481,12 @@ def main():
     print(f"  Total processed: {len(urls)}")
     print(f"  Successful: {successful}")
     print(f"  Failed: {failed}")
+
+    if failed_urls:
+        print(f"\nFailed JARs (could not be downloaded or processed):")
+        for url in failed_urls:
+            print(f"  - {url}")
+
     print(f"{'='*70}")
 
     if failed > 0:
