@@ -1,0 +1,2 @@
+https://binaries.sonarsource.com/CommercialDistribution/sonar-dummy-plugin/sonar-dummy-plugin-15.0.2.6792.jar
+https://binaries.sonarsource.com/Distribution/sonar-dummy-gradle-oss-plugin/sonar-dummy-gradle-oss-plugin-2.8.0.5008.jar

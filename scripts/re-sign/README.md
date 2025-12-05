@@ -345,19 +345,31 @@ gpg --armor --detach-sign test.txt
 If you encounter `InvalidAccessKeyId` or other AWS-related errors:
 
 ```bash
-# Verify AWS credentials are set
+# Verify AWS credentials are set (standard AWS env vars)
+echo $AWS_ACCESS_KEY_ID
+echo $AWS_SECRET_ACCESS_KEY
+echo $AWS_SESSION_TOKEN  # Required for temporary credentials
+
+# Or verify backward-compatible BINARIES_AWS_* vars
 echo $BINARIES_AWS_ACCESS_KEY_ID
 echo $BINARIES_AWS_SECRET_ACCESS_KEY
-echo $BINARIES_AWS_SESSION_TOKEN  # Required for temporary credentials
+echo $BINARIES_AWS_SESSION_TOKEN
 
 # Verify bucket name is set (optional, defaults to downloads-cdn-eu-central-1-prod)
 echo $BINARIES_AWS_DEPLOY
 
 # Verify region is set (optional, defaults to eu-central-1)
+echo $AWS_DEFAULT_REGION
+echo $AWS_REGION
 echo $BINARIES_AWS_DEFAULT_REGION
 ```
 
-**Note:** AWS credentials are mandatory when uploading to binaries.sonarsource.com. The script will fail with an `InvalidAccessKeyId` error if credentials are not provided.
+**Note:** AWS credentials can be provided via:
+- Standard AWS environment variables (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, etc.)
+- Backward-compatible `BINARIES_AWS_*` environment variables
+- Default boto3 credential chain (IAM role, `~/.aws/credentials`, etc.)
+
+The script will use the first available credential source.
 
 ### Maven Central Upload Issues
 
@@ -410,6 +422,163 @@ python3 scripts/re-sign/resign_artifacts.py \
 - Maven Central upload can take up to 2 hours to complete (script polls automatically)
 - All operations are logged with clear progress indicators
 - The script is organized into utility modules for better maintainability
+
+## Resign Binaries JAR Script
+
+A separate script `resign_binaries_jar.py` is available for re-signing individual JAR files from binaries.sonarsource.com.
+
+### Purpose
+
+This script downloads a JAR file from binaries.sonarsource.com, re-signs it using a GPG key from Vault, and uploads only the `.asc` signature file to the S3 bucket, overwriting the existing signature. It also automatically processes corresponding SBOM files (`*-cyclonedx.json` and `*-cyclonedx.xml`) if they exist.
+
+### Usage
+
+**Single JAR URL:**
+
+```bash
+export VAULT_TOKEN="your-vault-token"
+export AWS_ACCESS_KEY_ID="your-aws-access-key-id"
+export AWS_SECRET_ACCESS_KEY="your-aws-secret-access-key"
+export AWS_SESSION_TOKEN="your-aws-session-token"  # Optional
+
+python3 scripts/re-sign/resign_binaries_jar.py \
+    --jar-url https://binaries.sonarsource.com/Distribution/sonar-java-plugin/sonar-java-plugin-8.21.1.41883.jar
+```
+
+**Multiple JAR URLs from file:**
+
+Create a text file (`jar-urls.txt`) with one URL per line:
+
+```
+https://binaries.sonarsource.com/Distribution/sonar-java-plugin/sonar-java-plugin-8.21.1.41883.jar
+https://binaries.sonarsource.com/Distribution/sonar-python-plugin/sonar-python-plugin-3.15.0.1234.jar
+# Comments are ignored
+https://binaries.sonarsource.com/Distribution/sonar-javascript-plugin/sonar-javascript-plugin-9.0.0.5678.jar
+```
+
+Then run:
+
+```bash
+export VAULT_TOKEN="your-vault-token"
+export BINARIES_AWS_ACCESS_KEY_ID="your-aws-access-key-id"
+export BINARIES_AWS_SECRET_ACCESS_KEY="your-aws-secret-access-key"
+
+python3 scripts/re-sign/resign_binaries_jar.py \
+    --jar-urls-file jar-urls.txt
+```
+
+**Note:** Empty lines and lines starting with `#` are ignored in the URLs file.
+
+### Arguments
+
+- `--jar-url` (required if `--jar-urls-file` not used): Full URL to a single JAR file on binaries.sonarsource.com
+- `--jar-urls-file` (required if `--jar-url` not used): Path to a text file containing JAR URLs (one URL per line)
+- `--bucket` (optional): AWS S3 bucket name (default: from `BINARIES_AWS_DEPLOY` env var or `downloads-cdn-eu-central-1-prod`)
+- `--vault-url` (optional): Vault URL (default: from `VAULT_ADDR` env var or `https://vault.sonar.build:8200`)
+- `--dry-run` (optional): Dry run mode - sign artifacts and print upload destinations without actually uploading to S3
+
+**Note:** `--jar-url` and `--jar-urls-file` are mutually exclusive. You must provide exactly one of them.
+
+### Environment Variables
+
+**Required:**
+- `VAULT_TOKEN` - Vault authentication token
+
+**AWS Credentials (standard AWS env vars preferred):**
+- `AWS_ACCESS_KEY_ID` - AWS access key ID (or `BINARIES_AWS_ACCESS_KEY_ID` for backward compatibility)
+- `AWS_SECRET_ACCESS_KEY` - AWS secret access key (or `BINARIES_AWS_SECRET_ACCESS_KEY` for backward compatibility)
+- `AWS_SESSION_TOKEN` - AWS session token (optional, for temporary credentials, or `BINARIES_AWS_SESSION_TOKEN`)
+- `AWS_DEFAULT_REGION` or `AWS_REGION` - AWS region (or `BINARIES_AWS_DEFAULT_REGION`, default: `eu-central-1`)
+
+**Optional:**
+- `BINARIES_AWS_DEPLOY` - AWS S3 bucket name (default: `downloads-cdn-eu-central-1-prod`)
+- `VAULT_ADDR` - Vault URL (default: `https://vault.sonar.build:8200`)
+
+**Note:** If AWS credentials are not provided via environment variables, boto3 will use the default credential chain (IAM role, `~/.aws/credentials`, etc.)
+
+### How It Works
+
+1. **Parse URL(s)**: Extracts the S3 bucket key and filename from the binaries.sonarsource.com URL(s)
+2. **Download JAR**: Downloads each JAR file to a temporary directory
+3. **Download SBOM files**: Attempts to download corresponding SBOM files (`*-cyclonedx.json` and `*-cyclonedx.xml`) if they exist
+4. **Sign files**: Imports GPG key from Vault (once, reused for all JARs) and signs each JAR file and any SBOM files found
+5. **Upload Signatures**: Uploads only the `.asc` signature files to S3 for each JAR and SBOM, overwriting the existing signatures
+
+**SBOM Handling:**
+- The script automatically looks for SBOM files by replacing `.jar` with `-cyclonedx.json` and `-cyclonedx.xml` in the JAR URL
+- If SBOM files exist, they are downloaded, signed, and their signatures are uploaded
+- If SBOM files don't exist (404), the script prints a warning and continues with JAR processing only (no error)
+
+**Dry Run Mode:**
+- Use `--dry-run` to test signing and verify upload destinations without actually uploading to S3
+- In dry-run mode, AWS credentials are optional (not required)
+- All files are still downloaded and signed, but uploads are skipped
+- Upload destinations are printed with `[DRY RUN]` prefix for verification
+
+When processing multiple JARs from a file:
+- The GPG key is imported once and reused for all JARs (more efficient)
+- Each JAR (and its SBOMs) is processed sequentially
+- A summary is displayed at the end showing successful and failed operations
+- The script exits with a non-zero code if any JAR failed to process
+
+### Examples
+
+**Single JAR:**
+
+```bash
+# Set required environment variables
+export VAULT_TOKEN="your-vault-token"
+export BINARIES_AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+export BINARIES_AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+# Re-sign a single JAR file
+python3 scripts/re-sign/resign_binaries_jar.py \
+    --jar-url https://binaries.sonarsource.com/Distribution/sonar-java-plugin/sonar-java-plugin-8.21.1.41883.jar
+```
+
+**Multiple JARs from file:**
+
+```bash
+# Set required environment variables
+export VAULT_TOKEN="your-vault-token"
+export AWS_ACCESS_KEY_ID="AKIAIOSFODNN7EXAMPLE"
+export AWS_SECRET_ACCESS_KEY="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+# Create URLs file
+cat > jar-urls.txt << EOF
+https://binaries.sonarsource.com/Distribution/sonar-java-plugin/sonar-java-plugin-8.21.1.41883.jar
+https://binaries.sonarsource.com/Distribution/sonar-python-plugin/sonar-python-plugin-3.15.0.1234.jar
+https://binaries.sonarsource.com/Distribution/sonar-javascript-plugin/sonar-javascript-plugin-9.0.0.5678.jar
+EOF
+
+# Re-sign all JARs
+python3 scripts/re-sign/resign_binaries_jar.py --jar-urls-file jar-urls.txt
+```
+
+**Dry Run Mode:**
+
+Test the script without uploading to S3:
+
+```bash
+export VAULT_TOKEN="your-vault-token"
+# AWS credentials are optional in dry-run mode
+
+# Test with a single JAR
+python3 scripts/re-sign/resign_binaries_jar.py \
+    --jar-url https://binaries.sonarsource.com/Distribution/sonar-java-plugin/sonar-java-plugin-8.21.1.41883.jar \
+    --dry-run
+
+# Test with multiple JARs
+python3 scripts/re-sign/resign_binaries_jar.py \
+    --jar-urls-file jar-urls.txt \
+    --dry-run
+```
+
+In dry-run mode:
+- ✅ Downloads JAR and SBOM files
+- ✅ Signs all files
+- ✅ Prints upload destinations
+- ❌ Does NOT upload to S3
 
 ## Support
 
