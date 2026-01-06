@@ -150,7 +150,7 @@ jobs:
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
-        uses: SonarSource/vault-action-wrapper@d6d745ffdbc82b040df839b903bc33b5592cd6b0 # 3.0.2
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32 # 3.1.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -161,7 +161,7 @@ jobs:
       - name: Vault Binaries AWS Secrets
         id: secrets-binaries-aws
         if: ${{ inputs.dryRun != true && inputs.publishToBinaries }}
-        uses: SonarSource/vault-action-wrapper@d6d745ffdbc82b040df839b903bc33b5592cd6b0 # 3.0.2
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32 # 3.1.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -205,7 +205,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@66c21c6a7fc93337b457f44d1590f8a9e1433cf2 # 3.0.1
+      - uses: SonarSource/gh-action_releasability@d629774c84a04cddfcffa334490d6688c459db7f # 3.0.2
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
@@ -353,7 +353,7 @@ jobs:
 
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@d6d745ffdbc82b040df839b903bc33b5592cd6b0 # 3.0.2
+        uses: SonarSource/vault-action-wrapper@320bd31b03e5dacaac6be51bbbb15adf7caccc32 # 3.1.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
