@@ -20,7 +20,7 @@ jobs:
     name: Test action
     runs-on: github-ubuntu-latest-s
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2 (Necessary to access local action)
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1 (Necessary to access local action)
       - uses: ./main
         env:
           ARTIFACTORY_ACCESS_TOKEN: "42"
