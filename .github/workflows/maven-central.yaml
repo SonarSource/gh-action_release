@@ -65,7 +65,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@6.2.1
+        uses: SonarSource/gh-action_release/download-build@57b79f6188954a4d3fdc12dbdc8eb03a4f67a825
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -74,7 +74,7 @@ jobs:
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@6.2.1
+        uses: SonarSource/gh-action_release/maven-central-sync@57b79f6188954a4d3fdc12dbdc8eb03a4f67a825
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
           central-url: https://central.sonatype.com
