@@ -48,6 +48,9 @@ class RepoxResponse:
         self.ok = True
     def json(self):
         return {'message': 'done'}
+    def raise_for_status(self):
+        if self.status_code >= 400:
+            raise Exception(f"HTTP {self.status_code}")
 
 
 def test_notify(release_request):
@@ -112,9 +115,47 @@ def test_multi_promote_revoke(release_request,buildinfo_multi):
 
 
 def test_download():
-    with patch('release.utils.artifactory.urllib.request.urlretrieve') as request:
-        Artifactory("token").download('repo','gid','aid','qual','ext','version')
+    with patch('release.utils.artifactory.requests.get') as request, \
+         patch('builtins.open', create=True):
+        mock_response = RepoxResponse(200)
+        mock_response.iter_content = lambda chunk_size: [b'test data']
+        request.return_value = mock_response
+
+        Artifactory("token").download('repo', 'gid', 'aid', 'qual', 'ext', 'version')
         request.assert_called_once_with(
             f"{Artifactory.url}/repo/gid/aid/version/aid-version-qual.ext",
-            f'{tempfile.gettempdir()}/aid-version-qual.ext'
+            headers={'content-type': 'application/json', 'Authorization': 'Bearer token'},
+            stream=True
+        )
+
+
+def test_download_with_checksums():
+    with patch('release.utils.artifactory.requests.get') as request, \
+         patch('builtins.open', create=True):
+        # Mock response for main file
+        main_response = RepoxResponse(200)
+        main_response.iter_content = lambda chunk_size: [b'test data']
+
+        # Mock responses for checksums
+        checksum_response = RepoxResponse(200)
+        checksum_response.content = b'checksum_value'
+
+        request.side_effect = [main_response, checksum_response, checksum_response]
+
+        Artifactory("token").download('repo', 'gid', 'aid', 'qual', 'ext', 'version', checksums=['md5', 'sha1'])
+
+        # Verify main file request
+        assert request.call_count == 3
+        assert request.call_args_list[0] == (
+            (f"{Artifactory.url}/repo/gid/aid/version/aid-version-qual.ext",),
+            {'headers': {'content-type': 'application/json', 'Authorization': 'Bearer token'}, 'stream': True}
+        )
+        # Verify checksum requests
+        assert request.call_args_list[1] == (
+            (f"{Artifactory.url}/repo/gid/aid/version/aid-version-qual.ext.md5",),
+            {'headers': {'content-type': 'application/json', 'Authorization': 'Bearer token'}}
+        )
+        assert request.call_args_list[2] == (
+            (f"{Artifactory.url}/repo/gid/aid/version/aid-version-qual.ext.sha1",),
+            {'headers': {'content-type': 'application/json', 'Authorization': 'Bearer token'}}
         )
