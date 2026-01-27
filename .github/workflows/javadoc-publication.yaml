@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: SonarSource/gh-action_release
-          ref: ${{ github.ref }}
+          ref: 6.2.1
           path: gh-action_release
       - name: Get the version
         id: get_version
@@ -84,7 +84,7 @@ jobs:
           echo "path: $groupIdPath"
           echo "groupIdPath=${groupIdPath}" >> $GITHUB_OUTPUT
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@master
+        uses: SonarSource/gh-action_release/download-build@6.2.1
         with:
           flat-download: true
           build-number: ${{ steps.get_version.outputs.build }}
@@ -100,7 +100,7 @@ jobs:
       - name: List javadoc files
         run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ inputs.version || github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
-        uses: SonarSource/gh-action_release/aws-s3@master
+        uses: SonarSource/gh-action_release/aws-s3@6.2.1
         with:
           command: cp
           flags: --recursive
@@ -111,7 +111,7 @@ jobs:
           aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
           aws_region: eu-central-1
       - name: Delete dir named latest in S3
-        uses: SonarSource/gh-action_release/aws-s3@master
+        uses: SonarSource/gh-action_release/aws-s3@6.2.1
         with:
           command: rm
           source: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory || github.event.repository.name }}/latest
@@ -122,7 +122,7 @@ jobs:
         continue-on-error: true # the first time a project publish javadoc, there is no latest dir available
       - name: Upload to dir named latest in S3
         id: upload-latest
-        uses: SonarSource/gh-action_release/aws-s3@master
+        uses: SonarSource/gh-action_release/aws-s3@6.2.1
         with:
           command: cp
           flags: --recursive
