@@ -1,5 +1,4 @@
 import json
-import urllib
 import requests
 import tempfile
 
@@ -91,16 +90,23 @@ class Artifactory:
             filename = f"{aid}-{version}-{qual}.{ext}"
         url = f"{artifactory}/{gid_path}/{aid}/{version}/{filename}"
         print(url)
-        opener = urllib.request.build_opener()
-        opener.addheaders = [('Authorization', "Bearer "+self.access_token)]
-        urllib.request.install_opener(opener)
         # for sonarqube rename artifact from sonar-application.zip to sonarqube.zip
         if aid == "sonar-application":
             filename = f"sonarqube-{version}.zip"
         temp_file = f"{tempfile.gettempdir()}/{filename}"
-        urllib.request.urlretrieve(url, temp_file)
+        r = requests.get(url, headers=self.headers, stream=True)
+        r.raise_for_status()
+        with open(temp_file, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
         print(f'downloaded {temp_file}')
+
         for checksum in (checksums or []):
-            urllib.request.urlretrieve(f"{url}.{checksum}", f"{temp_file}.{checksum}")
-            print(f'downloaded {temp_file}.{checksum}')
+            checksum_url = f"{url}.{checksum}"
+            checksum_file = f"{temp_file}.{checksum}"
+            r = requests.get(checksum_url, headers=self.headers)
+            r.raise_for_status()
+            with open(checksum_file, 'wb') as f:
+                f.write(r.content)
+            print(f'downloaded {checksum_file}')
         return temp_file
