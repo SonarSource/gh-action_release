@@ -64,7 +64,7 @@ jobs:
 
       - name: Retrieve Secrets from Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@d6d745ffdbc82b040df839b903bc33b5592cd6b0 # 3.0.2
+        uses: SonarSource/vault-action-wrapper@c210d4012f44361e2d2a28aa2d97a75fd90b6214 # 3.1.1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -108,7 +108,7 @@ jobs:
         run: npm version --no-git-tag-version ${{ steps.get_version.outputs.version }}
 
       - name: Checkout developer repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ github.event.repository.full_name}}
           path: developer_repo
@@ -136,7 +136,7 @@ jobs:
           npm publish
       - name: Notify on Failure
         if: ${{ failure() }}
-        uses: 8398a7/action-slack@1750b5085f3ec60384090fb7c52965ef822e869e # v3.18.0
+        uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0
         with:
           status: failure
           fields: repo,author,eventName
