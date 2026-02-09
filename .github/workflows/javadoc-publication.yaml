@@ -48,7 +48,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: SonarSource/gh-action_release
-          ref: 6.2.2
+          ref: 3e26430fd7f821156c3bcaf51e13db206ae030df
           path: gh-action_release
       - name: Get the version
         id: get_version
@@ -84,7 +84,7 @@ jobs:
           echo "path: $groupIdPath"
           echo "groupIdPath=${groupIdPath}" >> $GITHUB_OUTPUT
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@6.2.2
+        uses: SonarSource/gh-action_release/download-build@3e26430fd7f821156c3bcaf51e13db206ae030df
         with:
           flat-download: true
           build-number: ${{ steps.get_version.outputs.build }}
@@ -100,7 +100,7 @@ jobs:
       - name: List javadoc files
         run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ inputs.version || github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
-        uses: SonarSource/gh-action_release/aws-s3@6.2.2
+        uses: SonarSource/gh-action_release/aws-s3@3e26430fd7f821156c3bcaf51e13db206ae030df
         with:
           command: cp
           flags: --recursive
@@ -111,7 +111,7 @@ jobs:
           aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
           aws_region: eu-central-1
       - name: Delete dir named latest in S3
-        uses: SonarSource/gh-action_release/aws-s3@6.2.2
+        uses: SonarSource/gh-action_release/aws-s3@3e26430fd7f821156c3bcaf51e13db206ae030df
         with:
           command: rm
           source: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory || github.event.repository.name }}/latest
@@ -122,7 +122,7 @@ jobs:
         continue-on-error: true # the first time a project publish javadoc, there is no latest dir available
       - name: Upload to dir named latest in S3
         id: upload-latest
-        uses: SonarSource/gh-action_release/aws-s3@6.2.2
+        uses: SonarSource/gh-action_release/aws-s3@3e26430fd7f821156c3bcaf51e13db206ae030df
         with:
           command: cp
           flags: --recursive
