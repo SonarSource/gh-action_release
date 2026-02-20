@@ -11,7 +11,7 @@ git checkout "${branch}"
 git pull origin "${branch}"
 original_ref=$(git rev-parse HEAD)
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${branch},\1${version},g"
-git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s/ref: \${{ github.ref }}/ref: ${version}/g"
+git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s/ref: \${{ inputs.ghActionReleaseRef || github.ref }}/ref: ${version}/g"
 git commit -m "chore: prepare ${version} for future reference" -a
 next_ref=$(git show -s --pretty=format:'%H')
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${version},\1${next_ref},g"
