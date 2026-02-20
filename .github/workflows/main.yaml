@@ -134,10 +134,9 @@ jobs:
           # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
           # to directly reference the repository where the reusable workflow is defined
           repository: SonarSource/gh-action_release
-          # github.workflow_sha resolves to the commit SHA of the reusable workflow,
-          # ensuring the correct version of gh-action_release is checked out regardless
-          # of whether this is called locally or from a consumer repository
-          ref: ${{ github.workflow_sha }}
+          # This property is changed during the release process to reference the correct tag
+          # During development change this to your branch name to run it in another repository
+          ref: ${{ github.ref }}
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -347,10 +346,9 @@ jobs:
           # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
           # to directly reference the repository where the reusable workflow is defined
           repository: SonarSource/gh-action_release
-          # github.workflow_sha resolves to the commit SHA of the reusable workflow,
-          # ensuring the correct version of gh-action_release is checked out regardless
-          # of whether this is called locally or from a consumer repository
-          ref: ${{ github.workflow_sha }}
+          # This property is changed during the release process to reference the correct tag
+          # During development change this to your branch name to run it in another repository
+          ref: ${{ github.ref }}
           path: gh-action_release
 
       - name: Vault

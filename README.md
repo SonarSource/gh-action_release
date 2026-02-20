@@ -132,8 +132,7 @@ ie: [`5.0.0`](https://github.com/SonarSource/gh-action_release/releases/tag/5.0.
 
 Branches prefixed with a `v` are pointers to the last major versions, ie: [`v6`](https://github.com/SonarSource/gh-action_release/tree/v6).
 
-> Note: Development branches (including `master`) can be referenced from consumer repositories for testing purposes.
-> For production use, always reference a `v` branch or a specific tag.
+> Note: the `master` branch is used for development and can not be referenced directly. Use a `v` branch or a tag instead.
 
 ## Development
 

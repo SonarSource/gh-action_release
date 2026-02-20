@@ -48,8 +48,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: SonarSource/gh-action_release
-          # github.workflow_sha resolves to the commit SHA of the reusable workflow
-          ref: ${{ github.workflow_sha }}
+          ref: ${{ github.ref }}
           path: gh-action_release
       - name: Get the version
         id: get_version
