@@ -31,7 +31,12 @@ class BuildInfo:
         return sourcerepo, targetrepo
 
     def get_artifacts_to_publish(self):
-        artifacts = self.get_module_property('artifactsToPublish', self.get_property('buildInfo.env.ARTIFACTS_TO_PUBLISH'))
+        modules = self.json.get('buildInfo', {}).get('modules', [])
+        combined = ','.join(m.get('properties', {}).get('artifactsToPublish', '') for m in modules)
+        all_artifacts = list(dict.fromkeys(a for a in combined.split(',') if a))
+        if all_artifacts:
+            return ','.join(all_artifacts)
+        artifacts = self.get_property('buildInfo.env.ARTIFACTS_TO_PUBLISH')
         if not artifacts:
             print("No artifacts to publish")
         return artifacts
