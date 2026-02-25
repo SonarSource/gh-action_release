@@ -31,6 +31,11 @@ name: Javadoc publication
         type: boolean
         description: Indicate if the project is generating a public release or not
         required: true
+      ghActionReleaseRef:
+        type: string
+        description: Override ref for gh-action_release checkout. Set to a branch name when testing from a consumer repository.
+        default: ''
+        required: false
 
 jobs:
   javadoc-publication:
@@ -48,7 +53,8 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: SonarSource/gh-action_release
-          ref: ${{ github.ref }}
+          # For cross-repo testing, pass ghActionReleaseRef input with the branch name
+          ref: ${{ inputs.ghActionReleaseRef || github.ref }}
           path: gh-action_release
       - name: Get the version
         id: get_version
