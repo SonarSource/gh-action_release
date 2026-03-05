@@ -86,7 +86,7 @@ def test_publish_artifact_s3_upload(buildinfo_com, buildinfo_org, capsys):
             # com
             publish_artifact(artifactory, binaries, buildinfo_com.get_artifacts_to_publish(), version, "repo")
             s3_upload.assert_called_once_with("/tmp/dummy-1.0.2.456.jar", "dummy-1.0.2.456.jar", "com.sonarsource.dummy", "dummy",
-                                              "1.0.2.456")
+                                              "1.0.2.456", "")
             captured = capsys.readouterr().out.split('\n')
             assert captured[0] == "publishing com.sonarsource.dummy:dummy:jar#1.0.2.456"
             assert captured[1] == "com.sonarsource.dummy dummy jar "
@@ -94,7 +94,7 @@ def test_publish_artifact_s3_upload(buildinfo_com, buildinfo_org, capsys):
             # org
             publish_artifact(artifactory, binaries, buildinfo_org.get_artifacts_to_publish(), version, "repo")
             s3_upload.assert_called_with("/tmp/dummy-1.0.2.456.jar", "dummy-1.0.2.456-qualifier.jar", "org.sonarsource.dummy", "dummy",
-                                         "1.0.2.456")
+                                         "1.0.2.456", "qualifier")
             captured = capsys.readouterr().out.split('\n')
             assert captured[0] == "publishing org.sonarsource.dummy:dummy:jar:qualifier#1.0.2.456"
             assert captured[1] == "org.sonarsource.dummy dummy jar qualifier"
@@ -109,7 +109,7 @@ def test_publish_artifact_s3_upload_sonarqube(buildinfo_sonarqube, capsys):
         with patch('release.utils.binaries.Binaries.s3_upload') as s3_upload:
             publish_artifact(artifactory, binaries, buildinfo_sonarqube.get_artifacts_to_publish(), version, "repo")
             s3_upload.assert_called_once_with("/tmp/sonarqube-10.0.0.66185.zip", "sonarqube-10.0.0.66185.zip", 'org.sonarsource.sonarqube',
-                                              'sonarqube', '10.0.0.66185')
+                                              'sonarqube', '10.0.0.66185', '')
             captured = capsys.readouterr().out.split('\n')
             assert captured[0] == "publishing org.sonarsource.sonarqube:sonar-application:zip#10.0.0.66185"
             assert captured[1] == "org.sonarsource.sonarqube sonar-application zip "
@@ -144,23 +144,23 @@ def test_publish_artifact_upload_file(buildinfo_com, buildinfo_org, capsys):
                    's3://test_bucket/CommercialDistribution/dummy/dummy-1.0.2.456.jar.asc'
             mock_upload_eclipse_update_site_unzip.assert_not_called()
             mock_upload_sonarlint_p2_site.assert_not_called()
-            # org
+            # org (with qualifier: hierarchical path version/platform/filename)
             version = buildinfo_org.get_version()
             publish_artifact(artifactory, binaries, buildinfo_org.get_artifacts_to_publish(), version, "repo")
             upload_file.assert_called_with('/tmp/dummy-1.0.2.456.jar.asc', 'test_bucket',
-                                           'Distribution/dummy/dummy-1.0.2.456-qualifier.jar.asc')
+                                           'Distribution/dummy/1.0.2.456/qualifier/dummy-1.0.2.456-qualifier.jar.asc')
             captured = capsys.readouterr().out.split('\n')
             assert captured[0] == 'publishing org.sonarsource.dummy:dummy:jar:qualifier#1.0.2.456'
             assert captured[1] == 'org.sonarsource.dummy dummy jar qualifier'
-            assert captured[2] == 'uploaded /tmp/dummy-1.0.2.456.jar to s3://test_bucket/Distribution/dummy/dummy-1.0.2.456-qualifier.jar'
+            assert captured[2] == 'uploaded /tmp/dummy-1.0.2.456.jar to s3://test_bucket/Distribution/dummy/1.0.2.456/qualifier/dummy-1.0.2.456-qualifier.jar'
             assert captured[3] == 'uploaded /tmp/dummy-1.0.2.456.jar.md5 to ' \
-                                  's3://test_bucket/Distribution/dummy/dummy-1.0.2.456-qualifier.jar.md5'
+                                  's3://test_bucket/Distribution/dummy/1.0.2.456/qualifier/dummy-1.0.2.456-qualifier.jar.md5'
             assert captured[4] == 'uploaded /tmp/dummy-1.0.2.456.jar.sha1 to ' \
-                                  's3://test_bucket/Distribution/dummy/dummy-1.0.2.456-qualifier.jar.sha1'
+                                  's3://test_bucket/Distribution/dummy/1.0.2.456/qualifier/dummy-1.0.2.456-qualifier.jar.sha1'
             assert captured[5] == 'uploaded /tmp/dummy-1.0.2.456.jar.sha256 to ' \
-                                  's3://test_bucket/Distribution/dummy/dummy-1.0.2.456-qualifier.jar.sha256'
+                                  's3://test_bucket/Distribution/dummy/1.0.2.456/qualifier/dummy-1.0.2.456-qualifier.jar.sha256'
             assert captured[6] == 'uploaded /tmp/dummy-1.0.2.456.jar.asc to ' \
-                                  's3://test_bucket/Distribution/dummy/dummy-1.0.2.456-qualifier.jar.asc'
+                                  's3://test_bucket/Distribution/dummy/1.0.2.456/qualifier/dummy-1.0.2.456-qualifier.jar.asc'
             mock_upload_eclipse_update_site_unzip.assert_not_called()
             mock_upload_sonarlint_p2_site.assert_not_called()
 
@@ -226,4 +226,4 @@ def test_revoke_publish_artifact():
     binaries = MagicMock()
     publish_artifact(artifactory, binaries, "groupId:artefactId:ext", "version", "repo", True)
     artifactory.assert_not_called()
-    binaries.s3_delete.assert_called_once_with('artefactId-version.ext', 'groupId', 'artefactId', 'version')
+    binaries.s3_delete.assert_called_once_with('artefactId-version.ext', 'groupId', 'artefactId', 'version', '')
