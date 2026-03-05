@@ -60,6 +60,15 @@ def test_s3_delete_sonarlint_eclipse():
     bucket.objects.filter.return_value.delete.assert_called_once()
 
 
+def test_qual_to_platform_folder():
+    assert Binaries.qual_to_platform_folder(None) is None
+    assert Binaries.qual_to_platform_folder('') is None
+    assert Binaries.qual_to_platform_folder('linux-x64') == 'linux'
+    assert Binaries.qual_to_platform_folder('darwin-arm64') == 'mac'
+    assert Binaries.qual_to_platform_folder('win32-x64') == 'windows'
+    assert Binaries.qual_to_platform_folder('unknown-platform') == 'unknown'
+
+
 @pytest.mark.parametrize(
     'group_id, root_bucket_key',
     [

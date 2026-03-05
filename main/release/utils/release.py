@@ -70,10 +70,10 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
         s3_aid = aid
 
     if revoke:
-        binaries.s3_delete(filename, gid, s3_aid, version)
+        binaries.s3_delete(filename, gid, s3_aid, version, qual)
     else:
         artifact_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, Binaries.get_actual_checksums(aid))
-        binaries.s3_upload(artifact_file, filename, gid, s3_aid, version)
+        binaries.s3_upload(artifact_file, filename, gid, s3_aid, version, qual)
 
 
 def set_output(output_name, value):

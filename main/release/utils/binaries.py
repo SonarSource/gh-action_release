@@ -17,6 +17,26 @@ SONARLINT_AID = "org.sonarlint.eclipse.site"
 REDDEER_AID = "org.eclipse.reddeer.site"
 UPLOAD_CHECKSUMS = ["md5", "sha1", "sha256", "asc"]
 
+# Map artifact qualifier (e.g. linux-x64, darwin-arm64) to folder name for hierarchical S3 structure.
+# Used to produce binaries.sonarsource.com layout: product/version/platform/file
+QUAL_TO_PLATFORM_FOLDER = {
+    "linux": "linux",
+    "linux-x64": "linux",
+    "linux-arm64": "linux",
+    "linux-arm": "linux",
+    "darwin": "mac",
+    "darwin-x64": "mac",
+    "darwin-arm64": "mac",
+    "mac": "mac",
+    "mac-x64": "mac",
+    "macos-x64": "mac",
+    "win32": "windows",
+    "win32-x64": "windows",
+    "win32-arm64": "windows",
+    "windows": "windows",
+    "windows-x64": "windows",
+}
+
 
 class Binaries:
     def __init__(self, binaries_bucket_name: str):
@@ -44,9 +64,24 @@ class Binaries:
             return UPLOAD_CHECKSUMS[:-1]
         return UPLOAD_CHECKSUMS
 
-    def s3_upload(self, artifact_file, filename, gid, aid, version):
+    @staticmethod
+    def qual_to_platform_folder(qual):
+        """Map artifact qualifier to platform folder for hierarchical S3 structure."""
+        if not qual:
+            return None
+        folder = QUAL_TO_PLATFORM_FOLDER.get(qual.lower())
+        if folder:
+            return folder
+        # Fallback: use first segment before hyphen (e.g. linux-x64 -> linux)
+        return qual.split("-")[0].lower() if "-" in qual else qual.lower()
+
+    def s3_upload(self, artifact_file, filename, gid, aid, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
-        file_bucket_key = f"{root_bucket_key}/{filename}"
+        platform_folder = self.qual_to_platform_folder(qual) if qual else None
+        if platform_folder:
+            file_bucket_key = f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
+        else:
+            file_bucket_key = f"{root_bucket_key}/{filename}"
 
         self.s3_client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
         print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
@@ -130,9 +165,13 @@ class Binaries:
         invalidation_uri = response['Location']
         print(f'CloudFront invalidation: {invalidation_uri}')
 
-    def s3_delete(self, filename, gid, aid, version):
+    def s3_delete(self, filename, gid, aid, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
-        bucket_key = f"{root_bucket_key}/{filename}"
+        platform_folder = self.qual_to_platform_folder(qual) if qual else None
+        if platform_folder:
+            bucket_key = f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
+        else:
+            bucket_key = f"{root_bucket_key}/{filename}"
 
         self.s3_client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
         print(f'deleted {bucket_key}')
