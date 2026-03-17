@@ -36,6 +36,7 @@ jobs:
       publishToNpmJS: false # for OSS projects only, publish npm artifacts to https://www.npmjs.com/
       skipPythonReleasabilityChecks: false # skip releasability checks for Python projects
       skipJavascriptReleasabilityChecks: false # skip releasability checks for Javascript projects
+      skipNugetReleasabilityChecks: false # skip releasability checks for NuGet projects
       slackChannel: build # define the Slack channel to use for notifications
       artifactoryRoleSuffix: promoter # define the Artifactory promoter role suffix
       dryRun: false # perform a dry run execution
