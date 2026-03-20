@@ -92,13 +92,10 @@ class Binaries:
 
     def s3_upload(self, artifact_file, filename, gid, aid, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
-        platform_folder = None
         if Binaries.use_hierarchical_qualifier_layout(aid, qual):
-            platform_folder = self.qual_to_platform_folder(qual)
-        if platform_folder:
-            file_bucket_key = f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
+            file_bucket_key = self.get_hierarchical_bucket_key(root_bucket_key, filename, version, qual)
         else:
-            file_bucket_key = f"{root_bucket_key}/{filename}"
+            file_bucket_key = self.get_flat_bucket_key(root_bucket_key, filename)
 
         self.s3_client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
         print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
