@@ -17,8 +17,12 @@ SONARLINT_AID = "org.sonarlint.eclipse.site"
 REDDEER_AID = "org.eclipse.reddeer.site"
 UPLOAD_CHECKSUMS = ["md5", "sha1", "sha256", "asc"]
 
-# Map artifact qualifier (e.g. linux-x64, darwin-arm64) to folder name for hierarchical S3 structure.
-# Used to produce binaries.sonarsource.com layout: product/version/platform/file
+# Hierarchical S3 layout (product/version/platform/file) for qualified artifacts is limited to
+# sonarqube-cli only (PREQ-4535). All other artifact IDs keep the legacy flat path.
+SONARQUBE_CLI_AID = "sonarqube-cli"
+
+# Map artifact qualifier (e.g. linux-x64, darwin-arm64) to folder name for hierarchical S3 structure
+# (used only when aid == SONARQUBE_CLI_AID and qual is set).
 QUAL_TO_PLATFORM_FOLDER = {
     "linux": "linux",
     "linux-x64": "linux",
@@ -75,9 +79,22 @@ class Binaries:
         # Fallback: use first segment before hyphen (e.g. linux-x64 -> linux)
         return qual.split("-")[0].lower() if "-" in qual else qual.lower()
 
+    @staticmethod
+    def use_hierarchical_qualifier_layout(aid, qual):
+        return bool(qual) and aid == SONARQUBE_CLI_AID
+
+    def get_flat_bucket_key(self, root_bucket_key, filename):
+        return f"{root_bucket_key}/{filename}"
+
+    def get_hierarchical_bucket_key(self, root_bucket_key, filename, version, qual):
+        platform_folder = self.qual_to_platform_folder(qual)
+        return f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
+
     def s3_upload(self, artifact_file, filename, gid, aid, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
-        platform_folder = self.qual_to_platform_folder(qual) if qual else None
+        platform_folder = None
+        if Binaries.use_hierarchical_qualifier_layout(aid, qual):
+            platform_folder = self.qual_to_platform_folder(qual)
         if platform_folder:
             file_bucket_key = f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
         else:
@@ -167,14 +184,17 @@ class Binaries:
 
     def s3_delete(self, filename, gid, aid, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
-        platform_folder = self.qual_to_platform_folder(qual) if qual else None
-        if platform_folder:
-            bucket_key = f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
-        else:
-            bucket_key = f"{root_bucket_key}/{filename}"
+        bucket_keys = [self.get_flat_bucket_key(root_bucket_key, filename)]
+        if Binaries.use_hierarchical_qualifier_layout(aid, qual):
+            bucket_keys = [self.get_hierarchical_bucket_key(root_bucket_key, filename, version, qual)]
+        elif qual:
+            # Backward compatibility for artifacts published by v6.4.0, where all qualifiers
+            # used the hierarchical version/platform layout.
+            bucket_keys.append(self.get_hierarchical_bucket_key(root_bucket_key, filename, version, qual))
 
-        self.s3_client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
-        print(f'deleted {bucket_key}')
+        for bucket_key in dict.fromkeys(bucket_keys):
+            self.s3_client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
+            print(f'deleted {bucket_key}')
 
         if aid == SONARLINT_AID:
             version_bucket_key = f"{root_bucket_key}/{version}/"
