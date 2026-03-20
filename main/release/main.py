@@ -68,7 +68,10 @@ def main():
         artifactory.promote(release_request, buildinfo)
         set_output("promote", 'done')  # There is no value to do it except to not break existing workflows
         if github.is_publish_to_binaries():
-            binaries = Binaries(binaries_bucket_name)
+            hierarchical_qualifier_layout = (
+                os.environ.get('INPUT_BINARIES_HIERARCHICAL_QUALIFIER_LAYOUT', '').strip().lower() == 'true'
+            )
+            binaries = Binaries(binaries_bucket_name, hierarchical_qualifier_layout=hierarchical_qualifier_layout)
             publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo)
             set_output("publish_to_binaries", "done")  # There is no value to do it except to not break existing workflows
         notify_slack(f"Successfully released {release_request.project}:{release_request.version}")
