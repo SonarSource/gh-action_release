@@ -25,6 +25,7 @@ jobs:
     uses: SonarSource/gh-action_release/.github/workflows/main.yaml@v6
     with:
       publishToBinaries: false # enable the publication to binaries
+      binariesHierarchicalQualifierLayout: false # PREQ-4535: qualified binaries under version/platform/ (opt-in)
       binariesS3Bucket: downloads-cdn-eu-central-1-prod # S3 bucket to use for the binaries
       publishJavadoc: false # enable the publication of the Javadoc to https://javadocs.sonarsource.org/
       publicRelease: false # define if the Javadoc is stored in 'sonarsource-public-releases' (or 'sonarsource-private-releases' if false)
@@ -47,6 +48,7 @@ Notes:
 
 - `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO`
   environment variable is required in the release Build Info.
+- `binariesHierarchicalQualifierLayout`: When `true`, artifacts with a Maven classifier are published under `product/version/platform/filename` on binaries (PREQ-4535). Default `false` keeps the legacy flat layout. Revoke deletes both possible keys for qualified artifacts.
 - `isDummyProject`: The _dummy_ projects are treated differently regarding alerts and metrics. E.g.: in Datadog, the stats from dummy
   projects are excluded from some dashboards.
 

@@ -13,6 +13,9 @@ inputs:
     description: "Don't actually do anything, report what would have been done."
     default: 'false'
     required: false
+  binaries_hierarchical_qualifier_layout:
+    description: "If true, publish qualified artifacts under product/version/platform/filename on binaries (PREQ-4535)."
+    required: false
 outputs:
   promote:
     description: "Output to detect if promote was executed"

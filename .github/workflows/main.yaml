@@ -23,6 +23,11 @@ on:
         description: Flag to enable the publication to binaries
         default: false
         required: false
+      binariesHierarchicalQualifierLayout:
+        type: boolean
+        description: If true, qualified artifacts use version/platform subfolders on binaries (PREQ-4535)
+        default: false
+        required: false
       publishJavadoc:
         type: boolean
         description: Flag to enable the javadoc publication
@@ -248,6 +253,7 @@ jobs:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
           dry_run: ${{ inputs.dryRun }}
+          binaries_hierarchical_qualifier_layout: ${{ inputs.binariesHierarchicalQualifierLayout }}
         env:
           PYTHONUNBUFFERED: 1
           ARTIFACTORY_ACCESS_TOKEN: ${{ steps.parse_vault.outputs.artifactory_access_token }}

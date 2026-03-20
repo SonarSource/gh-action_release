@@ -69,6 +69,15 @@ def test_qual_to_platform_folder():
     assert Binaries.qual_to_platform_folder('unknown-platform') == 'unknown'
 
 
+def test_use_hierarchical_qualifier_layout_flag():
+    flat = Binaries('bucket', hierarchical_qualifier_layout=False)
+    hier = Binaries('bucket', hierarchical_qualifier_layout=True)
+    assert flat.use_hierarchical_qualifier_layout('linux-x64') is False
+    assert hier.use_hierarchical_qualifier_layout('linux-x64') is True
+    assert hier.use_hierarchical_qualifier_layout('') is False
+
+
+
 @pytest.mark.parametrize(
     'group_id, root_bucket_key',
     [
@@ -83,3 +92,19 @@ def test_s3_delete_common_case(group_id, root_bucket_key):
     with patch('boto3.Session', return_value=binaries_session):
         Binaries('bucket').s3_delete('filename', group_id, "aid", 'version')
     client.delete_object.assert_called_once_with(Bucket='bucket', Key=f'{root_bucket_key}/aid/filename')
+
+
+
+def test_s3_delete_qualified_deletes_flat_and_hierarchical():
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
+        Binaries('bucket').s3_delete(
+            'sonarqube-cli-1.0.0-linux-x64.zip', 'org.sonarsource.sonarqube', 'sonarqube-cli', '1.0.0', 'linux-x64')
+    client.delete_object.assert_has_calls([
+        call(Bucket='bucket', Key='Distribution/sonarqube-cli/sonarqube-cli-1.0.0-linux-x64.zip'),
+        call(Bucket='bucket', Key='Distribution/sonarqube-cli/1.0.0/linux/sonarqube-cli-1.0.0-linux-x64.zip')
+    ])
+    assert client.delete_object.call_count == 2
+

@@ -18,7 +18,7 @@ REDDEER_AID = "org.eclipse.reddeer.site"
 UPLOAD_CHECKSUMS = ["md5", "sha1", "sha256", "asc"]
 
 # Map artifact qualifier (e.g. linux-x64, darwin-arm64) to folder name for hierarchical S3 structure.
-# Used to produce binaries.sonarsource.com layout: product/version/platform/file
+# Used only when Binaries.hierarchical_qualifier_layout is True and the artifact has a qualifier (PREQ-4535).
 QUAL_TO_PLATFORM_FOLDER = {
     "linux": "linux",
     "linux-x64": "linux",
@@ -39,8 +39,9 @@ QUAL_TO_PLATFORM_FOLDER = {
 
 
 class Binaries:
-    def __init__(self, binaries_bucket_name: str):
+    def __init__(self, binaries_bucket_name: str, hierarchical_qualifier_layout: bool = False):
         self.binaries_bucket_name = binaries_bucket_name
+        self.hierarchical_qualifier_layout = hierarchical_qualifier_layout
         self.binaries_session = boto3.Session(
             aws_access_key_id=binaries_aws_access_key_id,
             aws_secret_access_key=binaries_aws_secret_access_key,
@@ -75,13 +76,22 @@ class Binaries:
         # Fallback: use first segment before hyphen (e.g. linux-x64 -> linux)
         return qual.split("-")[0].lower() if "-" in qual else qual.lower()
 
+    def use_hierarchical_qualifier_layout(self, qual):
+        return bool(qual) and self.hierarchical_qualifier_layout
+
+    def get_flat_bucket_key(self, root_bucket_key, filename):
+        return f"{root_bucket_key}/{filename}"
+
+    def get_hierarchical_bucket_key(self, root_bucket_key, filename, version, qual):
+        platform_folder = self.qual_to_platform_folder(qual)
+        return f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
+
     def s3_upload(self, artifact_file, filename, gid, aid, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
-        platform_folder = self.qual_to_platform_folder(qual) if qual else None
-        if platform_folder:
-            file_bucket_key = f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
+        if self.use_hierarchical_qualifier_layout(qual):
+            file_bucket_key = self.get_hierarchical_bucket_key(root_bucket_key, filename, version, qual)
         else:
-            file_bucket_key = f"{root_bucket_key}/{filename}"
+            file_bucket_key = self.get_flat_bucket_key(root_bucket_key, filename)
 
         self.s3_client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
         print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
@@ -167,14 +177,14 @@ class Binaries:
 
     def s3_delete(self, filename, gid, aid, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
-        platform_folder = self.qual_to_platform_folder(qual) if qual else None
-        if platform_folder:
-            bucket_key = f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
-        else:
-            bucket_key = f"{root_bucket_key}/{filename}"
+        bucket_keys = [self.get_flat_bucket_key(root_bucket_key, filename)]
+        if qual:
+            # Remove both possible keys: flat (legacy / flag-off) and hierarchical (flag-on or v6.4.0).
+            bucket_keys.append(self.get_hierarchical_bucket_key(root_bucket_key, filename, version, qual))
 
-        self.s3_client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
-        print(f'deleted {bucket_key}')
+        for bucket_key in dict.fromkeys(bucket_keys):
+            self.s3_client.delete_object(Bucket=self.binaries_bucket_name, Key=bucket_key)
+            print(f'deleted {bucket_key}')
 
         if aid == SONARLINT_AID:
             version_bucket_key = f"{root_bucket_key}/{version}/"
