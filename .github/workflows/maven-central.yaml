@@ -53,7 +53,7 @@ jobs:
         run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@c154b4a417b51cb98dd71137f49bf20e77c56820 # 3.4.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
@@ -65,7 +65,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@master
+        uses: SonarSource/gh-action_release/download-build@05db046385edc88eb40554c2677c1d726f4987f6 # master
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -74,7 +74,7 @@ jobs:
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@master
+        uses: SonarSource/gh-action_release/maven-central-sync@05db046385edc88eb40554c2677c1d726f4987f6 # master
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
           central-url: https://central.sonatype.com
