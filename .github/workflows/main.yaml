@@ -150,7 +150,7 @@ jobs:
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@c154b4a417b51cb98dd71137f49bf20e77c56820 # 3.4.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -161,7 +161,7 @@ jobs:
       - name: Vault Binaries AWS Secrets
         id: secrets-binaries-aws
         if: ${{ inputs.dryRun != true && inputs.publishToBinaries }}
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@c154b4a417b51cb98dd71137f49bf20e77c56820 # 3.4.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -353,7 +353,7 @@ jobs:
 
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@c154b4a417b51cb98dd71137f49bf20e77c56820 # 3.4.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
