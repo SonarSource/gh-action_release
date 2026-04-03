@@ -102,11 +102,19 @@ on:
         description: Indicate whether this is a dummy project.
         default: false
         required: false
+      oidcEnvironment:
+        type: string
+        description: >
+          GitHub Environment to set on OIDC-using jobs. Required when the calling repository
+          configures OIDC subject claims to include 'environment' (include_claim_keys: [repo, environment]).
+          Leave empty (default) for repositories using the standard subject claim format.
+        required: false
 
 jobs:
   release:
     name: Release
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.oidcEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
@@ -331,6 +339,7 @@ jobs:
   datadog:
     name: Push results to datadog
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.oidcEnvironment }}
     needs:
       - release
       - mavenCentral
