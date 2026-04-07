@@ -34,6 +34,7 @@ jobs:
       publishToPyPI: false # for OSS projects only, publish PyPI artifacts to https://pypi.org/
       publishToTestPyPI: false # for OSS projects only, publish PyPI artifacts to https://test.pypi.org/
       publishToNpmJS: false # for OSS projects only, publish npm artifacts to https://www.npmjs.com/
+      useNpmTrustedPublisher: false # use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
       skipPythonReleasabilityChecks: false # skip releasability checks for Python projects
       skipJavascriptReleasabilityChecks: false # skip releasability checks for Javascript projects
       slackChannel: build # define the Slack channel to use for notifications
@@ -54,6 +55,16 @@ Notes:
 
 When releasing a npm project using this action, you can specify a custom .npmrc file. To do this, place your .npmrc file in the
 .github/workflows/ directory of the repository you wish to release. The action will automatically use this configuration.
+
+## npm Trusted Publishers (OIDC)
+
+Setting `useNpmTrustedPublisher: true` switches npm publishing from the Vault-stored static token to [npm Trusted Publishers](https://docs.npmjs.com/trusted-publishers) (GitHub Actions OIDC). The package is published with `--provenance`, linking it to the source commit and workflow.
+
+**Requirements before enabling:**
+1. Configure a Trusted Publisher on [npmjs.org](https://www.npmjs.com/) for each package, referencing the exact product repo, workflow filename, and environment `release`.
+2. Create a `release` environment in the product repo on GitHub (Settings → Environments) and configure branch rules.
+3. The calling workflow must have `id-token: write` permission (already standard for Vault-based workflows).
+4. The Vault permission `development/kv/data/npmjs` is no longer needed when using Trusted Publishers.
 
 ## Releasability check
 
