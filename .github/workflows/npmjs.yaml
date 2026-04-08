@@ -36,11 +36,17 @@ name: NpmJS
         description: Slack channel to post notifications
         default: build
         required: false
+      useNpmTrustedPublisher:
+        type: boolean
+        description: Use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
+        default: false
+        required: false
 
 jobs:
   publish-to-npm:
     name: Publish to npmjs
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.useNpmTrustedPublisher && 'release' || '' }}
     permissions:
       id-token: write
       contents: read
@@ -69,7 +75,7 @@ jobs:
           url: ${{ inputs.vaultAddr }}
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
-            development/kv/data/${{ inputs.vaultTokenKey }} sonartech_npm_token | npm_token;
+            ${{ !inputs.useNpmTrustedPublisher && format('development/kv/data/{0} sonartech_npm_token | npm_token;', inputs.vaultTokenKey) || '' }}
             development/kv/data/slack webhook | slack_webhook;
 
       - name: Setup JFrog
@@ -103,6 +109,11 @@ jobs:
           tar -xzf "$file" -C package --strip-components=1
           echo "Package extracted to ./package"
 
+      - name: Setup Node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        with:
+          node-version: '24'
+
       - name: Update package version
         working-directory: ${{ steps.local_repo.outputs.dir }}/package
         run: npm version --no-git-tag-version ${{ steps.get_version.outputs.version }}
@@ -115,6 +126,7 @@ jobs:
           token: ${{ github.token }}
 
       - name: Configure npm registry
+        if: ${{ !inputs.useNpmTrustedPublisher }}
         run: |
           if [ -f developer_repo/.github/workflows/.npmrc ]; then
             echo ".npmrc file found in developer repository at .github/workflows/.npmrc."
@@ -129,11 +141,19 @@ jobs:
           NPM_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).npm_token }}
 
       - name: Publish npm package to npmjs
+        if: ${{ !inputs.useNpmTrustedPublisher }}
         working-directory: ${{ steps.local_repo.outputs.dir }}/package
         env:
           NPM_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).npm_token }}
         run: |
           npm publish
+
+      - name: Publish npm package to npmjs (Trusted Publisher)
+        if: ${{ inputs.useNpmTrustedPublisher }}
+        working-directory: ${{ steps.local_repo.outputs.dir }}/package
+        run: |
+          npm publish --provenance --access public
+
       - name: Notify on Failure
         if: ${{ failure() }}
         uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0

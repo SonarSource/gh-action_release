@@ -82,6 +82,11 @@ on:
         description: Publish Javascript artifacts to https://www.npmjs.com
         default: false
         required: false
+      useNpmTrustedPublisher:
+        type: boolean
+        description: Use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
+        default: false
+        required: false
       skipPythonReleasabilityChecks:
         type: boolean
         description: Skip releasability checks for Python projects
@@ -327,6 +332,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
+      useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
 
   datadog:
     name: Push results to datadog
