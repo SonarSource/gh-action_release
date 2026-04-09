@@ -141,6 +141,11 @@ jobs:
       releasabilityCheckManifestValues: ${{ steps.releasability.outputs.releasabilityCheckManifestValues }}
 
     steps:
+      - name: Validate inputs
+        if: ${{ inputs.useNpmTrustedPublisher && inputs.oidcEnvironment != '' }}
+        run: |
+          echo "::error::useNpmTrustedPublisher and oidcEnvironment are mutually exclusive. When useNpmTrustedPublisher is true, oidcEnvironment should not be set (it will be automatically set to 'release' for npm publishing)."
+          exit 1
       # Clone gh-action_release repository to run actions locally
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -291,6 +296,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
       projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
+      oidcEnvironment: ${{ inputs.oidcEnvironment }}
 
   javadocPublication:
     name: Javadoc publication
@@ -304,6 +310,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
       publicRelease: ${{ inputs.publicRelease }}
+      oidcEnvironment: ${{ inputs.oidcEnvironment }}
 
   testPypi:
     name: TestPyPI
@@ -317,6 +324,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       pypiRepoUrl: "https://test.pypi.org/legacy/"
       slackChannel: ${{ inputs.slackChannel }}
+      oidcEnvironment: ${{ inputs.oidcEnvironment }}
 
   pypi:
     name: PyPi
@@ -328,6 +336,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
+      oidcEnvironment: ${{ inputs.oidcEnvironment }}
 
 
   npmjs:
@@ -340,7 +349,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
-      useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
+      oidcEnvironment: ${{ inputs.useNpmTrustedPublisher && 'release' || inputs.oidcEnvironment }}
 
   datadog:
     name: Push results to datadog

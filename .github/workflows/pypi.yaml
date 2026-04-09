@@ -36,11 +36,16 @@ name: PyPI
         description: Slack channel to post notifications
         default: build
         required: false
+      oidcEnvironment:
+        type: string
+        description: GitHub Environment to set on the OIDC-using job
+        required: false
 
 jobs:
   pypi:
     name: Publish to PyPI
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.oidcEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a GitHub release

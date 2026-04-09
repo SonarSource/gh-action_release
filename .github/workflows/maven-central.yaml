@@ -27,11 +27,16 @@ name: Maven Central
         type: string
         description: Project name for build info (may be different from repository name for multi-artifact repos)
         required: false
+      oidcEnvironment:
+        type: string
+        description: GitHub Environment to set on the OIDC-using job
+        required: false
 
 jobs:
   maven-central:
     name: Push to maven Central
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.oidcEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release
