@@ -31,7 +31,7 @@ name: Javadoc publication
         type: boolean
         description: Indicate if the project is generating a public release or not
         required: true
-      oidcEnvironment:
+      githubEnvironment:
         type: string
         description: GitHub Environment to set on the OIDC-using job
         required: false
@@ -40,7 +40,7 @@ jobs:
   javadoc-publication:
     name: Publish javadoc
     runs-on: github-ubuntu-latest-s
-    environment: ${{ inputs.oidcEnvironment }}
+    environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release

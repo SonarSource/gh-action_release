@@ -107,7 +107,7 @@ on:
         description: Indicate whether this is a dummy project.
         default: false
         required: false
-      oidcEnvironment:
+      githubEnvironment:
         type: string
         description: >
           GitHub Environment to set on OIDC-using jobs. Required when the calling repository
@@ -119,7 +119,7 @@ jobs:
   release:
     name: Release
     runs-on: github-ubuntu-latest-s
-    environment: ${{ inputs.oidcEnvironment }}
+    environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
@@ -142,9 +142,9 @@ jobs:
 
     steps:
       - name: Validate inputs
-        if: ${{ inputs.useNpmTrustedPublisher && inputs.oidcEnvironment != '' }}
+        if: ${{ inputs.useNpmTrustedPublisher && inputs.githubEnvironment != '' }}
         run: |
-          echo "::error::useNpmTrustedPublisher and oidcEnvironment are mutually exclusive. When useNpmTrustedPublisher is true, oidcEnvironment should not be set (it will be automatically set to 'release' for npm publishing)."
+          echo "::error::useNpmTrustedPublisher and githubEnvironment are mutually exclusive. When useNpmTrustedPublisher is true, githubEnvironment should not be set (it will be automatically set to 'release' for npm publishing)."
           exit 1
       # Clone gh-action_release repository to run actions locally
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -296,7 +296,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
       projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
-      oidcEnvironment: ${{ inputs.oidcEnvironment }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   javadocPublication:
     name: Javadoc publication
@@ -310,7 +310,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
       publicRelease: ${{ inputs.publicRelease }}
-      oidcEnvironment: ${{ inputs.oidcEnvironment }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   testPypi:
     name: TestPyPI
@@ -324,7 +324,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       pypiRepoUrl: "https://test.pypi.org/legacy/"
       slackChannel: ${{ inputs.slackChannel }}
-      oidcEnvironment: ${{ inputs.oidcEnvironment }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   pypi:
     name: PyPi
@@ -336,7 +336,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
-      oidcEnvironment: ${{ inputs.oidcEnvironment }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
 
   npmjs:
@@ -349,12 +349,12 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
-      oidcEnvironment: ${{ inputs.useNpmTrustedPublisher && 'release' || inputs.oidcEnvironment }}
+      githubEnvironment: ${{ inputs.useNpmTrustedPublisher && 'release' || inputs.githubEnvironment }}
 
   datadog:
     name: Push results to datadog
     runs-on: github-ubuntu-latest-s
-    environment: ${{ inputs.oidcEnvironment }}
+    environment: ${{ inputs.githubEnvironment }}
     needs:
       - release
       - mavenCentral
