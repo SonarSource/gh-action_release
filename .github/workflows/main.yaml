@@ -141,11 +141,6 @@ jobs:
       releasabilityCheckManifestValues: ${{ steps.releasability.outputs.releasabilityCheckManifestValues }}
 
     steps:
-      - name: Validate inputs
-        if: ${{ inputs.useNpmTrustedPublisher && inputs.githubEnvironment != '' }}
-        run: |
-          echo "::error::useNpmTrustedPublisher and githubEnvironment are mutually exclusive. When useNpmTrustedPublisher is true, githubEnvironment should not be set (it will be automatically set to 'release' for npm publishing)."
-          exit 1
       # Clone gh-action_release repository to run actions locally
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -349,7 +344,8 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
-      githubEnvironment: ${{ inputs.useNpmTrustedPublisher && 'release' || inputs.githubEnvironment }}
+      useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   datadog:
     name: Push results to datadog

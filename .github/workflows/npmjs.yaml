@@ -36,9 +36,14 @@ name: NpmJS
         description: Slack channel to post notifications
         default: build
         required: false
+      useNpmTrustedPublisher:
+        type: boolean
+        description: Use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
+        default: false
+        required: false
       githubEnvironment:
         type: string
-        description: GitHub Environment to set on the OIDC-using job. Set to a non-empty value to use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
+        description: GitHub Environment to set on the OIDC-using job
         required: false
 
 jobs:
@@ -74,7 +79,7 @@ jobs:
           url: ${{ inputs.vaultAddr }}
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
-            ${{ inputs.githubEnvironment == '' && format('development/kv/data/{0} sonartech_npm_token | npm_token;', inputs.vaultTokenKey) || '' }}
+            ${{ !inputs.useNpmTrustedPublisher && format('development/kv/data/{0} sonartech_npm_token | npm_token;', inputs.vaultTokenKey) || '' }}
             development/kv/data/slack webhook | slack_webhook;
 
       - name: Setup JFrog
@@ -125,7 +130,7 @@ jobs:
           token: ${{ github.token }}
 
       - name: Configure npm registry
-        if: ${{ inputs.githubEnvironment == '' }}
+        if: ${{ !inputs.useNpmTrustedPublisher }}
         run: |
           if [ -f developer_repo/.github/workflows/.npmrc ]; then
             echo ".npmrc file found in developer repository at .github/workflows/.npmrc."
@@ -140,7 +145,7 @@ jobs:
           NPM_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).npm_token }}
 
       - name: Publish npm package to npmjs
-        if: ${{ inputs.githubEnvironment == '' }}
+        if: ${{ !inputs.useNpmTrustedPublisher }}
         working-directory: ${{ steps.local_repo.outputs.dir }}/package
         env:
           NPM_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).npm_token }}
@@ -148,7 +153,7 @@ jobs:
           npm publish
 
       - name: Publish npm package to npmjs (Trusted Publisher)
-        if: ${{ inputs.githubEnvironment != '' }}
+        if: ${{ inputs.useNpmTrustedPublisher }}
         working-directory: ${{ steps.local_repo.outputs.dir }}/package
         run: |
           npm publish --provenance --access public
