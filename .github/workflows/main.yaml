@@ -107,11 +107,19 @@ on:
         description: Indicate whether this is a dummy project.
         default: false
         required: false
+      githubEnvironment:
+        type: string
+        description: >
+          GitHub Environment to set on OIDC-using jobs. Required when the calling repository
+          configures OIDC subject claims to include 'environment' (include_claim_keys: [repo, environment]).
+          Leave empty (default) for repositories using the standard subject claim format.
+        required: false
 
 jobs:
   release:
     name: Release
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
@@ -283,6 +291,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
       projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   javadocPublication:
     name: Javadoc publication
@@ -296,6 +305,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
       publicRelease: ${{ inputs.publicRelease }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   testPypi:
     name: TestPyPI
@@ -309,6 +319,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       pypiRepoUrl: "https://test.pypi.org/legacy/"
       slackChannel: ${{ inputs.slackChannel }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   pypi:
     name: PyPi
@@ -320,6 +331,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
 
   npmjs:
@@ -333,10 +345,12 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
       useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   datadog:
     name: Push results to datadog
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.githubEnvironment }}
     needs:
       - release
       - mavenCentral

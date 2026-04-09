@@ -41,12 +41,16 @@ name: NpmJS
         description: Use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
         default: false
         required: false
+      githubEnvironment:
+        type: string
+        description: GitHub Environment to set on the OIDC-using job
+        required: false
 
 jobs:
   publish-to-npm:
     name: Publish to npmjs
     runs-on: github-ubuntu-latest-s
-    environment: ${{ inputs.useNpmTrustedPublisher && 'release' || '' }}
+    environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write
       contents: read
