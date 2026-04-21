@@ -53,7 +53,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: SonarSource/gh-action_release
-          ref: 878038a8417109f2f99288ae1ad588aadfbbf590
+          ref: ${{ github.ref }}
           path: gh-action_release
       - name: Get the version
         id: get_version
