@@ -239,10 +239,9 @@ jobs:
       - name: Send Slack notification on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
         uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-        env:
-          SLACK_WEBHOOK_URL: ${{ steps.parse_vault.outputs.slack_webhook }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
         with:
+          webhook: ${{ steps.parse_vault.outputs.slack_webhook }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "channel": "${{ inputs.slackChannel }}",
