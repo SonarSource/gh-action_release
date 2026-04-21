@@ -1,0 +1,62 @@
+# yamllint disable rule:line-length
+---
+# TEMPORARY — BUILD-11049 test harness for the Slack webhook-type fix in main.yaml.
+# To be removed before this PR exits draft. Do NOT merge this file.
+#
+# Purpose: validate that `slackapi/slack-github-action@v2.1.1` succeeds with the
+# `webhook` / `webhook-type: incoming-webhook` `with:` inputs, using the same
+# Vault + AWS OIDC plumbing as the real releasability-failure Slack step.
+name: BUILD-11049 test - Slack webhook fix
+
+on:
+  push:
+    branches:
+      - bugfix/tom/BUILD-11049-slack-webhook-type
+  workflow_dispatch:
+
+permissions:
+  id-token: write   # needed to authenticate to AWS via OIDC (for Vault access)
+  contents: read
+
+jobs:
+  test-slack:
+    name: Test Slack releasability-failure step
+    runs-on: github-ubuntu-latest-s
+    timeout-minutes: 10
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        with:
+          aws-region: eu-central-1
+          role-to-assume: "arn:aws:iam::064493320159:role/deploymentroles/ReleasbilityChecksCICDRoleV2"
+
+      - name: Vault Secrets
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        with:
+          url: https://vault.sonar.build:8200
+          secrets: |
+            development/kv/data/slack webhook | slack_webhook;
+
+      - name: Parse Vault Output
+        id: parse_vault
+        env:
+          SECRET_OUTPUTS: ${{ toJson(steps.secrets.outputs) }}
+        run: |
+          echo "${SECRET_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
+
+      - name: Send BUILD-11049 test Slack notification
+        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
+        with:
+          webhook: ${{ steps.parse_vault.outputs.slack_webhook }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "channel": "build",
+              "attachments": [
+                {
+                  "color": "#36a64f",
+                  "text": "BUILD-11049 TEST (ignore): Slack `webhook-type` input fix validated from `${{ github.repository }}@${{ github.ref_name }}` (run <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|#${{ github.run_id }}>). This workflow is temporary and will be removed before the PR exits draft."
+                }
+              ]
+            }
