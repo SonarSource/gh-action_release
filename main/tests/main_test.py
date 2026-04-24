@@ -8,9 +8,10 @@ import pytest
 from parameterized import parameterized
 
 from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
-from release.main import main, set_output, check_params, MANDATORY_ENV_VARIABLES
+from release.main import abort_release, main, set_output, check_params, MANDATORY_ENV_VARIABLES
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
+from release.utils.binaries import Binaries
 from release.utils.buildinfo import BuildInfo
 from release.utils.github import GitHub
 
@@ -22,6 +23,24 @@ def test_set_output():
         set_output('function', 'output')
 
         assert temp_file.read().decode("utf-8").strip() == "function=output"
+
+
+@patch('release.main.revoke_release')
+@patch('release.main.set_output')
+@patch.object(GitHub, 'revoke_release')
+def test_abort_release_logs_error_and_revokes_artifacts(mock_github_revoke, mock_set_output, mock_revoke_release):
+    """abort_release must print the immutability-safe error, call github.revoke_release,
+    revoke JFrog/S3 artifacts, and set the 'release' output."""
+    release_request = ReleaseRequest('org', 'project', 'version', '42', 'branch', 'sha')
+    github = GitHub.__new__(GitHub)
+    artifactory = Artifactory.__new__(Artifactory)
+    binaries = Binaries.__new__(Binaries)
+
+    abort_release(github, artifactory, binaries, release_request)
+
+    mock_github_revoke.assert_called_once()
+    mock_revoke_release.assert_called_once_with(artifactory, binaries, release_request)
+    mock_set_output.assert_called_once_with("release", "project:42 aborted")
 
 
 class MainTest(unittest.TestCase):
