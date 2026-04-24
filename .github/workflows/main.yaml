@@ -367,7 +367,7 @@ jobs:
           repository: SonarSource/gh-action_release
           # This property is changed during the release process to reference the correct tag
           # During development change this to your branch name to run it in another repository
-          ref: feat/smarini/BUILD-11106-immutability-safe-rollback
+          ref: ${{ github.ref }}
           path: gh-action_release
 
       - name: Vault
