@@ -1,5 +1,5 @@
 import os
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
 import re
 import pytest
 
@@ -157,8 +157,6 @@ def test_must_succeed_with_plus_version_separator(mock_release_event):
 
 
 @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha', 'GITHUB_TOKEN': 'token'}, clear=True)
-@patch('requests.delete')
-@patch('requests.patch')
 @patch('release.utils.github.json.load',
        return_value={
            'repository': {
@@ -169,20 +167,32 @@ def test_must_succeed_with_plus_version_separator(mock_release_event):
                'url': 'release_url'
            },
        })
-def test_revoke_release(mock_release_event, mock_update_release, mock_delete_tag):
+def test_revoke_release_is_noop(mock_release_event):
+    """revoke_release() must NOT make any HTTP calls (immutability-safe since v6.8.1)."""
     with patch('release.utils.github.open', mock_open()) as open_mock:
-        GitHub().revoke_release()
+        github = GitHub()
+        # Confirm no requests module is imported / used by capturing any stray calls
+        with patch.dict('sys.modules', {'requests': MagicMock()}) as mock_requests_mod:
+            github.revoke_release()
+            # The requests module must not have been called
+            mock_requests_mod['requests'].patch.assert_not_called()
+            mock_requests_mod['requests'].delete.assert_not_called()
         open_mock.assert_called_once()
         mock_release_event.assert_called_once()
-        mock_update_release.assert_called_once_with(
-            'release_url',
-            json={'draft': True, 'tag_name': '1.0.0.42'},
-            headers={'Authorization': f'token token'}
-        )
-        mock_delete_tag.assert_called_once_with(
-            'git_refs_url/tags/1.0.0.42',
-            headers={'Authorization': f'token token'}
-        )
+
+
+@patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release', 'GITHUB_SHA': 'sha', 'GITHUB_TOKEN': 'token'}, clear=True)
+@patch('release.utils.github.json.load',
+       return_value={
+           'repository': {
+               'git_refs_url': 'git_refs_url{/sha}'
+           },
+           'release': None,
+       })
+def test_revoke_release_noop_when_release_is_none(mock_release_event):
+    """revoke_release() exits early when there is no release in the event payload."""
+    with patch('release.utils.github.open', mock_open()):
+        GitHub().revoke_release()  # must not raise
 
 
 @patch.dict(os.environ, {'INPUT_PUBLISH_TO_BINARIES': 'true'}, clear=True)
