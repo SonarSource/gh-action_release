@@ -19,10 +19,12 @@ MANDATORY_ENV_VARIABLES = [
 
 @Dryable(logging_msg='{function}()')
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest):
-    print("::error Aborting release")
+    print("::error::Release failed. JFrog/S3 artifacts are being revoked. "
+          "The GitHub release and tag are preserved (immutability-safe mode since v6.8.1) — "
+          "retry via workflow_dispatch with the same version and releaseId, no rebuild needed.")
     github.revoke_release()
     revoke_release(artifactory, binaries, rr)
-    set_output("release", f"{rr.project}:{rr.buildnumber} revoked")
+    set_output("release", f"{rr.project}:{rr.buildnumber} aborted")
 
 
 def check_params(buildinfo=BuildInfo({})):
@@ -73,7 +75,10 @@ def main():
             set_output("publish_to_binaries", "done")  # There is no value to do it except to not break existing workflows
         notify_slack(f"Successfully released {release_request.project}:{release_request.version}")
     except Exception as e:
-        notify_slack(f"Failed to release {release_request.project}:{release_request.version}")
+        notify_slack(
+            f"Failed to release {release_request.project}:{release_request.version}. "
+            f"GitHub release and tag are preserved — retry via workflow_dispatch, no rebuild needed."
+        )
         abort_release(github, artifactory, binaries, release_request)
         raise e
 

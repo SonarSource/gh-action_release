@@ -228,13 +228,13 @@ jobs:
           repository: ${{ github.event.repository.name }}
           version: ${{ inputs.version || github.event.release.tag_name }}
 
-      - name: Revoke release on releasability check failure
+      - name: Release rollback notice
         if: failure() && steps.releasability.outcome == 'failure'
         env:
-          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version || github.event.release.tag_name }}
+          RELEASE_ID: ${{ inputs.releaseId || github.event.release.id }}
         run: |
-          gh api repos/${{ github.repository }}/releases/${{ inputs.releaseId || github.event.release.id }} -X PATCH -F draft=true
-          gh api repos/${{ github.repository }}/git/refs/tags/${{ inputs.version || github.event.release.tag_name }} -X DELETE
+          echo "::warning::Release NOT revoked on GitHub (immutability-safe mode since v6.8.1). The GitHub release and tag are preserved so you can retry without triggering a new build. Artifacts were revoked in JFrog/S3. Fix the underlying issue and rerun this workflow via 'Run workflow' (workflow_dispatch) with version=${VERSION} and releaseId=${RELEASE_ID}."
 
       - name: Send Slack notification on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
@@ -248,7 +248,7 @@ jobs:
               "attachments": [
                 {
                   "color": "#ff0000",
-                  "text": "Releasability checks failed in `${{ github.repository }}`. Release `${{ inputs.version || github.event.release.tag_name }}` was revoked. Publish the release again after resolving the issue. \n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
+                  "text": "Releasability checks failed in `${{ github.repository }}`. Release `${{ inputs.version || github.event.release.tag_name }}` is *kept* (not revoked) — retry without rebuilding. JFrog/S3 artifacts were revoked.\n*To retry:* <${{ github.server_url }}/${{ github.repository }}/actions/workflows/release.yml|Run workflow> with `version=${{ inputs.version || github.event.release.tag_name }}` and `releaseId=${{ inputs.releaseId || github.event.release.id }}`\n*To abandon:* delete the release and tag manually (`gh release delete <tag> --cleanup-tag`).\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to failed run>"
                 }
               ]
             }

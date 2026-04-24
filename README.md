@@ -66,6 +66,36 @@ Setting `useNpmTrustedPublisher: true` switches npm publishing from the Vault-st
 3. The calling workflow must have `id-token: write` permission (already standard for Vault-based workflows).
 4. The Vault permission `development/kv/data/npmjs` is no longer needed when using Trusted Publishers.
 
+## Recovering from a failed release
+
+Since v6.8.1, when a release workflow fails (releasability checks, Artifactory promotion, etc.) the GitHub release and its tag are **left intact**. This preserves the ability to retry without triggering a full rebuild (~3h for some projects).
+
+### What happens on failure
+
+- The GitHub release stays published (visible in the Releases tab).
+- The Git tag stays in place.
+- JFrog/S3 artifacts **are** revoked (no broken artifacts are available to downstream consumers).
+- You will see a `::warning::` annotation in the Actions log and a Slack message with retry instructions.
+
+### Retrying without rebuilding
+
+1. Fix the root cause (e.g. merge the missing Jira fix-version, resolve the releasability check).
+2. Go to **Actions → Release → Run workflow** (or use `gh workflow run`).
+3. Fill in:
+   - `version` — the tag name (e.g. `1.2.3.456`), visible in the failed run or the Slack notification.
+   - `releaseId` — the GitHub release ID, also visible in the Slack notification or the failed run annotations.
+4. Run the workflow. No new build is needed.
+
+### Abandoning a failed release
+
+If you decide not to retry with the same version:
+
+```sh
+gh release delete <tag> --cleanup-tag --yes --repo <org/repo>
+```
+
+> **Note:** After deleting the release, the tag name is protected by GitHub's resurrection protection — it cannot be reused for a new release. A new build (and new tag) is required.
+
 ## Releasability check
 
 To perform a releasability check for a given version without performing an actual release, run

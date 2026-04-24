@@ -1,7 +1,6 @@
 import json
 import os
 import re
-import requests
 import logging
 
 from release.utils.dryrun import DryRunHelper
@@ -97,12 +96,14 @@ class GitHub:
         release = self._get_release()
         if release is None:
             return
-        tag_name = release["tag_name"]
-        headers = {'Authorization': f'token {self.token}'}
-        payload = {'draft': True, 'tag_name': tag_name}
-        requests.patch(release['url'], json=payload, headers=headers)
-        # Delete tag
-        requests.delete(self._get_repository().get("git_refs_url").replace("{/sha}", f'/tags/{tag_name}'), headers=headers)
+        tag_name = release.get("tag_name", "unknown")
+        self.logger.warning(
+            "revoke_release: GitHub release '%s' is NOT being unpublished or deleted "
+            "(immutability-safe mode since v6.8.1). The tag and version are preserved so "
+            "the release can be retried via workflow_dispatch without triggering a new build. "
+            "JFrog/S3 artifacts have already been revoked by the caller.",
+            tag_name,
+        )
 
     @staticmethod
     def is_publish_to_binaries():
