@@ -22,4 +22,9 @@ git checkout "${original_ref}" -- .
 git commit -m "chore: revert release commits" -a
 git push origin "$version"
 git push origin "${branch}"
-gh release create "$version" -t "$version" --target "$(git show -s --pretty=format:'%H' "$version")" --verify-tag --generate-notes
+# Trigger the release workflow via workflow_dispatch.
+# The reusable workflow owns draft creation, checks, promotion, and publication.
+GITHUB_REPO="${GITHUB_REPO:-SonarSource/gh-action_release}"
+gh workflow run release.yml \
+  --repo "$GITHUB_REPO" \
+  -f version="$version"

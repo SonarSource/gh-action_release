@@ -2,6 +2,7 @@ import json
 import os
 import re
 import logging
+import requests
 
 from release.utils.dryrun import DryRunHelper
 from release.steps.ReleaseRequest import ReleaseRequest
@@ -110,7 +111,21 @@ class GitHub:
         return os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true"
 
     def _get_release(self) -> dict | None:
-        return self.event.get("release", None)
+        # Retro-compat: the legacy `release:published` event embeds the full release object
+        # directly in the event payload, so no API call is needed. v7 uses `workflow_dispatch`
+        # which has no release in the payload — we fetch it by tag via the API instead.
+        if self.event.get("release") is not None:
+            return self.event["release"]
+        # workflow_dispatch path: fetch the draft (or published) release by tag via API
+        tag = os.environ.get("INPUT_VERSION")
+        if not tag:
+            return None
+        repo = self.event["repository"]["full_name"]
+        resp = requests.get(
+            f"https://api.github.com/repos/{repo}/releases/tags/{tag}",
+            headers={"Authorization": f"token {self.token}"},
+        )
+        return resp.json() if resp.ok else None
 
     def _get_repository(self) -> {}:
         return self.event["repository"]

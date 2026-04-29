@@ -7,12 +7,8 @@ on:
     inputs:
       version:
         type: string
-        description: Version (alternative to release event)
-        required: false
-      releaseId:
-        type: string
-        description: Release ID (alternative to release event)
-        required: false
+        description: Full version including build number (e.g. 1.2.3.456). Required for v7 draft-first flow.
+        required: true
       dryRun:
         type: boolean
         description: Flag to enable the dry-run execution
@@ -124,7 +120,7 @@ jobs:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
     timeout-minutes: 30
-    if: ${{ inputs.dryRun == true || (github.event_name == 'release' && github.event.action == 'published') || (inputs.version != '' && inputs.releaseId != '') }}
+    if: ${{ inputs.dryRun == true || inputs.version != '' }}
     outputs:
       releasability: ${{ steps.release.outputs.releasability }}
       promote: ${{ steps.release.outputs.promote }}
@@ -155,6 +151,30 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: ${{ github.event.repository.name }}
+
+      - name: Create or reuse draft release
+        id: draft
+        if: ${{ inputs.dryRun != true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if gh release view "$VERSION" --repo "${{ github.repository }}" --json id,isDraft -q '.isDraft' 2>/dev/null | grep -q true; then
+            echo "Reusing existing draft release $VERSION"
+          elif gh release view "$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "::error::Release $VERSION already exists and is NOT a draft. Aborting to avoid duplicate publish."
+            exit 1
+          else
+            gh release create "$VERSION" \
+              --repo "${{ github.repository }}" \
+              --draft --generate-notes \
+              --target "$GITHUB_SHA"
+            echo "Created draft release $VERSION"
+          fi
+          release_id=$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id -q '.id')
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
         with:
@@ -226,15 +246,14 @@ jobs:
           commit-sha: ${{ github.sha }}
           organization: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
-          version: ${{ inputs.version || github.event.release.tag_name }}
+          version: ${{ inputs.version }}
 
       - name: Release rollback notice
         if: failure() && steps.releasability.outcome == 'failure'
         env:
-          VERSION: ${{ inputs.version || github.event.release.tag_name }}
-          RELEASE_ID: ${{ inputs.releaseId || github.event.release.id }}
+          VERSION: ${{ inputs.version }}
         run: |
-          echo "::warning::Release NOT revoked on GitHub (immutability-safe mode since v6.8.1). The GitHub release and tag are preserved so you can retry without triggering a new build. Artifacts were revoked in JFrog/S3. Fix the underlying issue and rerun this workflow via 'Run workflow' (workflow_dispatch) with version=${VERSION} and releaseId=${RELEASE_ID}."
+          echo "::warning::Release $VERSION saved as draft. Fix the root cause and 'Re-run jobs'. No need for a new build."
 
       - name: Send Slack notification on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
@@ -248,12 +267,12 @@ jobs:
               "attachments": [
                 {
                   "color": "#ff0000",
-                  "text": "Releasability checks failed in `${{ github.repository }}`. Release `${{ inputs.version || github.event.release.tag_name }}` is *kept* (not revoked) — retry without rebuilding. JFrog/S3 artifacts were revoked.\n*To retry:* <${{ github.server_url }}/${{ github.repository }}/actions/workflows/release.yml|Run workflow> with `version=${{ inputs.version || github.event.release.tag_name }}` and `releaseId=${{ inputs.releaseId || github.event.release.id }}`\n*To abandon:* delete the release and tag manually (`gh release delete <tag> --cleanup-tag`).\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to failed run>"
+                  "text": "Releasability checks failed in `${{ github.repository }}`. Fix the root cause and retry without rebuilding.\n*To retry:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Rerun release workflow `${{ inputs.version }}`>\n*Draft:* <${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.version }}|View draft release `${{ inputs.version }}`>\n*To abandon:* `gh release delete ${{ inputs.version }} --cleanup-tag --yes`"
                 }
               ]
             }
 
-      - name: Release ${{ inputs.version || github.event.release.tag_name }}
+      - name: Release ${{ inputs.version }}
         id: release
         uses: ./gh-action_release/main
         with:
@@ -262,6 +281,7 @@ jobs:
           dry_run: ${{ inputs.dryRun }}
         env:
           PYTHONUNBUFFERED: 1
+          INPUT_VERSION: ${{ inputs.version }}
           ARTIFACTORY_ACCESS_TOKEN: ${{ steps.parse_vault.outputs.artifactory_access_token }}
           BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -346,6 +366,27 @@ jobs:
       useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
 
+  publish:
+    name: Publish draft release
+    runs-on: sonar-xs
+    needs:
+      - release
+      - mavenCentral
+      - javadocPublication
+      - testPypi
+      - pypi
+      - npmjs
+    if: ${{ !failure() && !cancelled() && inputs.dryRun != true }}
+    permissions:
+      contents: write
+    steps:
+      - name: Promote draft to published (immutable)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          gh release edit "$INPUT_VERSION" --repo "${{ github.repository }}" --draft=false
+
   datadog:
     name: Push results to datadog
     runs-on: github-ubuntu-latest-s
@@ -357,6 +398,7 @@ jobs:
       - testPypi
       - pypi
       - npmjs
+      - publish
     if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
     steps:
       # Clone gh-action_release repository to run actions locally
@@ -396,7 +438,7 @@ jobs:
           testpypi_published: ${{ needs.testPypi.result }}
           pypi_published: ${{ needs.pypi.result }}
           npmjs_published: ${{ needs.npmjs.result }}
-          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' }}
+          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' && needs.publish.result != 'failure' }}
           repo: ${{ github.repository }}
           run_id: ${{ github.run_id }}
           is_dummy_project: ${{ inputs.isDummyProject }}
