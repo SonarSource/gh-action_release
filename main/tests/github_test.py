@@ -2,6 +2,7 @@ import os
 from unittest.mock import patch, mock_open, MagicMock
 import re
 import pytest
+import requests as real_requests
 
 from release.utils.github import GitHub, GitHubException, ALLOWED_GITHUB_ACTIONS
 
@@ -272,3 +273,119 @@ def test_no_release_no_dry_run(json_load_mock):
         release_request = github.get_release_request()
         assert release_request.branch == 'master'
         github.revoke_release()
+
+
+# ── _get_release() v7 path: release event (legacy v6 path) ──────────────────
+
+@patch.dict(os.environ, {"GITHUB_EVENT_NAME": "release", "GITHUB_TOKEN": "tok"}, clear=True)
+@patch(
+    "release.utils.github.json.load",
+    return_value={
+        "release": {"id": 1, "tag_name": "1.0.0.42"},
+        "repository": {"full_name": "org/project"},
+    },
+)
+def test_get_release_reads_from_event_on_release_event(mock_load):
+    with patch("release.utils.github.open", mock_open()):
+        github = GitHub()
+        release = github._get_release()
+        assert release == {"id": 1, "tag_name": "1.0.0.42"}
+
+
+# ── _get_release() v7 path: workflow_dispatch fetches via API ────────────────
+
+@patch.dict(
+    os.environ,
+    {"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_TOKEN": "tok", "INPUT_VERSION": "2.0.0.99"},
+    clear=True,
+)
+@patch(
+    "release.utils.github.json.load",
+    return_value={
+        "inputs": {"version": "2.0.0.99"},
+        "repository": {"full_name": "org/project", "default_branch": "master"},
+    },
+)
+def test_get_release_fetches_via_api_on_workflow_dispatch(mock_load):
+    mock_response = MagicMock()
+    mock_response.ok = True
+    mock_response.json.return_value = {"id": 99, "tag_name": "2.0.0.99", "draft": True}
+    with patch("release.utils.github.open", mock_open()):
+        with patch("release.utils.github.requests.get", return_value=mock_response) as mock_get:
+            github = GitHub()
+            release = github._get_release()
+            assert release == {"id": 99, "tag_name": "2.0.0.99", "draft": True}
+            mock_get.assert_called_once_with(
+                "https://api.github.com/repos/org/project/releases/tags/2.0.0.99",
+                headers={"Authorization": "token tok"},
+            )
+
+
+@patch.dict(
+    os.environ,
+    {"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_TOKEN": "tok"},
+    clear=True,
+)
+@patch(
+    "release.utils.github.json.load",
+    return_value={
+        "inputs": {"version": ""},
+        "repository": {"full_name": "org/project", "default_branch": "master"},
+    },
+)
+def test_get_release_returns_none_when_input_version_missing(mock_load):
+    with patch("release.utils.github.open", mock_open()):
+        github = GitHub()
+        release = github._get_release()
+        assert release is None
+
+
+@patch.dict(
+    os.environ,
+    {"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_TOKEN": "tok", "INPUT_VERSION": "3.0.0.1"},
+    clear=True,
+)
+@patch(
+    "release.utils.github.json.load",
+    return_value={
+        "inputs": {"version": "3.0.0.1"},
+        "repository": {"full_name": "org/project", "default_branch": "master"},
+    },
+)
+def test_get_release_returns_none_on_api_404(mock_load):
+    mock_response = MagicMock()
+    mock_response.ok = False
+    with patch("release.utils.github.open", mock_open()):
+        with patch("release.utils.github.requests.get", return_value=mock_response):
+            github = GitHub()
+            release = github._get_release()
+            assert release is None
+
+
+# ── revoke_release() remains a no-op in all paths (carry-over from v6.8.1) ──
+
+@patch.dict(
+    os.environ,
+    {"GITHUB_EVENT_NAME": "workflow_dispatch", "GITHUB_TOKEN": "tok", "INPUT_VERSION": "1.0.0.42"},
+    clear=True,
+)
+@patch(
+    "release.utils.github.json.load",
+    return_value={
+        "inputs": {"version": "1.0.0.42"},
+        "repository": {"full_name": "org/project", "default_branch": "master"},
+    },
+)
+def test_revoke_release_is_noop_on_workflow_dispatch_path(mock_load):
+    mock_response = MagicMock()
+    mock_response.ok = True
+    mock_response.json.return_value = {"id": 7, "tag_name": "1.0.0.42"}
+    with patch("release.utils.github.open", mock_open()):
+        with patch("release.utils.github.requests.get", return_value=mock_response):
+            with patch("release.utils.github.requests.delete") as mock_delete:
+                with patch("release.utils.github.requests.patch") as mock_patch:
+                    github = GitHub()
+                    # revoke_release must complete without raising and without making HTTP mutations
+                    github.revoke_release()
+                    mock_delete.assert_not_called()
+                    mock_patch.assert_not_called()
