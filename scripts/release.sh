@@ -1,6 +1,6 @@
 #!/bin/bash
 # Release a new version of the action
-# Usage: scripts/release.sh <branch> <version> [draft=true]
+# Usage: scripts/release.sh <branch> <version> [true|false]
 set -xeuo pipefail
 
 : "${GITHUB_STEP_SUMMARY:?}"
@@ -68,12 +68,16 @@ ${release_notes}
     ## What's Changed
 
     ### New Features
+    - _Curated highlights from release notes: new features, important new options_
 
     ### Improvements
+    - _Curated highlights from release notes: improvement and upgrades_
 
     ### Bug Fixes
+    - _Curated highlights from release notes_
 
     ### Documentation
+    - _Curated highlights from release notes_
     \`\`\`
     - Fill in the sections: New Features, Improvements, Bug Fixes, Documentation
     - Add usage examples or references if applicable

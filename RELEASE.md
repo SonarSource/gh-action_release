@@ -13,7 +13,7 @@ Due to the issue with GitHub Reusable Workflows referencing files in the same re
 This is available on GitHub: https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml
 
 ```bash
-scripts/release.sh <branch> <version> [draft=true]
+scripts/release.sh <branch> <version> [true|false]
 ```
 
 This script will:
