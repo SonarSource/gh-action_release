@@ -166,8 +166,9 @@ jobs:
           CREATE_DRAFT_RELEASE: ${{ inputs.createDraftRelease }}
         run: |
           set -euo pipefail
-          if release_details="$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id,isDraft --jq '[.id, .isDraft] | @tsv' 2>/dev/null)"; then
-            read -r release_id release_is_draft <<< "$release_details"
+          if release_details="$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id,isDraft 2>/dev/null)"; then
+            release_id=$(jq -r '.id' <<< "$release_details")
+            release_is_draft=$(jq -r '.isDraft' <<< "$release_details")
             if [[ "$release_is_draft" == "true" ]]; then
               echo "Reusing existing draft release $VERSION"
             else

@@ -256,13 +256,15 @@ been performed based on the provided inputs defined in `with:` section.
 ### Releasing
 
 To create a release run the [Release workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml). The workflow
-will create the GitHub Release.
+will create a **draft** GitHub Release, then post a summary with the release URL, generated notes (with a template to fill in),
+and next steps: review and complete the notes, publish the draft, and communicate on
+[#ops-platform-releases](https://sonarsource.enterprise.slack.com/archives/C0A6RL3L9BP) using the `/platform-comms` skill.
 
 To update the v-branch run
 the [Update v-branch workflow](https://github.com/SonarSource/gh-action_release/actions/workflows/update-v-branch.yml). The workflow will
 update the v-branch to the specified tag.
 
-For more deails see [RELEASE.md](./RELEASE.md)
+For more details see [RELEASE.md](./RELEASE.md)
 
 ## References
 
