@@ -14,6 +14,11 @@ on:
         description: Flag to enable the dry-run execution
         default: false
         required: false
+      createDraftRelease:
+        type: boolean
+        description: Create the draft release when it does not already exist
+        default: true
+        required: false
       publishToBinaries:
         type: boolean
         description: Flag to enable the publication to binaries
@@ -158,12 +163,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
+          CREATE_DRAFT_RELEASE: ${{ inputs.createDraftRelease }}
         run: |
           set -euo pipefail
-          if gh release view "$VERSION" --repo "${{ github.repository }}" --json id,isDraft -q '.isDraft' 2>/dev/null | grep -q true; then
-            echo "Reusing existing draft release $VERSION"
-          elif gh release view "$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1; then
-            echo "::error::Release $VERSION already exists and is NOT a draft. Aborting to avoid duplicate publish."
+          if release_details="$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id,isDraft --jq '[.id, .isDraft] | @tsv' 2>/dev/null)"; then
+            read -r release_id release_is_draft <<< "$release_details"
+            if [[ "$release_is_draft" == "true" ]]; then
+              echo "Reusing existing draft release $VERSION"
+            else
+              echo "::error::Release $VERSION already exists and is NOT a draft. Aborting to avoid duplicate publish."
+              exit 1
+            fi
+          elif [[ "$CREATE_DRAFT_RELEASE" == "false" ]]; then
+            echo "::error::Draft release $VERSION does not exist and createDraftRelease=false. Create the draft release before running this workflow."
             exit 1
           else
             gh release create "$VERSION" \
@@ -171,8 +183,8 @@ jobs:
               --draft --generate-notes \
               --target "$GITHUB_SHA"
             echo "Created draft release $VERSION"
+            release_id=$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id -q '.id')
           fi
-          release_id=$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id -q '.id')
           echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS Credentials
