@@ -40,6 +40,7 @@ jobs:
       slackChannel: build # define the Slack channel to use for notifications
       artifactoryRoleSuffix: promoter # define the Artifactory promoter role suffix
       dryRun: false # perform a dry run execution
+      createDraftRelease: true # create the draft release if it does not already exist
       pushToDatadog: true # push results to Datadog for monitoring
       isDummyProject: false # set to true if this is a dummy project (e.g. sonar-dummy)
 ```
@@ -108,6 +109,8 @@ Three changes: the `on:` block (drop `release: types: [published]`, make `versio
 3. Attaching assets to the draft release:
 
 If your repo has workflows that attach assets (e.g. SBOMs, installers) to the GitHub release, those must run **before** v7 publishes the draft. Create the draft first, attach assets using the draft's `release-id`, then call v7 (which reuses the draft and publishes it atomically). See [`gh-action_sbom`](https://github.com/SonarSource/gh-action_sbom) for an example with SBOMs.
+
+- `createDraftRelease`: To require a pre-created draft release set `createDraftRelease: false`. If the draft release for `version` does not already exist, the workflow fails.
 
 - `isDummyProject`: The _dummy_ projects are treated differently regarding alerts and metrics. E.g.: in Datadog, the stats from dummy
   projects are excluded from some dashboards.
