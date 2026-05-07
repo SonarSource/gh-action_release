@@ -13,7 +13,7 @@ Due to the issue with GitHub Reusable Workflows referencing files in the same re
 This is available on GitHub: https://github.com/SonarSource/gh-action_release/actions/workflows/release.yml
 
 ```bash
-scripts/release.sh <branch> <version>
+scripts/release.sh <branch> <version> [draft=true]
 ```
 
 This script will:
@@ -22,15 +22,14 @@ This script will:
 2. in detached HEAD, replace all `@<branch>` and `ref: ${{ github.ref }}` self-references with `@<original_sha>`
 3. commit and tag that detached commit as `<version>`
 4. push only the tag (the branch is left untouched)
-5. create a Release on GitHub
+5. create a **draft** Release on GitHub (default) with auto-generated notes
+6. post a summary to the workflow run with the release URL, release notes, and next steps
 
-Example:
+After the workflow completes:
 
-```
-$ scripts/release.sh branch-2 2.0.0
-$ git show -s --pretty="%H %s %D" 2.0.0
-2082aca0c8aa7cb64320b3713391d3d1056aaec6 chore: release 2.0.0 (tag: 2.0.0)
-```
+1. **Review and complete the release notes** — the summary includes a template with sections (New Features, Improvements, Bug Fixes, Documentation); fill in and remove empty sections
+2. **Publish the draft release** once the notes are finalized
+3. **Communicate the release** on [#ops-platform-releases](https://sonarsource.enterprise.slack.com/archives/C0A6RL3L9BP) using the `/platform-comms` skill
 
 #### Update the v* Branch
 
@@ -38,12 +37,4 @@ Available as a workflow at: https://github.com/SonarSource/gh-action_release/act
 
 ```bash
 scripts/updatevbranch.sh <version>
-```
-
-Example:
-
-```
-$ scripts/updatevbranch.sh 2.0.0
-$ git show -s --pretty=format:'%H%d' 2.0.0
-2082aca0c8aa7cb64320b3713391d3d1056aaec6 (tag: 2.0.0, origin/v2)
 ```
