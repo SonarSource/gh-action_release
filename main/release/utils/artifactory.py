@@ -3,6 +3,7 @@ import requests
 import tempfile
 
 from dryable import Dryable
+from release.exceptions.promotion_error import PromotionError
 from release.utils.buildinfo import BuildInfo
 
 
@@ -25,7 +26,7 @@ class Artifactory:
         else:
             print(r.status_code)
             print(r.content)
-            raise Exception('unknown build')
+            raise RuntimeError('unknown build')
 
     @Dryable(logging_msg='{function}()')
     def promote(self, release_request, buildinfo, revoke=False):
@@ -77,7 +78,7 @@ class Artifactory:
             r = requests.get(url, headers=self.headers)
             print(f"Successful promotion. Response: {r.text}")
         if not r.ok:
-            raise Exception(f"Promotion failed with code: {r.status_code}. Response was: {r.text}")
+            raise PromotionError(f"Promotion failed with code: {r.status_code}. Response was: {r.text}")
 
     def download(self, artifactory_repo, gid, aid, qual, ext, version, checksums=None):
         gid_path = gid.replace(".", "/")
