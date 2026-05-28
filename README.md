@@ -156,6 +156,10 @@ gh release delete <tag> --cleanup-tag --yes --repo <org/repo>
 
 > **Note:** After deleting the release, the tag name is protected by GitHub's resurrection protection — it cannot be reused for a new release. A new build (and new tag) is required.
 
+### Manual Maven Central re-sync
+
+If `mavenCentralSync` was disabled at release time and the artifacts need to be pushed to Maven Central after the fact, run `scripts/manual-maven-central-sync.sh <build-name> <build-number>` locally — it mirrors the CI flow (JFrog download + Central Portal upload) without re-running the full release. See [Manual Sync — Maven Central](https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/2401697818) for the full procedure and prerequisites.
+
 ## Releasability check
 
 To perform a releasability check for a given version without performing an actual release, run

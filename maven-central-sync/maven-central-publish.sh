@@ -5,6 +5,7 @@ set -euo pipefail
 LOCAL_REPO_DIR="$1"
 CENTRAL_URL="$2"
 AUTO_PUBLISH="$3"
+DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-central-bundle}"
 
 # Validate required environment variables
 if [ -z "${CENTRAL_TOKEN:-}" ]; then
@@ -15,6 +16,7 @@ fi
 echo "Starting Central Portal publishing..."
 echo "Repository: $LOCAL_REPO_DIR"
 echo "Auto-publish: $AUTO_PUBLISH"
+echo "Deployment name: $DEPLOYMENT_NAME"
 
 # Validate that we have artifacts in the repository directory
 if [ ! -d "$LOCAL_REPO_DIR" ]; then
@@ -62,11 +64,14 @@ echo "Publishing type: $PUBLISHING_TYPE"
 
 echo "Uploading to Central Portal..."
 
+ENCODED_NAME=$(jq -rn --arg s "$DEPLOYMENT_NAME" '$s|@uri')
+UPLOAD_URL="$CENTRAL_URL/api/v1/publisher/upload?publishingType=$PUBLISHING_TYPE&name=$ENCODED_NAME"
+
 UPLOAD_RESPONSE=$(curl -s -w "HTTPSTATUS:%{http_code}" \
     -X POST \
     -H "$AUTH_HEADER" \
     -F "bundle=@$BUNDLE_FILE" \
-    "$CENTRAL_URL/api/v1/publisher/upload?publishingType=$PUBLISHING_TYPE")
+    "$UPLOAD_URL")
 
 HTTP_STATUS=$(echo "$UPLOAD_RESPONSE" | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
 RESPONSE_BODY="${UPLOAD_RESPONSE%HTTPSTATUS:*}"
