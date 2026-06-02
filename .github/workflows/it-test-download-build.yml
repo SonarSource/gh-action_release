@@ -27,7 +27,7 @@ jobs:
           # use default values for the following:
           #flat-download:
           #exclusions:
-      - uses: nick-fields/assert-action@aa0067e01f0f6545c31755d6ca128c5a3a14f6bf # v2.0.0
+      - uses: nick-fields/assert-action@22dd2a66ef733fe92022d3704183ac007463eecb # v3.0.0
         name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
         with:
           expected: '--exclusions - --dry-run=true'
@@ -55,7 +55,7 @@ jobs:
           flat-download: 'true'
           exclusions: '-'
           local-repo-dir: '.'
-      - uses: nick-fields/assert-action@aa0067e01f0f6545c31755d6ca128c5a3a14f6bf # v2.0.0
+      - uses: nick-fields/assert-action@22dd2a66ef733fe92022d3704183ac007463eecb # v3.0.0
         name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
         with:
           expected: '--exclusions - --dry-run=true --flat'
