@@ -93,7 +93,8 @@ def buildinfo_sonarqube_cli():
 def test_publish_artifact_s3_upload(buildinfo_com, buildinfo_org, capsys):
     client = MagicMock()
     with patch('boto3.client', return_value=client):
-        artifactory = MagicMock(**{'download.return_value': "/tmp/dummy-1.0.2.456.jar"})
+        artifactory = MagicMock(**{'download.return_value': "/tmp/dummy-1.0.2.456.jar",
+                                   'find_sbom_filename.return_value': None})
         binaries = Binaries("test_bucket")
         version = buildinfo_com.get_version()
         with patch('release.utils.binaries.Binaries.s3_upload') as s3_upload:
@@ -117,7 +118,8 @@ def test_publish_artifact_s3_upload(buildinfo_com, buildinfo_org, capsys):
 def test_publish_artifact_s3_upload_sonarqube(buildinfo_sonarqube, capsys):
     client = MagicMock()
     with patch('boto3.client', return_value=client):
-        artifactory = MagicMock(**{'download.return_value': "/tmp/sonarqube-10.0.0.66185.zip"})
+        artifactory = MagicMock(**{'download.return_value': "/tmp/sonarqube-10.0.0.66185.zip",
+                                   'find_sbom_filename.return_value': None})
         binaries = Binaries("test_bucket")
         version = buildinfo_sonarqube.get_version()
         with patch('release.utils.binaries.Binaries.s3_upload') as s3_upload:
@@ -134,7 +136,8 @@ def test_publish_artifact_upload_file_sonarqube_cli(buildinfo_sonarqube_cli, cap
     client = MagicMock()
     binaries_session.client.return_value = client
     with patch('boto3.Session', return_value=binaries_session):
-        artifactory = MagicMock(**{'download.return_value': "/tmp/sonarqube-cli-0.6.0.500-linux-x64.zip"})
+        artifactory = MagicMock(**{'download.return_value': "/tmp/sonarqube-cli-0.6.0.500-linux-x64.zip",
+                                   'find_sbom_filename.return_value': None})
         binaries = Binaries("test_bucket")
         with patch.object(binaries, 'upload_eclipse_update_site_unzip') as mock_upload_eclipse_update_site_unzip, \
             patch.object(binaries, 'upload_sonarlint_p2_site') as mock_upload_sonarlint_p2_site, \
@@ -157,7 +160,8 @@ def test_publish_artifact_upload_file(buildinfo_com, buildinfo_org, capsys):
     client = MagicMock()
     binaries_session.client.return_value = client
     with patch('boto3.Session', return_value=binaries_session):
-        artifactory = MagicMock(**{'download.return_value': "/tmp/dummy-1.0.2.456.jar"})
+        artifactory = MagicMock(**{'download.return_value': "/tmp/dummy-1.0.2.456.jar",
+                                   'find_sbom_filename.return_value': None})
         binaries = Binaries("test_bucket")
         with patch.object(binaries, 'upload_eclipse_update_site_unzip') as mock_upload_eclipse_update_site_unzip, \
             patch.object(binaries, 'upload_sonarlint_p2_site') as mock_upload_sonarlint_p2_site, \
@@ -207,7 +211,8 @@ def test_publish_artifact_upload_file_sonarlint(buildinfo_sonarlint, capsys):
     client = MagicMock()
     binaries_session.client.return_value = client
     with patch('boto3.Session', return_value=binaries_session):
-        artifactory = MagicMock(**{'download.return_value': "/tmp/org.sonarlint.eclipse.site-7.9.0.63244.zip"})
+        artifactory = MagicMock(**{'download.return_value': "/tmp/org.sonarlint.eclipse.site-7.9.0.63244.zip",
+                                   'find_sbom_filename.return_value': None})
         binaries = Binaries("test_bucket")
         with patch.object(binaries, 'upload_eclipse_update_site_unzip') as mock_upload_eclipse_update_site_unzip, \
             patch.object(binaries, 'upload_sonarlint_p2_site') as mock_upload_sonarlint_p2_site, \
@@ -239,7 +244,8 @@ def test_publish_artifact_upload_file_reddeer(buildinfo_reddeer, capsys):
     client = MagicMock()
     binaries_session.client.return_value = client
     with patch('boto3.Session', return_value=binaries_session):
-        artifactory = MagicMock(**{'download.return_value': "/tmp/org.eclipse.reddeer.site-4.7.0.53.zip"})
+        artifactory = MagicMock(**{'download.return_value': "/tmp/org.eclipse.reddeer.site-4.7.0.53.zip",
+                                   'find_sbom_filename.return_value': None})
         binaries = Binaries("test_bucket")
         with patch.object(binaries, 'upload_eclipse_update_site_unzip') as mock_upload_eclipse_update_site_unzip, \
             patch.object(binaries, 'upload_sonarlint_p2_site') as mock_upload_sonarlint_p2_site, \
@@ -264,3 +270,51 @@ def test_revoke_publish_artifact():
     publish_artifact(artifactory, binaries, "groupId:artefactId:ext", "version", "repo", True)
     artifactory.assert_not_called()
     binaries.s3_delete.assert_called_once_with('artefactId-version.ext', 'groupId', 'artefactId', 'version', '')
+    binaries.s3_delete_sbom.assert_called_once_with('artefactId-version.sbom.json', 'groupId', 'artefactId', 'version', '')
+
+
+def test_publish_artifact_uploads_sbom(buildinfo_sonarqube):
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
+        artifactory = MagicMock(**{
+            'download.return_value': "/tmp/sonarqube-10.0.0.66185.zip",
+            'find_sbom_filename.return_value': "sonar-application-10.0.0.66185-cyclonedx.json",
+            'download_named.return_value': ("/tmp/sonar-application-10.0.0.66185-cyclonedx.json",
+                                            ["asc"]),
+        })
+        binaries = Binaries("test_bucket")
+        with patch.object(client, 'upload_file') as upload_file:
+            version = buildinfo_sonarqube.get_version()
+            publish_artifact(artifactory, binaries, buildinfo_sonarqube.get_artifacts_to_publish(), version, "repo")
+
+            # SBOM is discovered using the original aid (sonar-application), not the s3 aid.
+            artifactory.find_sbom_filename.assert_called_once_with(
+                "repo", "org.sonarsource.sonarqube", "sonar-application", "10.0.0.66185")
+            artifactory.download_named.assert_called_once_with(
+                "repo", "org.sonarsource.sonarqube", "sonar-application", "10.0.0.66185",
+                "sonar-application-10.0.0.66185-cyclonedx.json",
+                checksums=["md5", "sha1", "sha256"], optional_checksums=["asc"])
+            # SBOM uploaded next to the binary with the normalized name + checksums (incl. .asc).
+            upload_file.assert_any_call(
+                "/tmp/sonar-application-10.0.0.66185-cyclonedx.json", "test_bucket",
+                "Distribution/sonarqube/sonarqube-10.0.0.66185.sbom.json")
+            upload_file.assert_any_call(
+                "/tmp/sonar-application-10.0.0.66185-cyclonedx.json.asc", "test_bucket",
+                "Distribution/sonarqube/sonarqube-10.0.0.66185.sbom.json.asc")
+
+
+def test_publish_artifact_skips_when_no_sbom(buildinfo_org, capsys):
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
+        artifactory = MagicMock(**{'download.return_value': "/tmp/dummy-1.0.2.456.jar",
+                                   'find_sbom_filename.return_value': None})
+        binaries = Binaries("test_bucket")
+        version = buildinfo_org.get_version()
+        publish_artifact(artifactory, binaries, buildinfo_org.get_artifacts_to_publish(), version, "repo")
+        artifactory.download_named.assert_not_called()
+        assert "no SBOM found for org.sonarsource.dummy:dummy:1.0.2.456 - skipping SBOM upload" \
+               in capsys.readouterr().out

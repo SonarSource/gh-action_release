@@ -110,3 +110,77 @@ class Artifactory:
                 f.write(r.content)
             print(f'downloaded {checksum_file}')
         return temp_file
+
+    def _resolve_repo(self, artifactory_repo, gid):
+        if gid.startswith('com.'):
+            return artifactory_repo.replace('public', 'private')
+        return artifactory_repo
+
+    def find_sbom_filename(self, artifactory_repo, gid, aid, version):
+        """Discover the SBOM file co-located with the artifact in its Repox version folder.
+
+        SBOM naming is not uniform across products (e.g. '-cyclonedx.json',
+        '.sbom-cyclonedx.json', 'SonarLint.visualstudio.sbom-<v>-<year>.json'), so we match any
+        '.json'/'.xml' child whose name mentions 'cyclonedx' or 'sbom' and is not a checksum or
+        signature. Returns the filename or None when no SBOM is published for this artifact.
+        """
+        repo = self._resolve_repo(artifactory_repo, gid)
+        gid_path = gid.replace(".", "/")
+        url = f"{self.url}/api/storage/{repo}/{gid_path}/{aid}/{version}"
+        r = requests.get(url, headers=self.headers)
+        if r.status_code != 200:
+            print(f"could not list {url} (status {r.status_code}) to find an SBOM")
+            return None
+        children = r.json().get('children', [])
+        excluded_suffixes = ('.asc', '.md5', '.sha1', '.sha256')
+        for child in children:
+            if child.get('folder'):
+                continue
+            name = child.get('uri', '').lstrip('/')
+            lowered = name.lower()
+            if any(lowered.endswith(suffix) for suffix in excluded_suffixes):
+                continue
+            if not (lowered.endswith('.json') or lowered.endswith('.xml')):
+                continue
+            if 'cyclonedx' in lowered or 'sbom' in lowered:
+                return name
+        return None
+
+    def download_named(self, artifactory_repo, gid, aid, version, filename, checksums=None,
+                       optional_checksums=None):
+        """Download an exact filename (and its checksum siblings) from a Repox version folder.
+
+        Unlike download(), the filename is provided verbatim (used for SBOMs whose name does not
+        follow the {aid}-{version}.{ext} pattern). Checksums in `optional_checksums` are fetched
+        best-effort and skipped when absent (e.g. a product that does not sign its SBOM).
+        """
+        repo = self._resolve_repo(artifactory_repo, gid)
+        gid_path = gid.replace(".", "/")
+        url = f"{self.url}/{repo}/{gid_path}/{aid}/{version}/{filename}"
+        print(url)
+        temp_file = f"{tempfile.gettempdir()}/{filename}"
+        r = requests.get(url, headers=self.headers, stream=True)
+        r.raise_for_status()
+        with open(temp_file, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print(f'downloaded {temp_file}')
+
+        for checksum in (checksums or []):
+            r = requests.get(f"{url}.{checksum}", headers=self.headers)
+            r.raise_for_status()
+            with open(f"{temp_file}.{checksum}", 'wb') as f:
+                f.write(r.content)
+            print(f'downloaded {temp_file}.{checksum}')
+
+        downloaded_optional = []
+        for checksum in (optional_checksums or []):
+            r = requests.get(f"{url}.{checksum}", headers=self.headers)
+            if r.status_code != 200:
+                print(f"skipping optional {filename}.{checksum} (status {r.status_code})")
+                continue
+            with open(f"{temp_file}.{checksum}", 'wb') as f:
+                f.write(r.content)
+            print(f'downloaded {temp_file}.{checksum}')
+            downloaded_optional.append(checksum)
+        return temp_file, downloaded_optional
