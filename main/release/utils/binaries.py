@@ -90,18 +90,23 @@ class Binaries:
         platform_folder = self.qual_to_platform_folder(qual)
         return f"{root_bucket_key}/{version}/{platform_folder}/{filename}"
 
-    def s3_upload(self, artifact_file, filename, gid, aid, version, qual=None):
+    def get_bucket_key(self, aid, gid, filename, version, qual=None):
         root_bucket_key = self.get_file_bucket_key(aid, gid)
         if Binaries.use_hierarchical_qualifier_layout(aid, qual):
-            file_bucket_key = self.get_hierarchical_bucket_key(root_bucket_key, filename, version, qual)
-        else:
-            file_bucket_key = self.get_flat_bucket_key(root_bucket_key, filename)
+            return self.get_hierarchical_bucket_key(root_bucket_key, filename, version, qual)
+        return self.get_flat_bucket_key(root_bucket_key, filename)
 
-        self.s3_client.upload_file(artifact_file, self.binaries_bucket_name, file_bucket_key)
-        print(f'uploaded {artifact_file} to s3://{self.binaries_bucket_name}/{file_bucket_key}')
-        for checksum in Binaries.get_actual_checksums(aid):
-            self.s3_client.upload_file(f'{artifact_file}.{checksum}', self.binaries_bucket_name, f'{file_bucket_key}.{checksum}')
-            print(f'uploaded {artifact_file}.{checksum} to s3://{self.binaries_bucket_name}/{file_bucket_key}.{checksum}')
+    def _upload_with_checksums(self, local_file, bucket_key, checksums):
+        self.s3_client.upload_file(local_file, self.binaries_bucket_name, bucket_key)
+        print(f'uploaded {local_file} to s3://{self.binaries_bucket_name}/{bucket_key}')
+        for checksum in checksums:
+            self.s3_client.upload_file(f'{local_file}.{checksum}', self.binaries_bucket_name, f'{bucket_key}.{checksum}')
+            print(f'uploaded {local_file}.{checksum} to s3://{self.binaries_bucket_name}/{bucket_key}.{checksum}')
+
+    def s3_upload(self, artifact_file, filename, gid, aid, version, qual=None):
+        root_bucket_key = self.get_file_bucket_key(aid, gid)
+        file_bucket_key = self.get_bucket_key(aid, gid, filename, version, qual)
+        self._upload_with_checksums(artifact_file, file_bucket_key, Binaries.get_actual_checksums(aid))
 
         version_bucket_key = f"{root_bucket_key}/{version}"
 
@@ -115,6 +120,23 @@ class Binaries:
             # internally anyway and the update process inside SonarSource/sonarlint-eclipse is done
             # manually to not break something by relying on the "latest" released artifact!
             self.upload_eclipse_update_site_unzip(version_bucket_key, artifact_file)
+
+    @staticmethod
+    def sbom_filename_for(binary_filename):
+        """Normalized SBOM name co-located with the binary, e.g. sonarqube-10.x.zip -> sonarqube-10.x.sbom.json."""
+        base = os.path.splitext(binary_filename)[0]
+        return f"{base}.sbom.json"
+
+    def s3_upload_sbom(self, sbom_file, sbom_filename, gid, aid, version, qual=None, checksums=None):
+        bucket_key = self.get_bucket_key(aid, gid, sbom_filename, version, qual)
+        self._upload_with_checksums(sbom_file, bucket_key, checksums or [])
+
+    def s3_delete_sbom(self, sbom_filename, gid, aid, version, qual=None):
+        self.s3_delete(sbom_filename, gid, aid, version, qual)
+        # Also remove the checksum/signature siblings written at upload time so a revoke does not
+        # leave orphaned objects referencing a deleted SBOM.
+        for checksum in UPLOAD_CHECKSUMS:
+            self.s3_delete(f"{sbom_filename}.{checksum}", gid, aid, version, qual)
 
     def get_file_bucket_key(self, aid, gid):
         # SonarLint Eclipse is uploaded to a special directory

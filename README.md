@@ -47,8 +47,9 @@ jobs:
 
 Notes:
 
-- `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO`
-  environment variable is required in the release Build Info.
+- `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO` environment variable is required in the release Build Info. The CycloneDX
+  SBOM is also uploaded next to the artifacts. Products that do not publish an SBOM to Repox are
+  silently skipped.
 
 ## Migrating from v6 to v7 (draft-first, `workflow_dispatch`)
 

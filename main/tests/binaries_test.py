@@ -7,6 +7,8 @@ import pytest
 
 from release.utils.binaries import Binaries, SONARLINT_AID
 
+SONARQUBE_GID = 'org.sonarsource.sonarqube'
+
 
 def test_upload_sonarlint_p2_site(capsys):
     binaries_session = MagicMock()
@@ -58,6 +60,45 @@ def test_s3_delete_sonarlint_eclipse():
     client.delete_object.assert_called_once_with(Bucket='bucket', Key='SonarLint-for-Eclipse/releases/filename')
     bucket.objects.filter.assert_called_once_with(Prefix='SonarLint-for-Eclipse/releases/version/')
     bucket.objects.filter.return_value.delete.assert_called_once()
+
+
+def test_sbom_filename_for():
+    assert Binaries.sbom_filename_for('sonarqube-10.0.0.66185.zip') == 'sonarqube-10.0.0.66185.sbom.json'
+    assert Binaries.sbom_filename_for('sonar-java-plugin-8.0.jar') == 'sonar-java-plugin-8.0.sbom.json'
+    assert Binaries.sbom_filename_for('sonarlint-vscode-10.0.vsix') == 'sonarlint-vscode-10.0.sbom.json'
+
+
+def test_s3_upload_sbom_flat_layout(capsys):
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    sbom = f"{tempfile.gettempdir()}/sbom.json"
+    with patch('boto3.Session', return_value=binaries_session), \
+        patch.object(client, 'upload_file') as upload_file:
+        binaries = Binaries("test_bucket")
+        binaries.s3_upload_sbom(sbom, 'sonarqube-10.0.sbom.json', SONARQUBE_GID,
+                                'sonarqube', '10.0', '', checksums=['md5', 'sha256', 'asc'])
+        key = 'Distribution/sonarqube/sonarqube-10.0.sbom.json'
+        upload_file.assert_any_call(sbom, 'test_bucket', key)
+        upload_file.assert_any_call(f"{sbom}.md5", 'test_bucket', f"{key}.md5")
+        upload_file.assert_any_call(f"{sbom}.sha256", 'test_bucket', f"{key}.sha256")
+        upload_file.assert_any_call(f"{sbom}.asc", 'test_bucket', f"{key}.asc")
+
+
+def test_s3_upload_sbom_hierarchical_layout_for_sonarqube_cli():
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    sbom = f"{tempfile.gettempdir()}/sbom.json"
+    with patch('boto3.Session', return_value=binaries_session), \
+        patch.object(client, 'upload_file') as upload_file:
+        binaries = Binaries("test_bucket")
+        binaries.s3_upload_sbom(sbom, 'sonarqube-cli-1.0-linux-x64.sbom.json',
+                                SONARQUBE_GID, 'sonarqube-cli', '1.0', 'linux-x64',
+                                checksums=['md5'])
+        upload_file.assert_any_call(
+            sbom, 'test_bucket',
+            'Distribution/sonarqube-cli/1.0/linux/sonarqube-cli-1.0-linux-x64.sbom.json')
 
 
 def test_qual_to_platform_folder():
