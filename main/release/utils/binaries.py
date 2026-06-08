@@ -133,6 +133,10 @@ class Binaries:
 
     def s3_delete_sbom(self, sbom_filename, gid, aid, version, qual=None):
         self.s3_delete(sbom_filename, gid, aid, version, qual)
+        # Also remove the checksum/signature siblings written at upload time so a revoke does not
+        # leave orphaned objects referencing a deleted SBOM.
+        for checksum in UPLOAD_CHECKSUMS:
+            self.s3_delete(f"{sbom_filename}.{checksum}", gid, aid, version, qual)
 
     def get_file_bucket_key(self, aid, gid):
         # SonarLint Eclipse is uploaded to a special directory

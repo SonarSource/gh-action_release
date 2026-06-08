@@ -169,6 +169,9 @@ class StorageResponse:
         return {'children': self._children}
 
 
+TEST_GID = 'org.x'
+
+
 def _child(name, folder=False):
     return {'uri': f'/{name}', 'folder': folder}
 
@@ -203,12 +206,12 @@ def test_find_sbom_filename_sbom_named_and_private_repo():
 def test_find_sbom_filename_none_when_absent():
     children = [_child('binary.zip'), _child('binary.zip.asc'), _child('binary.pom')]
     with patch('release.utils.artifactory.requests.get', return_value=StorageResponse(200, children)):
-        assert Artifactory("token").find_sbom_filename('repo', 'org.x', 'aid', '1.0') is None
+        assert Artifactory("token").find_sbom_filename('repo', TEST_GID, 'aid', '1.0') is None
 
 
 def test_find_sbom_filename_none_on_listing_error():
     with patch('release.utils.artifactory.requests.get', return_value=StorageResponse(404, [])):
-        assert Artifactory("token").find_sbom_filename('repo', 'org.x', 'aid', '1.0') is None
+        assert Artifactory("token").find_sbom_filename('repo', TEST_GID, 'aid', '1.0') is None
 
 
 def test_download_named_with_optional_checksum_present_and_absent():
@@ -225,7 +228,7 @@ def test_download_named_with_optional_checksum_present_and_absent():
          patch('builtins.open', create=True):
         request.side_effect = [main_response, md5_response, sha1_response, sha256_response, asc_missing]
         temp_file, optional = Artifactory("token").download_named(
-            'repo', 'org.x', 'aid', '1.0', 'aid-1.0-cyclonedx.json',
+            'repo', TEST_GID, 'aid', '1.0', 'aid-1.0-cyclonedx.json',
             checksums=['md5', 'sha1', 'sha256'], optional_checksums=['asc'])
         assert temp_file == f"{tempfile.gettempdir()}/aid-1.0-cyclonedx.json"
         assert optional == []  # .asc was absent (404) -> skipped, not fatal

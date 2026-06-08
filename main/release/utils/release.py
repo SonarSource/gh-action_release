@@ -88,18 +88,24 @@ def publish_sbom(artifactory, binaries, artifactory_repo, gid, aid, s3_aid, vers
     """Upload the artifact's SBOM next to the binary on binaries.sonarsource.com (BUILD-10272).
 
     The SBOM is co-located with the binary in the same Repox version folder; if the product does
-    not publish one, the step is skipped without failing the release.
+    not publish one, the step is skipped without failing the release. SBOM publishing is
+    best-effort: any error (download, checksum, S3) is logged and swallowed so it cannot abort an
+    already-published binary release (the binary is uploaded before this step runs).
     """
-    sbom_repox_filename = artifactory.find_sbom_filename(artifactory_repo, gid, aid, version)
-    if not sbom_repox_filename:
-        print(f"no SBOM found for {gid}:{aid}:{version} - skipping SBOM upload")
-        return
-    sbom_file, optional_checksums = artifactory.download_named(
-        artifactory_repo, gid, aid, version, sbom_repox_filename,
-        checksums=SBOM_REQUIRED_CHECKSUMS, optional_checksums=SBOM_OPTIONAL_CHECKSUMS)
-    sbom_s3_filename = Binaries.sbom_filename_for(binary_filename)
-    binaries.s3_upload_sbom(sbom_file, sbom_s3_filename, gid, s3_aid, version, qual,
-                            checksums=SBOM_REQUIRED_CHECKSUMS + optional_checksums)
+    try:
+        sbom_repox_filename = artifactory.find_sbom_filename(artifactory_repo, gid, aid, version)
+        if not sbom_repox_filename:
+            print(f"no SBOM found for {gid}:{aid}:{version} - skipping SBOM upload")
+            return
+        sbom_file, optional_checksums = artifactory.download_named(
+            artifactory_repo, gid, aid, version, sbom_repox_filename,
+            checksums=SBOM_REQUIRED_CHECKSUMS, optional_checksums=SBOM_OPTIONAL_CHECKSUMS)
+        sbom_s3_filename = Binaries.sbom_filename_for(binary_filename)
+        binaries.s3_upload_sbom(sbom_file, sbom_s3_filename, gid, s3_aid, version, qual,
+                                checksums=SBOM_REQUIRED_CHECKSUMS + optional_checksums)
+    except Exception as e:
+        print(f"::warning::SBOM publishing failed for {gid}:{aid}:{version} - "
+              f"continuing release: {e}")
 
 
 def set_output(output_name, value):

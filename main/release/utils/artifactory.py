@@ -133,6 +133,7 @@ class Artifactory:
             return None
         children = r.json().get('children', [])
         excluded_suffixes = ('.asc', '.md5', '.sha1', '.sha256')
+        candidates = []
         for child in children:
             if child.get('folder'):
                 continue
@@ -143,8 +144,18 @@ class Artifactory:
             if not (lowered.endswith('.json') or lowered.endswith('.xml')):
                 continue
             if 'cyclonedx' in lowered or 'sbom' in lowered:
-                return name
-        return None
+                candidates.append(name)
+        if not candidates:
+            return None
+        # Artifactory listing order is not guaranteed; pick deterministically: prefer an explicit
+        # CycloneDX file, then .json over .xml, then by name.
+        def sort_key(n):
+            low = n.lower()
+            return (0 if 'cyclonedx' in low else 1, 0 if low.endswith('.json') else 1, low)
+        candidates.sort(key=sort_key)
+        if len(candidates) > 1:
+            print(f"multiple SBOM candidates found, using {candidates[0]} (from {candidates})")
+        return candidates[0]
 
     def download_named(self, artifactory_repo, gid, aid, version, filename, checksums=None,
                        optional_checksums=None):

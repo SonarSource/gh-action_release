@@ -7,6 +7,8 @@ import pytest
 
 from release.utils.binaries import Binaries, SONARLINT_AID
 
+SONARQUBE_GID = 'org.sonarsource.sonarqube'
+
 
 def test_upload_sonarlint_p2_site(capsys):
     binaries_session = MagicMock()
@@ -70,29 +72,32 @@ def test_s3_upload_sbom_flat_layout(capsys):
     binaries_session = MagicMock()
     client = MagicMock()
     binaries_session.client.return_value = client
+    sbom = f"{tempfile.gettempdir()}/sbom.json"
     with patch('boto3.Session', return_value=binaries_session), \
         patch.object(client, 'upload_file') as upload_file:
         binaries = Binaries("test_bucket")
-        binaries.s3_upload_sbom('/tmp/sbom.json', 'sonarqube-10.0.sbom.json', 'org.sonarsource.sonarqube',
+        binaries.s3_upload_sbom(sbom, 'sonarqube-10.0.sbom.json', SONARQUBE_GID,
                                 'sonarqube', '10.0', '', checksums=['md5', 'sha256', 'asc'])
-        upload_file.assert_any_call('/tmp/sbom.json', 'test_bucket', 'Distribution/sonarqube/sonarqube-10.0.sbom.json')
-        upload_file.assert_any_call('/tmp/sbom.json.md5', 'test_bucket', 'Distribution/sonarqube/sonarqube-10.0.sbom.json.md5')
-        upload_file.assert_any_call('/tmp/sbom.json.sha256', 'test_bucket', 'Distribution/sonarqube/sonarqube-10.0.sbom.json.sha256')
-        upload_file.assert_any_call('/tmp/sbom.json.asc', 'test_bucket', 'Distribution/sonarqube/sonarqube-10.0.sbom.json.asc')
+        key = 'Distribution/sonarqube/sonarqube-10.0.sbom.json'
+        upload_file.assert_any_call(sbom, 'test_bucket', key)
+        upload_file.assert_any_call(f"{sbom}.md5", 'test_bucket', f"{key}.md5")
+        upload_file.assert_any_call(f"{sbom}.sha256", 'test_bucket', f"{key}.sha256")
+        upload_file.assert_any_call(f"{sbom}.asc", 'test_bucket', f"{key}.asc")
 
 
 def test_s3_upload_sbom_hierarchical_layout_for_sonarqube_cli():
     binaries_session = MagicMock()
     client = MagicMock()
     binaries_session.client.return_value = client
+    sbom = f"{tempfile.gettempdir()}/sbom.json"
     with patch('boto3.Session', return_value=binaries_session), \
         patch.object(client, 'upload_file') as upload_file:
         binaries = Binaries("test_bucket")
-        binaries.s3_upload_sbom('/tmp/sbom.json', 'sonarqube-cli-1.0-linux-x64.sbom.json',
-                                'org.sonarsource.sonarqube', 'sonarqube-cli', '1.0', 'linux-x64',
+        binaries.s3_upload_sbom(sbom, 'sonarqube-cli-1.0-linux-x64.sbom.json',
+                                SONARQUBE_GID, 'sonarqube-cli', '1.0', 'linux-x64',
                                 checksums=['md5'])
         upload_file.assert_any_call(
-            '/tmp/sbom.json', 'test_bucket',
+            sbom, 'test_bucket',
             'Distribution/sonarqube-cli/1.0/linux/sonarqube-cli-1.0-linux-x64.sbom.json')
 
 

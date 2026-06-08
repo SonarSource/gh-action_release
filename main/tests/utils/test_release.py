@@ -1,3 +1,4 @@
+import tempfile
 from unittest.mock import MagicMock, patch
 
 from pytest import fixture
@@ -277,12 +278,12 @@ def test_publish_artifact_uploads_sbom(buildinfo_sonarqube):
     binaries_session = MagicMock()
     client = MagicMock()
     binaries_session.client.return_value = client
+    sbom_local = f"{tempfile.gettempdir()}/sonar-application-10.0.0.66185-cyclonedx.json"
     with patch('boto3.Session', return_value=binaries_session):
         artifactory = MagicMock(**{
-            'download.return_value': "/tmp/sonarqube-10.0.0.66185.zip",
+            'download.return_value': f"{tempfile.gettempdir()}/sonarqube-10.0.0.66185.zip",
             'find_sbom_filename.return_value': "sonar-application-10.0.0.66185-cyclonedx.json",
-            'download_named.return_value': ("/tmp/sonar-application-10.0.0.66185-cyclonedx.json",
-                                            ["asc"]),
+            'download_named.return_value': (sbom_local, ["asc"]),
         })
         binaries = Binaries("test_bucket")
         with patch.object(client, 'upload_file') as upload_file:
@@ -297,12 +298,9 @@ def test_publish_artifact_uploads_sbom(buildinfo_sonarqube):
                 "sonar-application-10.0.0.66185-cyclonedx.json",
                 checksums=["md5", "sha1", "sha256"], optional_checksums=["asc"])
             # SBOM uploaded next to the binary with the normalized name + checksums (incl. .asc).
-            upload_file.assert_any_call(
-                "/tmp/sonar-application-10.0.0.66185-cyclonedx.json", "test_bucket",
-                "Distribution/sonarqube/sonarqube-10.0.0.66185.sbom.json")
-            upload_file.assert_any_call(
-                "/tmp/sonar-application-10.0.0.66185-cyclonedx.json.asc", "test_bucket",
-                "Distribution/sonarqube/sonarqube-10.0.0.66185.sbom.json.asc")
+            sbom_key = "Distribution/sonarqube/sonarqube-10.0.0.66185.sbom.json"
+            upload_file.assert_any_call(sbom_local, "test_bucket", sbom_key)
+            upload_file.assert_any_call(f"{sbom_local}.asc", "test_bucket", f"{sbom_key}.asc")
 
 
 def test_publish_artifact_skips_when_no_sbom(buildinfo_org, capsys):
