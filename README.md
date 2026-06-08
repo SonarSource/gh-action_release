@@ -47,14 +47,9 @@ jobs:
 
 Notes:
 
-- `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO`
-  environment variable is required in the release Build Info.
-- SBOM co-location (BUILD-10272): when `publishToBinaries` is enabled, each artifact's CycloneDX
-  SBOM is uploaded next to the binary on `binaries.sonarsource.com`. The SBOM is discovered in the
-  same Repox version folder as the artifact (any `*cyclonedx*`/`*sbom*` `.json`/`.xml` sibling),
-  uploaded as `<binary-basename>.sbom.json` (e.g. `sonarqube-10.x.sbom.json`) with `.md5`, `.sha1`,
-  `.sha256` and, when present, `.asc` checksums. Products that do not publish an SBOM to Repox are
-  skipped silently — no per-project configuration is required.
+- `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO` environment variable is required in the release Build Info. The CycloneDX
+  SBOM is also uploaded next to the artifacts. Products that do not publish an SBOM to Repox are
+  silently skipped.
 
 ## Migrating from v6 to v7 (draft-first, `workflow_dispatch`)
 

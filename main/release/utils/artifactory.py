@@ -5,8 +5,6 @@ import tempfile
 from dryable import Dryable
 from release.utils.buildinfo import BuildInfo
 
-# Suffixes that are checksum/signature siblings, never the SBOM itself.
-SBOM_EXCLUDED_SUFFIXES = ('.asc', '.md5', '.sha1', '.sha256')
 SBOM_EXTENSIONS = ('.json', '.xml')
 
 
@@ -122,11 +120,13 @@ class Artifactory:
 
     @staticmethod
     def _is_sbom_candidate(name):
-        """An SBOM file is a '.json'/'.xml' mentioning 'cyclonedx'/'sbom', not a checksum/signature."""
+        """An SBOM file is a '.json'/'.xml' mentioning 'cyclonedx'/'sbom'.
+
+        Checksum/signature siblings (.asc/.md5/.sha1/.sha256) are excluded implicitly since they
+        never end with an SBOM extension.
+        """
         lowered = name.lower()
-        if lowered.endswith(SBOM_EXCLUDED_SUFFIXES) or not lowered.endswith(SBOM_EXTENSIONS):
-            return False
-        return 'cyclonedx' in lowered or 'sbom' in lowered
+        return lowered.endswith(SBOM_EXTENSIONS) and ('cyclonedx' in lowered or 'sbom' in lowered)
 
     @staticmethod
     def _sbom_sort_key(name):
