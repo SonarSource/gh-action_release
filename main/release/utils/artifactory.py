@@ -5,6 +5,10 @@ import tempfile
 from dryable import Dryable
 from release.utils.buildinfo import BuildInfo
 
+# Suffixes that are checksum/signature siblings, never the SBOM itself.
+SBOM_EXCLUDED_SUFFIXES = ('.asc', '.md5', '.sha1', '.sha256')
+SBOM_EXTENSIONS = ('.json', '.xml')
+
 
 class Artifactory:
     url = 'https://repox.jfrog.io/repox'
@@ -116,6 +120,21 @@ class Artifactory:
             return artifactory_repo.replace('public', 'private')
         return artifactory_repo
 
+    @staticmethod
+    def _is_sbom_candidate(name):
+        """An SBOM file is a '.json'/'.xml' mentioning 'cyclonedx'/'sbom', not a checksum/signature."""
+        lowered = name.lower()
+        if lowered.endswith(SBOM_EXCLUDED_SUFFIXES) or not lowered.endswith(SBOM_EXTENSIONS):
+            return False
+        return 'cyclonedx' in lowered or 'sbom' in lowered
+
+    @staticmethod
+    def _sbom_sort_key(name):
+        # Artifactory listing order is not guaranteed; pick deterministically: prefer an explicit
+        # CycloneDX file, then .json over .xml, then by name.
+        lowered = name.lower()
+        return (0 if 'cyclonedx' in lowered else 1, 0 if lowered.endswith('.json') else 1, lowered)
+
     def find_sbom_filename(self, artifactory_repo, gid, aid, version):
         """Discover the SBOM file co-located with the artifact in its Repox version folder.
 
@@ -131,28 +150,10 @@ class Artifactory:
         if r.status_code != 200:
             print(f"could not list {url} (status {r.status_code}) to find an SBOM")
             return None
-        children = r.json().get('children', [])
-        excluded_suffixes = ('.asc', '.md5', '.sha1', '.sha256')
-        candidates = []
-        for child in children:
-            if child.get('folder'):
-                continue
-            name = child.get('uri', '').lstrip('/')
-            lowered = name.lower()
-            if any(lowered.endswith(suffix) for suffix in excluded_suffixes):
-                continue
-            if not (lowered.endswith('.json') or lowered.endswith('.xml')):
-                continue
-            if 'cyclonedx' in lowered or 'sbom' in lowered:
-                candidates.append(name)
+        names = (c.get('uri', '').lstrip('/') for c in r.json().get('children', []) if not c.get('folder'))
+        candidates = sorted((n for n in names if self._is_sbom_candidate(n)), key=self._sbom_sort_key)
         if not candidates:
             return None
-        # Artifactory listing order is not guaranteed; pick deterministically: prefer an explicit
-        # CycloneDX file, then .json over .xml, then by name.
-        def sort_key(n):
-            low = n.lower()
-            return (0 if 'cyclonedx' in low else 1, 0 if low.endswith('.json') else 1, low)
-        candidates.sort(key=sort_key)
         if len(candidates) > 1:
             print(f"multiple SBOM candidates found, using {candidates[0]} (from {candidates})")
         return candidates[0]
