@@ -96,13 +96,20 @@ jobs:
           print-hash: true
       - name: Notify on failure
         if: ${{ failure() }}
-        uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0
+        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
-          status: failure
-          fields: repo,author,eventName
-          channel: ${{ inputs.slackChannel }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+          webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "channel": "${{ inputs.slackChannel }}",
+              "attachments": [
+                {
+                  "color": "#ff0000",
+                  "text": "PyPI publish failed in `${{ github.repository }}` (event: `${{ github.event_name }}`, triggered by `${{ github.actor }}`).\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>"
+                }
+              ]
+            }
       - name: Exit with error
         if: ${{ failure() }}
         run: exit 1
