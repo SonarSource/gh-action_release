@@ -35,7 +35,7 @@ name: Maven Central
 jobs:
   maven-central:
     name: Push to maven Central
-    runs-on: github-ubuntu-latest-s
+    runs-on: warp-custom-ubuntu-24-04
     environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
