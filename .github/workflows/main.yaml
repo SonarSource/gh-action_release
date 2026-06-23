@@ -143,7 +143,7 @@ jobs:
 
     steps:
       # Clone gh-action_release repository to run actions locally
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
           # to directly reference the repository where the reusable workflow is defined
@@ -153,7 +153,7 @@ jobs:
           ref: ${{ github.ref }}
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           path: ${{ github.event.repository.name }}
 
@@ -415,7 +415,7 @@ jobs:
     if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
     steps:
       # Clone gh-action_release repository to run actions locally
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
           # to directly reference the repository where the reusable workflow is defined
