@@ -65,7 +65,7 @@ jobs:
         run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e # 3.6.1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
@@ -77,7 +77,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@05db046385edc88eb40554c2677c1d726f4987f6 # master
+        uses: SonarSource/gh-action_release/download-build@c9d923c35b5e487fe018ca9f1e07aa008c8dd53b # master
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -88,7 +88,7 @@ jobs:
       - name: Publish to PyPI
         id: publish-pypi
         continue-on-error: true
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           packages-dir: ${{ steps.local_repo.outputs.dir }}
           password: ${{ fromJSON(steps.secrets.outputs.vault).pypi_token }}
