@@ -47,8 +47,9 @@ jobs:
 
 Notes:
 
-- `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO`
-  environment variable is required in the release Build Info.
+- `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO` environment variable is required in the release Build Info. The CycloneDX
+  SBOM is also uploaded next to the artifacts. Products that do not publish an SBOM to Repox are
+  silently skipped.
 
 ## Migrating from v6 to v7 (draft-first, `workflow_dispatch`)
 
@@ -155,6 +156,10 @@ gh release delete <tag> --cleanup-tag --yes --repo <org/repo>
 ```
 
 > **Note:** After deleting the release, the tag name is protected by GitHub's resurrection protection — it cannot be reused for a new release. A new build (and new tag) is required.
+
+### Manual Maven Central re-sync
+
+If `mavenCentralSync` was disabled at release time and the artifacts need to be pushed to Maven Central after the fact, run `scripts/manual-maven-central-sync.sh <build-name> <build-number>` locally — it mirrors the CI flow (JFrog download + Central Portal upload) without re-running the full release. See [Manual Sync — Maven Central](https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/2401697818) for the full procedure and prerequisites.
 
 ## Releasability check
 
