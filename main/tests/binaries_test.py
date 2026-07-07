@@ -7,6 +7,8 @@ import pytest
 
 from release.utils.binaries import Binaries, SONARLINT_AID
 
+SONARQUBE_GID = 'org.sonarsource.sonarqube'
+
 
 def test_upload_sonarlint_p2_site(capsys):
     binaries_session = MagicMock()
@@ -60,6 +62,61 @@ def test_s3_delete_sonarlint_eclipse():
     bucket.objects.filter.return_value.delete.assert_called_once()
 
 
+def test_sbom_filename_for():
+    assert Binaries.sbom_filename_for('sonarqube-10.0.0.66185.zip') == 'sonarqube-10.0.0.66185.sbom.json'
+    assert Binaries.sbom_filename_for('sonar-java-plugin-8.0.jar') == 'sonar-java-plugin-8.0.sbom.json'
+    assert Binaries.sbom_filename_for('sonarlint-vscode-10.0.vsix') == 'sonarlint-vscode-10.0.sbom.json'
+
+
+def test_s3_upload_sbom_flat_layout(capsys):
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    sbom = f"{tempfile.gettempdir()}/sbom.json"
+    with patch('boto3.Session', return_value=binaries_session), \
+        patch.object(client, 'upload_file') as upload_file:
+        binaries = Binaries("test_bucket")
+        binaries.s3_upload_sbom(sbom, 'sonarqube-10.0.sbom.json', SONARQUBE_GID,
+                                'sonarqube', '10.0', '', checksums=['md5', 'sha256', 'asc'])
+        key = 'Distribution/sonarqube/sonarqube-10.0.sbom.json'
+        upload_file.assert_any_call(sbom, 'test_bucket', key)
+        upload_file.assert_any_call(f"{sbom}.md5", 'test_bucket', f"{key}.md5")
+        upload_file.assert_any_call(f"{sbom}.sha256", 'test_bucket', f"{key}.sha256")
+        upload_file.assert_any_call(f"{sbom}.asc", 'test_bucket', f"{key}.asc")
+
+
+def test_s3_upload_sbom_hierarchical_layout_for_sonarqube_cli():
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    sbom = f"{tempfile.gettempdir()}/sbom.json"
+    with patch('boto3.Session', return_value=binaries_session), \
+        patch.object(client, 'upload_file') as upload_file:
+        binaries = Binaries("test_bucket")
+        binaries.s3_upload_sbom(sbom, 'sonarqube-cli-1.0-linux-x64.sbom.json',
+                                SONARQUBE_GID, 'sonarqube-cli', '1.0', 'linux-x64',
+                                checksums=['md5'])
+        upload_file.assert_any_call(
+            sbom, 'test_bucket',
+            'Distribution/sonarqube-cli/1.0/linux/sonarqube-cli-1.0-linux-x64.sbom.json')
+
+
+def test_qual_to_platform_folder():
+    assert Binaries.qual_to_platform_folder(None) is None
+    assert Binaries.qual_to_platform_folder('') is None
+    assert Binaries.qual_to_platform_folder('linux-x64') == 'linux'
+    assert Binaries.qual_to_platform_folder('darwin-arm64') == 'mac'
+    assert Binaries.qual_to_platform_folder('win32-x64') == 'windows'
+    assert Binaries.qual_to_platform_folder('unknown-platform') == 'unknown'
+
+
+def test_use_hierarchical_qualifier_layout():
+    assert Binaries.use_hierarchical_qualifier_layout('sonarqube-cli', 'linux-x64') is True
+    assert Binaries.use_hierarchical_qualifier_layout('sonarqube-cli', '') is False
+    assert Binaries.use_hierarchical_qualifier_layout('sonar-scanner-cli', 'linux-x64') is False
+    assert Binaries.use_hierarchical_qualifier_layout('dummy', 'cyclonedx') is False
+
+
 @pytest.mark.parametrize(
     'group_id, root_bucket_key',
     [
@@ -74,3 +131,28 @@ def test_s3_delete_common_case(group_id, root_bucket_key):
     with patch('boto3.Session', return_value=binaries_session):
         Binaries('bucket').s3_delete('filename', group_id, "aid", 'version')
     client.delete_object.assert_called_once_with(Bucket='bucket', Key=f'{root_bucket_key}/aid/filename')
+
+
+def test_s3_delete_sonarqube_cli_qualified():
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
+        Binaries('bucket').s3_delete(
+            'sonarqube-cli-1.0.0-linux-x64.zip', 'org.sonarsource.sonarqube', 'sonarqube-cli', '1.0.0', 'linux-x64')
+    client.delete_object.assert_called_once_with(
+        Bucket='bucket', Key='Distribution/sonarqube-cli/1.0.0/linux/sonarqube-cli-1.0.0-linux-x64.zip')
+
+
+def test_s3_delete_non_cli_qualified_deletes_flat_and_legacy_hierarchical():
+    binaries_session = MagicMock()
+    client = MagicMock()
+    binaries_session.client.return_value = client
+    with patch('boto3.Session', return_value=binaries_session):
+        Binaries('bucket').s3_delete(
+            'other-1.0.0-linux-x64.zip', 'org.sonarsource.foo', 'other', '1.0.0', 'linux-x64')
+    client.delete_object.assert_has_calls([
+        call(Bucket='bucket', Key='Distribution/other/other-1.0.0-linux-x64.zip'),
+        call(Bucket='bucket', Key='Distribution/other/1.0.0/linux/other-1.0.0-linux-x64.zip')
+    ])
+    assert client.delete_object.call_count == 2

@@ -35,7 +35,9 @@ jobs:
     name: Test reusable workflow
     uses: ./.github/workflows/main.yaml
     with:
+      version: "0.0.0.0"
       dryRun: true
+      createDraftRelease: true
       publishToBinaries: false
       binariesS3Bucket: test-bucket
       slackChannel: ""

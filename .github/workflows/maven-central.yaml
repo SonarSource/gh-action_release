@@ -27,11 +27,16 @@ name: Maven Central
         type: string
         description: Project name for build info (may be different from repository name for multi-artifact repos)
         required: false
+      githubEnvironment:
+        type: string
+        description: GitHub Environment to set on the OIDC-using job
+        required: false
 
 jobs:
   maven-central:
     name: Push to maven Central
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: read  # to revert a github release
@@ -53,7 +58,7 @@ jobs:
         run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
@@ -61,11 +66,11 @@ jobs:
             development/kv/data/ossrh token | central_token;
             development/kv/data/slack webhook | slack_webhook;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@e0f353c7f1bcc7b2f663063d72b5fec7948f6815 # 3.6.0
+        uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@master
+        uses: SonarSource/gh-action_release/download-build@05db046385edc88eb40554c2677c1d726f4987f6 # master
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -74,21 +79,29 @@ jobs:
       - name: Maven Central Sync
         id: maven-central-sync
         continue-on-error: true
-        uses: SonarSource/gh-action_release/maven-central-sync@master
+        uses: SonarSource/gh-action_release/maven-central-sync@05db046385edc88eb40554c2677c1d726f4987f6 # master
         with:
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
           central-url: https://central.sonatype.com
           auto-publish: "true"
         env:
           CENTRAL_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).central_token }}
+          DEPLOYMENT_NAME: ${{ inputs.projectName != '' && inputs.projectName || github.event.repository.name }}-${{ steps.get_version.outputs.build }}
       - name: Notify on failure
         if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
-        uses: 8398a7/action-slack@77eaa4f1c608a7d68b38af4e3f739dcd8cba273e # v3.19.0
+        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
-          status: failure
-          fields: repo,author,eventName
-        env:
-          SLACK_WEBHOOK_URL: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+          webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "attachments": [
+                {
+                  "color": "#ff0000",
+                  "text": "Maven Central sync failed in `${{ github.repository }}` (event: `${{ github.event_name }}`, triggered by `${{ github.actor }}`).\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>"
+                }
+              ]
+            }
       - name: Exit with error
         if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
         run: exit 1

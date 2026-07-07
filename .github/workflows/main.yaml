@@ -7,16 +7,17 @@ on:
     inputs:
       version:
         type: string
-        description: Version (alternative to release event)
-        required: false
-      releaseId:
-        type: string
-        description: Release ID (alternative to release event)
-        required: false
+        description: Full version including build number (e.g. 1.2.3.456). Required for v7 draft-first flow.
+        required: true
       dryRun:
         type: boolean
         description: Flag to enable the dry-run execution
         default: false
+        required: false
+      createDraftRelease:
+        type: boolean
+        description: Create the draft release when it does not already exist
+        default: true
         required: false
       publishToBinaries:
         type: boolean
@@ -82,6 +83,11 @@ on:
         description: Publish Javascript artifacts to https://www.npmjs.com
         default: false
         required: false
+      useNpmTrustedPublisher:
+        type: boolean
+        description: Use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
+        default: false
+        required: false
       skipPythonReleasabilityChecks:
         type: boolean
         description: Skip releasability checks for Python projects
@@ -102,16 +108,24 @@ on:
         description: Indicate whether this is a dummy project.
         default: false
         required: false
+      githubEnvironment:
+        type: string
+        description: >
+          GitHub Environment to set on OIDC-using jobs. Required when the calling repository
+          configures OIDC subject claims to include 'environment' (include_claim_keys: [repo, environment]).
+          Leave empty (default) for repositories using the standard subject claim format.
+        required: false
 
 jobs:
   release:
     name: Release
     runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
     timeout-minutes: 30
-    if: ${{ inputs.dryRun == true || (github.event_name == 'release' && github.event.action == 'published') || (inputs.version != '' && inputs.releaseId != '') }}
+    if: ${{ inputs.dryRun == true || inputs.version != '' }}
     outputs:
       releasability: ${{ steps.release.outputs.releasability }}
       promote: ${{ steps.release.outputs.promote }}
@@ -142,15 +156,47 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           path: ${{ github.event.repository.name }}
+
+      - name: Create or reuse draft release
+        id: draft
+        if: ${{ inputs.dryRun != true }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+          CREATE_DRAFT_RELEASE: ${{ inputs.createDraftRelease }}
+        run: |
+          set -euo pipefail
+          if release_details="$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id,isDraft 2>/dev/null)"; then
+            release_id=$(jq -r '.id' <<< "$release_details")
+            release_is_draft=$(jq -r '.isDraft' <<< "$release_details")
+            if [[ "$release_is_draft" == "true" ]]; then
+              echo "Reusing existing draft release $VERSION"
+            else
+              echo "::error::Release $VERSION already exists and is NOT a draft. Aborting to avoid duplicate publish."
+              exit 1
+            fi
+          elif [[ "$CREATE_DRAFT_RELEASE" == "false" ]]; then
+            echo "::error::Draft release $VERSION does not exist and createDraftRelease=false. Create the draft release before running this workflow."
+            exit 1
+          else
+            gh release create "$VERSION" \
+              --repo "${{ github.repository }}" \
+              --draft --generate-notes \
+              --target "$GITHUB_SHA"
+            echo "Created draft release $VERSION"
+            release_id=$(gh release view "$VERSION" --repo "${{ github.repository }}" --json id -q '.id')
+          fi
+          echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
+
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
+        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
         with:
           aws-region: eu-central-1
-          role-to-assume: "arn:aws:iam::064493320159:role/ReleasbilityChecksCICDRole"
+          role-to-assume: "arn:aws:iam::064493320159:role/deploymentroles/ReleasbilityChecksCICDRoleV2"
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -161,7 +207,7 @@ jobs:
       - name: Vault Binaries AWS Secrets
         id: secrets-binaries-aws
         if: ${{ inputs.dryRun != true && inputs.publishToBinaries }}
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -205,7 +251,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@d629774c84a04cddfcffa334490d6688c459db7f # 3.0.2
+      - uses: SonarSource/gh-action_releasability@52f09917764eac5a80045d103bfa91e7eaf0c8d6 # 3.0.5
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
@@ -213,35 +259,33 @@ jobs:
           commit-sha: ${{ github.sha }}
           organization: ${{ github.repository_owner }}
           repository: ${{ github.event.repository.name }}
-          version: ${{ inputs.version || github.event.release.tag_name }}
+          version: ${{ inputs.version }}
 
-      - name: Revoke release on releasability check failure
+      - name: Release rollback notice
         if: failure() && steps.releasability.outcome == 'failure'
         env:
-          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
         run: |
-          gh api repos/${{ github.repository }}/releases/${{ inputs.releaseId || github.event.release.id }} -X PATCH -F draft=true
-          gh api repos/${{ github.repository }}/git/refs/tags/${{ inputs.version || github.event.release.tag_name }} -X DELETE
+          echo "::warning::Release $VERSION saved as draft. Fix the root cause and 'Re-run jobs'. No need for a new build."
 
       - name: Send Slack notification on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
-        uses: slackapi/slack-github-action@91efab103c0de0a537f72a35f6b8cda0ee76bf0a # v2.1.1
-        env:
-          SLACK_WEBHOOK_URL: ${{ steps.parse_vault.outputs.slack_webhook }}
-          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
+        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
+          webhook: ${{ steps.parse_vault.outputs.slack_webhook }}
+          webhook-type: incoming-webhook
           payload: |
             {
               "channel": "${{ inputs.slackChannel }}",
               "attachments": [
                 {
                   "color": "#ff0000",
-                  "text": "Releasability checks failed in `${{ github.repository }}`. Release `${{ inputs.version || github.event.release.tag_name }}` was revoked. Publish the release again after resolving the issue. \n <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Link to workflow run>"
+                  "text": "Releasability checks failed in `${{ github.repository }}`. Fix the root cause and retry without rebuilding.\n*To retry:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|Rerun release workflow `${{ inputs.version }}`>\n*Draft:* <${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.version }}|View draft release `${{ inputs.version }}`>\n*To abandon:* `gh release delete ${{ inputs.version }} --cleanup-tag --yes`"
                 }
               ]
             }
 
-      - name: Release ${{ inputs.version || github.event.release.tag_name }}
+      - name: Release ${{ inputs.version }}
         id: release
         uses: ./gh-action_release/main
         with:
@@ -250,6 +294,7 @@ jobs:
           dry_run: ${{ inputs.dryRun }}
         env:
           PYTHONUNBUFFERED: 1
+          INPUT_VERSION: ${{ inputs.version }}
           ARTIFACTORY_ACCESS_TOKEN: ${{ steps.parse_vault.outputs.artifactory_access_token }}
           BINARIES_AWS_DEPLOY: ${{ inputs.binariesS3Bucket }}  # Required for pushing the binaries
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -278,6 +323,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
       projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   javadocPublication:
     name: Javadoc publication
@@ -291,6 +337,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
       publicRelease: ${{ inputs.publicRelease }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   testPypi:
     name: TestPyPI
@@ -304,6 +351,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       pypiRepoUrl: "https://test.pypi.org/legacy/"
       slackChannel: ${{ inputs.slackChannel }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
   pypi:
     name: PyPi
@@ -315,6 +363,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
 
   npmjs:
@@ -327,10 +376,12 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
+      useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
 
-  datadog:
-    name: Push results to datadog
-    runs-on: github-ubuntu-latest-s
+  publish:
+    name: Publish draft release
+    runs-on: sonar-xs
     needs:
       - release
       - mavenCentral
@@ -338,6 +389,29 @@ jobs:
       - testPypi
       - pypi
       - npmjs
+    if: ${{ !failure() && !cancelled() && inputs.dryRun != true }}
+    permissions:
+      contents: write
+    steps:
+      - name: Promote draft to published (immutable)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          gh release edit "$INPUT_VERSION" --repo "${{ github.repository }}" --draft=false
+
+  datadog:
+    name: Push results to datadog
+    runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.githubEnvironment }}
+    needs:
+      - release
+      - mavenCentral
+      - javadocPublication
+      - testPypi
+      - pypi
+      - npmjs
+      - publish
     if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
     steps:
       # Clone gh-action_release repository to run actions locally
@@ -353,7 +427,7 @@ jobs:
 
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@545e7cfbb5528e7009a1edcc83e073898d292627 # 3.2.0
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
@@ -377,7 +451,7 @@ jobs:
           testpypi_published: ${{ needs.testPypi.result }}
           pypi_published: ${{ needs.pypi.result }}
           npmjs_published: ${{ needs.npmjs.result }}
-          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' }}
+          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' && needs.publish.result != 'failure' }}
           repo: ${{ github.repository }}
           run_id: ${{ github.run_id }}
           is_dummy_project: ${{ inputs.isDummyProject }}

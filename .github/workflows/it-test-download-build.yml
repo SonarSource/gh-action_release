@@ -13,7 +13,7 @@ jobs:
       contents: write
     steps:
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@e0f353c7f1bcc7b2f663063d72b5fec7948f6815 # 3.6.0
+        uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
         with:
           artifactoryRoleSuffix: "private-reader"
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 (Necessary to access local action)
@@ -27,7 +27,7 @@ jobs:
           # use default values for the following:
           #flat-download:
           #exclusions:
-      - uses: nick-fields/assert-action@aa0067e01f0f6545c31755d6ca128c5a3a14f6bf # v2.0.0
+      - uses: nick-fields/assert-action@22dd2a66ef733fe92022d3704183ac007463eecb # v3.0.0
         name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
         with:
           expected: '--exclusions - --dry-run=true'
@@ -42,7 +42,7 @@ jobs:
       contents: write
     steps:
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@e0f353c7f1bcc7b2f663063d72b5fec7948f6815 # 3.6.0
+        uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
         with:
           artifactoryRoleSuffix: "private-reader"
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 (Necessary to access local action)
@@ -55,7 +55,7 @@ jobs:
           flat-download: 'true'
           exclusions: '-'
           local-repo-dir: '.'
-      - uses: nick-fields/assert-action@aa0067e01f0f6545c31755d6ca128c5a3a14f6bf # v2.0.0
+      - uses: nick-fields/assert-action@22dd2a66ef733fe92022d3704183ac007463eecb # v3.0.0
         name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
         with:
           expected: '--exclusions - --dry-run=true --flat'

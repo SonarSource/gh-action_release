@@ -8,6 +8,12 @@ from release.utils.binaries import Binaries
 
 REVOKE = True
 
+# Checksums uploaded next to the SBOM on binaries.sonarsource.com. md5/sha1/sha256 are served
+# virtually by Artifactory for any artifact; the GPG signature (.asc) is fetched best-effort since
+# not every product signs its SBOM.
+SBOM_REQUIRED_CHECKSUMS = ["md5", "sha1", "sha256"]
+SBOM_OPTIONAL_CHECKSUMS = ["asc"]
+
 
 def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseRequest):
     buildinfo = artifactory.receive_build_info(release_request)
@@ -70,10 +76,36 @@ def publish_artifact(artifactory, binaries, artifact_to_publish, version, repo, 
         s3_aid = aid
 
     if revoke:
-        binaries.s3_delete(filename, gid, s3_aid, version)
+        binaries.s3_delete(filename, gid, s3_aid, version, qual)
+        binaries.s3_delete_sbom(Binaries.sbom_filename_for(filename), gid, s3_aid, version, qual)
     else:
         artifact_file = artifactory.download(artifactory_repo, gid, aid, qual, ext, version, Binaries.get_actual_checksums(aid))
-        binaries.s3_upload(artifact_file, filename, gid, s3_aid, version)
+        binaries.s3_upload(artifact_file, filename, gid, s3_aid, version, qual)
+        publish_sbom(artifactory, binaries, artifactory_repo, gid, aid, s3_aid, version, qual, filename)
+
+
+def publish_sbom(artifactory, binaries, artifactory_repo, gid, aid, s3_aid, version, qual, binary_filename):
+    """Upload the artifact's SBOM next to the binary on binaries.sonarsource.com (BUILD-10272).
+
+    The SBOM is co-located with the binary in the same Repox version folder; if the product does
+    not publish one, the step is skipped without failing the release. SBOM publishing is
+    best-effort: any error (download, checksum, S3) is logged and swallowed so it cannot abort an
+    already-published binary release (the binary is uploaded before this step runs).
+    """
+    try:
+        sbom_repox_filename = artifactory.find_sbom_filename(artifactory_repo, gid, aid, version)
+        if not sbom_repox_filename:
+            print(f"no SBOM found for {gid}:{aid}:{version} - skipping SBOM upload")
+            return
+        sbom_file, optional_checksums = artifactory.download_named(
+            artifactory_repo, gid, aid, version, sbom_repox_filename,
+            checksums=SBOM_REQUIRED_CHECKSUMS, optional_checksums=SBOM_OPTIONAL_CHECKSUMS)
+        sbom_s3_filename = Binaries.sbom_filename_for(binary_filename)
+        binaries.s3_upload_sbom(sbom_file, sbom_s3_filename, gid, s3_aid, version, qual,
+                                checksums=SBOM_REQUIRED_CHECKSUMS + optional_checksums)
+    except Exception as e:
+        print(f"::warning::SBOM publishing failed for {gid}:{aid}:{version} - "
+              f"continuing release: {e}")
 
 
 def set_output(output_name, value):

@@ -1,8 +1,8 @@
 import json
 import os
 import re
-import requests
 import logging
+import requests
 
 from release.utils.dryrun import DryRunHelper
 from release.steps.ReleaseRequest import ReleaseRequest
@@ -97,19 +97,35 @@ class GitHub:
         release = self._get_release()
         if release is None:
             return
-        tag_name = release["tag_name"]
-        headers = {'Authorization': f'token {self.token}'}
-        payload = {'draft': True, 'tag_name': tag_name}
-        requests.patch(release['url'], json=payload, headers=headers)
-        # Delete tag
-        requests.delete(self._get_repository().get("git_refs_url").replace("{/sha}", f'/tags/{tag_name}'), headers=headers)
+        tag_name = release.get("tag_name", "unknown")
+        self.logger.warning(
+            "revoke_release: GitHub release '%s' is NOT being unpublished or deleted "
+            "(immutability-safe mode since v6.8.1). The tag and version are preserved so "
+            "the release can be retried via workflow_dispatch without triggering a new build. "
+            "JFrog/S3 artifacts have already been revoked by the caller.",
+            tag_name,
+        )
 
     @staticmethod
     def is_publish_to_binaries():
         return os.environ.get('INPUT_PUBLISH_TO_BINARIES', 'false').lower() == "true"
 
     def _get_release(self) -> dict | None:
-        return self.event.get("release", None)
+        # Retro-compat: the legacy `release:published` event embeds the full release object
+        # directly in the event payload, so no API call is needed. v7 uses `workflow_dispatch`
+        # which has no release in the payload — we fetch it by tag via the API instead.
+        if self.event.get("release") is not None:
+            return self.event["release"]
+        # workflow_dispatch path: fetch the draft (or published) release by tag via API
+        tag = os.environ.get("INPUT_VERSION")
+        if not tag:
+            return None
+        repo = self.event["repository"]["full_name"]
+        resp = requests.get(
+            f"https://api.github.com/repos/{repo}/releases/tags/{tag}",
+            headers={"Authorization": f"token {self.token}"},
+        )
+        return resp.json() if resp.ok else None
 
     def _get_repository(self) -> {}:
         return self.event["repository"]
