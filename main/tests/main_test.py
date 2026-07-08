@@ -60,7 +60,7 @@ class MainTest(unittest.TestCase):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
-                with pytest.raises(Exception):
+                with pytest.raises(TypeError):
                     main()
                     check_params.assert_called_once()
                     open_mock.assert_called_once()
@@ -84,7 +84,7 @@ class MainTest(unittest.TestCase):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
-                with pytest.raises(Exception):
+                with pytest.raises(TypeError):
                     main()
                     check_params.assert_called_once()
                     open_mock.assert_called_once()
@@ -150,7 +150,7 @@ class MainTest(unittest.TestCase):
         with patch('release.utils.github.open', mock_open()) as open_mock:
             release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
-                with pytest.raises(Exception):
+                with pytest.raises(Exception, match='exception'):
                     main()
                     check_params.assert_called_once()
                     open_mock.assert_called_once()
