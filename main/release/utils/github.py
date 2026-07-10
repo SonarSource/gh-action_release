@@ -9,7 +9,7 @@ from release.steps.ReleaseRequest import ReleaseRequest
 from dryable import Dryable
 
 
-ALLOWED_GITHUB_ACTIONS = set(['release', 'workflow_dispatch'])
+ALLOWED_GITHUB_ACTIONS = {'release', 'workflow_dispatch'}
 
 
 class GitHubException(Exception):
