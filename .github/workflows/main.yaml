@@ -119,7 +119,7 @@ on:
 jobs:
   release:
     name: Release
-    runs-on: github-ubuntu-latest-s
+    runs-on: warp-custom-ubuntu-24-04
     environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
@@ -402,7 +402,7 @@ jobs:
 
   datadog:
     name: Push results to datadog
-    runs-on: github-ubuntu-latest-s
+    runs-on: warp-custom-ubuntu-24-04
     environment: ${{ inputs.githubEnvironment }}
     needs:
       - release
