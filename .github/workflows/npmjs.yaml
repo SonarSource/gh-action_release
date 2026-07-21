@@ -74,7 +74,7 @@ jobs:
 
       - name: Retrieve Secrets from Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e # 3.6.1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -88,7 +88,7 @@ jobs:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
 
       - name: Download Artifacts from JFrog
-        uses: SonarSource/gh-action_release/download-build@05db046385edc88eb40554c2677c1d726f4987f6 # master
+        uses: SonarSource/gh-action_release/download-build@3acdae7b8b93e8ef15e91c8787cf986738518711 # master
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -114,7 +114,7 @@ jobs:
           echo "Package extracted to ./package"
 
       - name: Setup Node.js
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
         with:
           node-version: '24'
 
@@ -123,7 +123,7 @@ jobs:
         run: npm version --no-git-tag-version ${{ steps.get_version.outputs.version }}
 
       - name: Checkout developer repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           repository: ${{ github.event.repository.full_name}}
           path: developer_repo
@@ -160,7 +160,7 @@ jobs:
 
       - name: Notify on Failure
         if: ${{ failure() }}
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        uses: slackapi/slack-github-action@0d95c9a7becc1e6e297d76df9bc735c44f4cbcbc # v3.0.5
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook

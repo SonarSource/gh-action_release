@@ -14,12 +14,12 @@
           id-token: write
           contents: write
         steps:
-          - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-          - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+          - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+          - uses: jdx/mise-action@dad1bfd3df957f44999b559dd69dc1671cb4e9ea # v4.2.1
             with:
-              version: 2026.2.3
+              version: 2026.7.7
           - name: Run IRIS Analysis
-            uses: SonarSource/unified-dogfooding-actions/run-iris@v1
+            uses: SonarSource/unified-dogfooding-actions/run-iris@03e023516511b1c9da325ad104c2290e3b91688c # 1.1.0
             with:
               primary_project_key: "SonarSource_speed-automations"
               primary_platform: "SQC-EU"
