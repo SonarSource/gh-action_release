@@ -89,7 +89,7 @@ jobs:
           DEPLOYMENT_NAME: ${{ inputs.projectName != '' && inputs.projectName || github.event.repository.name }}-${{ steps.get_version.outputs.build }}
       - name: Notify on failure
         if: ${{ failure() || steps.maven-central-sync.outcome == 'failure' }}
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        uses: slackapi/slack-github-action@dcb1066f776dd043e64d0e8ba94ca15cc7e1875d # v4.0.0
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
