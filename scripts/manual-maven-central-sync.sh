@@ -28,9 +28,10 @@
 #
 # Environment overrides (rarely needed):
 #   REMOTE_REPO      JFrog repo to download from (default: sonarsource-public-releases)
-#   FILTER           Path prefix under REMOTE_REPO to constrain the download (default: `org/sonarsource`).
-#                    Restricts the download to SonarSource Maven artifacts and drops non-Maven payloads (e.g. `.nupkg`) that Central
-#                    Portal rejects when they end up at the zip root. Set to empty (FILTER=) to download every file in the build.
+#   FILTER           Path prefix under REMOTE_REPO to constrain the download.
+#                    Auto-derived from the build-info groupId when not set (e.g. `org/sonarsource/sonarqube`).
+#                    Restricts the download to Maven artifacts and drops non-Maven payloads (e.g. `.nupkg`) that Central
+#                    Portal rejects when they end up at the zip root. Set FILTER= explicitly to download every file in the build.
 #   EXCLUSIONS       Passed verbatim to `jfrog rt download --exclusions` (default: `-`, i.e. no exclusions). Use to filter out a
 #                    specific path pattern, e.g. EXCLUSIONS='*.nupkg;*.snupkg'.
 #   CENTRAL_URL      Central Portal URL (default: https://central.sonatype.com)
@@ -65,17 +66,13 @@ BUILD_NUMBER="$2"
 PROJECT_NAME="${3:-$BUILD_NAME}"
 
 REMOTE_REPO="${REMOTE_REPO:-sonarsource-public-releases}"
-FILTER="${FILTER-org/sonarsource}"
+# FILTER is auto-derived from build-info when not explicitly set; set FILTER= to download everything.
+FILTER_EXPLICITLY_SET="${FILTER+yes}"
 EXCLUSIONS="${EXCLUSIONS:--}"
 CENTRAL_URL="${CENTRAL_URL:-https://central.sonatype.com}"
 AUTO_PUBLISH="${AUTO_PUBLISH:-true}"
 DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-${PROJECT_NAME}-${BUILD_NUMBER}}"
 export DEPLOYMENT_NAME
-
-DOWNLOAD_TARGET="$REMOTE_REPO"
-if [[ -n "$FILTER" ]]; then
-    DOWNLOAD_TARGET="${REMOTE_REPO}/${FILTER}/"
-fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -91,6 +88,22 @@ if [[ -z "${JFROG_CLI:-}" ]]; then
         echo "ERROR: neither 'jfrog' nor 'jf' CLI is on PATH" >&2
         exit 1
     fi
+fi
+
+# Auto-derive FILTER from build-info groupId when not explicitly set by the caller.
+# The first module's groupId (e.g. org.sonarsource.sonarqube) is converted to a Maven path prefix
+# (org/sonarsource/sonarqube), constraining the download to Maven artifacts and preventing non-Maven
+# payloads (e.g. .nupkg) from landing at the bundle root where Central Portal would reject them.
+# Set FILTER= explicitly to download every file in the build.
+if [[ "${FILTER_EXPLICITLY_SET}" != "yes" ]]; then
+    FILTER=$("$JFROG_CLI" rt curl "/api/build/${PROJECT_NAME}/${BUILD_NUMBER}" 2>/dev/null \
+        | jq -r '.buildInfo.modules[0].id // empty' | cut -d: -f1 | tr '.' '/') || true
+    echo "Auto-derived FILTER from build info: ${FILTER:-<none>}"
+fi
+
+DOWNLOAD_TARGET="$REMOTE_REPO"
+if [[ -n "${FILTER:-}" ]]; then
+    DOWNLOAD_TARGET="${REMOTE_REPO}/${FILTER}/"
 fi
 
 # Resolve Central Portal token from Vault.

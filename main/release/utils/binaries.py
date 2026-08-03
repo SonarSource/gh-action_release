@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import zipfile
@@ -9,6 +10,20 @@ from release import resources as file_resources
 from xml.dom.minidom import parseString
 
 from release.vars import binaries_aws_region_name, binaries_aws_session_token, binaries_aws_secret_access_key, binaries_aws_access_key_id
+
+
+def _get_private_prefixes():
+    """Return Maven group-ID prefixes that identify private/commercial artifacts.
+
+    Read from the PRIVATE_MAVEN_GROUP_ID_PREFIXES env var (JSON array, e.g. '["com.sonarsource."]').
+    Defaults to '["com."]' when unset.  An empty list ('[]') means no group is treated as private.
+    """
+    raw = os.environ.get('PRIVATE_MAVEN_GROUP_ID_PREFIXES', '["com."]')
+    try:
+        prefixes = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        prefixes = ['com.']
+    return prefixes
 
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
@@ -56,7 +71,7 @@ class Binaries:
 
     @staticmethod
     def get_binaries_repo(gid):
-        if gid.startswith('com.'):
+        if any(gid.startswith(p) for p in _get_private_prefixes()):
             return COMMERCIAL_REPO
         else:
             return OSS_REPO

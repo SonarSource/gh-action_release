@@ -3,7 +3,7 @@ from unittest.mock import patch
 from pytest import fixture
 
 from release.steps.ReleaseRequest import ReleaseRequest
-from release.utils.artifactory import Artifactory
+from release.utils.artifactory import Artifactory, _get_private_prefixes, _is_private_gid
 from release.utils.buildinfo import BuildInfo
 
 
@@ -234,3 +234,96 @@ def test_download_named_with_optional_checksum_present_and_absent():
         assert optional == []  # .asc was absent (404) -> skipped, not fatal
         assert request.call_args_list[0][0][0] == \
             f"{Artifactory.url}/repo/org/x/aid/1.0/aid-1.0-cyclonedx.json"
+
+
+# --- privateMavenGroupIdPrefixes tests ---
+
+def test_get_private_prefixes_default():
+    with patch.dict('os.environ', {}, clear=False):
+        # When env var absent, default is ["com."]
+        import os
+        os.environ.pop('PRIVATE_MAVEN_GROUP_ID_PREFIXES', None)
+        assert _get_private_prefixes() == ['com.']
+
+
+def test_get_private_prefixes_custom():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com.acme.", "io.private."]'}):
+        assert _get_private_prefixes() == ['com.acme.', 'io.private.']
+
+
+def test_get_private_prefixes_empty_list():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '[]'}):
+        assert _get_private_prefixes() == []
+
+
+def test_get_private_prefixes_invalid_json_falls_back():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': 'not-json'}):
+        assert _get_private_prefixes() == ['com.']
+
+
+def test_is_private_gid_default_com_is_private():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com."]'}):
+        assert _is_private_gid('com.sonarsource.foo') is True
+        assert _is_private_gid('org.sonarsource.bar') is False
+
+
+def test_is_private_gid_empty_list_nothing_private():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '[]'}):
+        assert _is_private_gid('com.sonarsource.foo') is False
+        assert _is_private_gid('com.acme') is False
+
+
+def test_is_private_gid_custom_prefixes():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com.acme.", "io.private."]'}):
+        assert _is_private_gid('com.acme.product') is True
+        assert _is_private_gid('io.private.lib') is True
+        assert _is_private_gid('com.other') is False
+        assert _is_private_gid('org.example') is False
+
+
+def test_download_routes_to_private_repo_with_custom_prefix():
+    with patch('release.utils.artifactory.requests.get') as request, \
+         patch('builtins.open', create=True), \
+         patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com.acme."]'}):
+        mock_response = RepoxResponse(200)
+        mock_response.iter_content = lambda chunk_size: [b'data']
+        request.return_value = mock_response
+        Artifactory("token").download('sonarsource-public-builds', 'com.acme.product', 'aid', '', 'jar', '1.0')
+        url = request.call_args[0][0]
+        assert 'sonarsource-private-builds' in url, f"Expected private repo in URL, got: {url}"
+
+
+def test_download_stays_public_when_prefix_not_matched():
+    with patch('release.utils.artifactory.requests.get') as request, \
+         patch('builtins.open', create=True), \
+         patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com.acme."]'}):
+        mock_response = RepoxResponse(200)
+        mock_response.iter_content = lambda chunk_size: [b'data']
+        request.return_value = mock_response
+        Artifactory("token").download('sonarsource-public-builds', 'org.example', 'aid', '', 'jar', '1.0')
+        url = request.call_args[0][0]
+        assert 'sonarsource-public-builds' in url, f"Expected public repo in URL, got: {url}"
+
+
+# --- artifactoryBuildName tests ---
+
+def test_receive_build_info_uses_artifactory_build_name(release_request):
+    rr = ReleaseRequest('org', 'my-repo', '1.0.0.1', '1', 'main', 'abc123',
+                        artifactory_build_name='my-repo-enterprise')
+    with patch('release.utils.artifactory.requests.get', return_value=RepoxResponse(200)) as request:
+        Artifactory("token").receive_build_info(rr)
+        request.assert_called_once_with(
+            f"{Artifactory.url}/api/build/my-repo-enterprise/1",
+            headers={'content-type': 'application/json', 'Authorization': 'Bearer token'}
+        )
+
+
+def test_receive_build_info_defaults_to_project_when_no_build_name():
+    rr = ReleaseRequest('org', 'my-repo', '1.0.0.1', '1', 'main', 'abc123')
+    assert rr.artifactory_build_name == 'my-repo'
+    with patch('release.utils.artifactory.requests.get', return_value=RepoxResponse(200)) as request:
+        Artifactory("token").receive_build_info(rr)
+        request.assert_called_once_with(
+            f"{Artifactory.url}/api/build/my-repo/1",
+            headers={'content-type': 'application/json', 'Authorization': 'Bearer token'}
+        )

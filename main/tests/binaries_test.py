@@ -5,7 +5,7 @@ from xml.dom.minidom import parse
 
 import pytest
 
-from release.utils.binaries import Binaries, SONARLINT_AID
+from release.utils.binaries import Binaries, SONARLINT_AID, _get_private_prefixes
 
 SONARQUBE_GID = 'org.sonarsource.sonarqube'
 
@@ -156,3 +156,49 @@ def test_s3_delete_non_cli_qualified_deletes_flat_and_legacy_hierarchical():
         call(Bucket='bucket', Key='Distribution/other/1.0.0/linux/other-1.0.0-linux-x64.zip')
     ])
     assert client.delete_object.call_count == 2
+
+
+# --- privateMavenGroupIdPrefixes tests for Binaries ---
+
+def test_binaries_get_private_prefixes_default():
+    import os
+    os.environ.pop('PRIVATE_MAVEN_GROUP_ID_PREFIXES', None)
+    assert _get_private_prefixes() == ['com.']
+
+
+def test_binaries_get_private_prefixes_custom():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com.acme."]'}):
+        assert _get_private_prefixes() == ['com.acme.']
+
+
+def test_binaries_get_private_prefixes_empty():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '[]'}):
+        assert _get_private_prefixes() == []
+
+
+def test_get_binaries_repo_default_com_is_commercial():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com."]'}):
+        assert Binaries.get_binaries_repo('com.sonarsource.foo') == 'CommercialDistribution'
+        assert Binaries.get_binaries_repo('org.sonarsource.bar') == 'Distribution'
+
+
+def test_get_binaries_repo_empty_prefixes_all_public():
+    """When privateMavenGroupIdPrefixes is empty, com.* is public too."""
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '[]'}):
+        assert Binaries.get_binaries_repo('com.sonarsource.commercial') == 'Distribution'
+        assert Binaries.get_binaries_repo('com.acme.product') == 'Distribution'
+
+
+def test_get_binaries_repo_custom_prefix():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com.acme."]'}):
+        assert Binaries.get_binaries_repo('com.acme.product') == 'CommercialDistribution'
+        assert Binaries.get_binaries_repo('com.other') == 'Distribution'
+        assert Binaries.get_binaries_repo('org.example') == 'Distribution'
+
+
+def test_get_binaries_repo_mixed_prefixes():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '["com.sonarsource.", "io.private."]'}):
+        assert Binaries.get_binaries_repo('com.sonarsource.sonarqube') == 'CommercialDistribution'
+        assert Binaries.get_binaries_repo('io.private.lib') == 'CommercialDistribution'
+        assert Binaries.get_binaries_repo('com.other') == 'Distribution'
+        assert Binaries.get_binaries_repo('org.example') == 'Distribution'
