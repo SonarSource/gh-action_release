@@ -1,31 +1,22 @@
-import json
 import os
 import requests
 import tempfile
 
 from dryable import Dryable
 from release.utils.buildinfo import BuildInfo
+from release.utils.maven_visibility import is_private_maven_group_id
 
 SBOM_EXTENSIONS = ('.json', '.xml')
 
 
+# Backwards-compatible aliases for existing unit tests.
 def _get_private_prefixes():
-    """Return Maven group-ID prefixes that identify private/commercial artifacts.
-
-    Read from the PRIVATE_MAVEN_GROUP_ID_PREFIXES env var (JSON array, e.g. '["com.sonarsource."]').
-    Defaults to '["com."]' when unset.  An empty list ('[]') means no group is treated as private.
-    """
-    raw = os.environ.get('PRIVATE_MAVEN_GROUP_ID_PREFIXES', '["com."]')
-    try:
-        prefixes = json.loads(raw)
-    except (json.JSONDecodeError, TypeError):
-        prefixes = ['com.']
-    return prefixes
+    from release.utils.maven_visibility import get_private_maven_group_id_prefixes
+    return get_private_maven_group_id_prefixes()
 
 
 def _is_private_gid(gid: str) -> bool:
-    return any(gid.startswith(p) for p in _get_private_prefixes())
-
+    return is_private_maven_group_id(gid)
 
 class Artifactory:
     url = 'https://repox.jfrog.io/repox'

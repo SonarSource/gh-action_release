@@ -1,18 +1,19 @@
 import tempfile
 from unittest.mock import patch
-from pytest import fixture
+
+import pytest
 
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory, _get_private_prefixes, _is_private_gid
 from release.utils.buildinfo import BuildInfo
 
 
-@fixture
+@pytest.fixture
 def release_request():
     return ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
 
 
-@fixture
+@pytest.fixture
 def buildinfo_multi():
     return  BuildInfo({
         "buildInfo": {
@@ -26,7 +27,7 @@ def buildinfo_multi():
     })
 
 
-@fixture
+@pytest.fixture
 def buildinfo():
     return  BuildInfo({
         "buildInfo": {
@@ -258,6 +259,11 @@ def test_get_private_prefixes_empty_list():
 
 def test_get_private_prefixes_invalid_json_falls_back():
     with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': 'not-json'}):
+        assert _get_private_prefixes() == ['com.']
+
+
+def test_get_private_prefixes_non_list_json_falls_back():
+    with patch.dict('os.environ', {'PRIVATE_MAVEN_GROUP_ID_PREFIXES': '5'}):
         assert _get_private_prefixes() == ['com.']
 
 
