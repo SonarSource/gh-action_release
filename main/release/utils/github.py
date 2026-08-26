@@ -76,9 +76,11 @@ class GitHub:
                 # https://sonarsource.atlassian.net/browse/BUILD-5506
                 project = f'{project}-{prefix[:-1]}'
 
+            artifactory_build_name = os.environ.get('ARTIFACTORY_BUILD_NAME') or None
             return ReleaseRequest(organisation, project,
                                   version, version_match.group("build"),
-                                  branch_name, os.environ.get('GITHUB_SHA'))
+                                  branch_name, os.environ.get('GITHUB_SHA'),
+                                  artifactory_build_name=artifactory_build_name)
 
     def __fake_release_request(self) -> ReleaseRequest:
         """Provide a dummy release request object"""

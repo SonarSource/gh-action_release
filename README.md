@@ -43,6 +43,8 @@ jobs:
       createDraftRelease: true # create the draft release if it does not already exist
       pushToDatadog: true # push results to Datadog for monitoring
       isDummyProject: false # set to true if this is a dummy project (e.g. sonar-dummy)
+      artifactoryBuildName: '' # Repox build name; defaults to the GitHub repository name
+      privateMavenGroupIdPrefixes: '["com."]' # Maven groupIds treated as private/commercial
 ```
 
 Notes:
@@ -117,6 +119,10 @@ If your repo has workflows that attach assets (e.g. SBOMs, installers) to the Gi
   projects are excluded from some dashboards.
 
 - `runnerLabel`: Optional runner-label override for every job. When omitted, existing callers keep their current runners (`github-ubuntu-latest-s`, or `sonar-xs` for publishing). Callers in organizations without those labels can pass one their runners register, such as `warp-custom-ubuntu-24-04`.
+
+- `artifactoryBuildName`: Repox build-info name for release and publication downloads. Default is the GitHub repository name. Releasability still looks up the GitHub repository name; do not use this override for a live release until that client accepts a matching input.
+
+- `privateMavenGroupIdPrefixes`: JSON array of Maven groupId prefixes treated as private/commercial when promoting or downloading from Repox. Default `["com."]` is current behavior. An empty list (`[]`) treats every `com.*` artifact as public and should only be used with a concrete migration case.
 
 ## Custom .npmrc File for NpmJS
 

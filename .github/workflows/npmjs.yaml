@@ -50,6 +50,11 @@ name: NpmJS
         description: Runner label override for this job
         default: ''
         required: false
+      artifactoryBuildName:
+        type: string
+        description: Artifactory build name for build-info lookup (defaults to the calling repository name)
+        required: false
+        default: ''
 
 jobs:
   publish-to-npm:
@@ -101,6 +106,7 @@ jobs:
           remote-repo: sonarsource-npm-public-releases
           flat-download: true
           download-checksums: false
+          project-name: ${{ inputs.artifactoryBuildName }}
 
       - name: Extract .tgz package
         working-directory: ${{ steps.local_repo.outputs.dir }}

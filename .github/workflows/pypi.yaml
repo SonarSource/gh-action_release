@@ -45,6 +45,11 @@ name: PyPI
         description: Runner label override for this job
         default: ''
         required: false
+      artifactoryBuildName:
+        type: string
+        description: Artifactory build name for build-info lookup (defaults to the calling repository name)
+        required: false
+        default: ''
 
 jobs:
   pypi:
@@ -90,6 +95,7 @@ jobs:
           remote-repo: sonarsource-pypi-public-releases
           flat-download: true
           download-checksums: false
+          project-name: ${{ inputs.artifactoryBuildName }}
       - name: Publish to PyPI
         id: publish-pypi
         continue-on-error: true

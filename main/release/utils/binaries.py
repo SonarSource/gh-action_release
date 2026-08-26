@@ -9,6 +9,12 @@ from release import resources as file_resources
 from xml.dom.minidom import parseString
 
 from release.vars import binaries_aws_region_name, binaries_aws_session_token, binaries_aws_secret_access_key, binaries_aws_access_key_id
+from release.utils.maven_visibility import is_private_maven_group_id
+
+
+def _get_private_prefixes():
+    from release.utils.maven_visibility import get_private_maven_group_id_prefixes
+    return get_private_maven_group_id_prefixes()
 
 OSS_REPO = "Distribution"
 COMMERCIAL_REPO = "CommercialDistribution"
@@ -56,7 +62,7 @@ class Binaries:
 
     @staticmethod
     def get_binaries_repo(gid):
-        if gid.startswith('com.'):
+        if is_private_maven_group_id(gid):
             return COMMERCIAL_REPO
         else:
             return OSS_REPO

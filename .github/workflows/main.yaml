@@ -120,6 +120,19 @@ on:
         description: Runner label override for all jobs (empty preserves each job's existing runner)
         default: ''
         required: false
+      artifactoryBuildName:
+        type: string
+        description: Artifactory build name for build-info lookup (defaults to the calling repository name)
+        required: false
+        default: ''
+      privateMavenGroupIdPrefixes:
+        type: string
+        description: >
+          JSON array of Maven group-ID prefixes that identify private/commercial artifacts
+          (e.g. '["com.sonarsource."]').  Defaults to '["com."]'.
+          Pass '[]' when all com.* artifacts are public (e.g. acquisition repos).
+        default: '["com."]'
+        required: false
 
 jobs:
   release:
@@ -304,6 +317,8 @@ jobs:
           BINARIES_AWS_SECRET_ACCESS_KEY: ${{ steps.parse_vault.outputs.binaries_aws_secret_access_key }}
           BINARIES_AWS_SESSION_TOKEN: ${{ steps.parse_vault.outputs.binaries_aws_security_token }}
           BINARIES_AWS_DEFAULT_REGION: eu-central-1
+          ARTIFACTORY_BUILD_NAME: ${{ inputs.artifactoryBuildName }}
+          PRIVATE_MAVEN_GROUP_ID_PREFIXES: ${{ inputs.privateMavenGroupIdPrefixes }}
 
       - name: Release action results
         if: always()
@@ -323,7 +338,7 @@ jobs:
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
-      projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
+      projectName: ${{ inputs.artifactoryBuildName != '' && inputs.artifactoryBuildName || (github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '') }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
       runnerLabel: ${{ inputs.runnerLabel }}
 
@@ -340,6 +355,7 @@ jobs:
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
       publicRelease: ${{ inputs.publicRelease }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
+      artifactoryBuildName: ${{ inputs.artifactoryBuildName }}
       runnerLabel: ${{ inputs.runnerLabel }}
 
   testPypi:
@@ -356,6 +372,7 @@ jobs:
       slackChannel: ${{ inputs.slackChannel }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
       runnerLabel: ${{ inputs.runnerLabel }}
+      artifactoryBuildName: ${{ inputs.artifactoryBuildName }}
 
   pypi:
     name: PyPi
@@ -369,6 +386,8 @@ jobs:
       slackChannel: ${{ inputs.slackChannel }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
       runnerLabel: ${{ inputs.runnerLabel }}
+      artifactoryBuildName: ${{ inputs.artifactoryBuildName }}
+
 
   npmjs:
     name: NpmJS
@@ -383,6 +402,7 @@ jobs:
       useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
       runnerLabel: ${{ inputs.runnerLabel }}
+      artifactoryBuildName: ${{ inputs.artifactoryBuildName }}
 
   publish:
     name: Publish draft release

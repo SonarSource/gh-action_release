@@ -1,12 +1,23 @@
 import json
+import os
 import requests
 import tempfile
 
 from dryable import Dryable
 from release.utils.buildinfo import BuildInfo
+from release.utils.maven_visibility import is_private_maven_group_id
 
 SBOM_EXTENSIONS = ('.json', '.xml')
 
+
+# Backwards-compatible aliases for existing unit tests.
+def _get_private_prefixes():
+    from release.utils.maven_visibility import get_private_maven_group_id_prefixes
+    return get_private_maven_group_id_prefixes()
+
+
+def _is_private_gid(gid: str) -> bool:
+    return is_private_maven_group_id(gid)
 
 class Artifactory:
     url = 'https://repox.jfrog.io/repox'
@@ -19,7 +30,7 @@ class Artifactory:
 
     @Dryable(logging_msg='{function}()')
     def receive_build_info(self, release_request):
-        url = f"{self.url}/api/build/{release_request.project}/{release_request.buildnumber}"
+        url = f"{self.url}/api/build/{release_request.artifactory_build_name}/{release_request.buildnumber}"
         r = requests.get(url, headers=self.headers)
         buildinfo = r.json()
         if r.status_code == 200:
@@ -83,7 +94,7 @@ class Artifactory:
 
     def download(self, artifactory_repo, gid, aid, qual, ext, version, checksums=None):
         gid_path = gid.replace(".", "/")
-        if gid.startswith('com.'):
+        if _is_private_gid(gid):
             artifactory_repo = artifactory_repo.replace('public', 'private')
         artifactory = self.url + "/" + artifactory_repo
 
@@ -114,7 +125,7 @@ class Artifactory:
         return temp_file
 
     def _resolve_repo(self, artifactory_repo, gid):
-        if gid.startswith('com.'):
+        if _is_private_gid(gid):
             return artifactory_repo.replace('public', 'private')
         return artifactory_repo
 
