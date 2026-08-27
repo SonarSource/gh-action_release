@@ -35,11 +35,16 @@ name: Javadoc publication
         type: string
         description: GitHub Environment to set on the OIDC-using job
         required: false
+      runnerLabel:
+        type: string
+        description: Runner label override for this job
+        default: ''
+        required: false
 
 jobs:
   javadoc-publication:
     name: Publish javadoc
-    runs-on: github-ubuntu-latest-s
+    runs-on: ${{ inputs.runnerLabel || 'github-ubuntu-latest-s' }}
     environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
@@ -52,8 +57,8 @@ jobs:
       - name: Checkout gh-action_release for scripts
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          repository: SonarSource/gh-action_release
-          ref: ${{ github.ref }}
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
           path: gh-action_release
       - name: Get the version
         id: get_version
