@@ -115,11 +115,16 @@ on:
           configures OIDC subject claims to include 'environment' (include_claim_keys: [repo, environment]).
           Leave empty (default) for repositories using the standard subject claim format.
         required: false
+      runnerLabel:
+        type: string
+        description: Runner label override for all jobs (empty preserves each job's existing runner)
+        default: ''
+        required: false
 
 jobs:
   release:
     name: Release
-    runs-on: github-ubuntu-latest-s
+    runs-on: ${{ inputs.runnerLabel || 'github-ubuntu-latest-s' }}
     environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC
@@ -145,12 +150,8 @@ jobs:
       # Clone gh-action_release repository to run actions locally
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
-          # to directly reference the repository where the reusable workflow is defined
-          repository: SonarSource/gh-action_release
-          # This property is changed during the release process to reference the correct tag
-          # During development change this to your branch name to run it in another repository
-          ref: ${{ github.ref }}
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -324,6 +325,7 @@ jobs:
       downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
       projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
       githubEnvironment: ${{ inputs.githubEnvironment }}
+      runnerLabel: ${{ inputs.runnerLabel }}
 
   javadocPublication:
     name: Javadoc publication
@@ -338,6 +340,7 @@ jobs:
       javadocDestinationDirectory: ${{ inputs.javadocDestinationDirectory }}
       publicRelease: ${{ inputs.publicRelease }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
+      runnerLabel: ${{ inputs.runnerLabel }}
 
   testPypi:
     name: TestPyPI
@@ -352,6 +355,7 @@ jobs:
       pypiRepoUrl: "https://test.pypi.org/legacy/"
       slackChannel: ${{ inputs.slackChannel }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
+      runnerLabel: ${{ inputs.runnerLabel }}
 
   pypi:
     name: PyPi
@@ -364,7 +368,7 @@ jobs:
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
-
+      runnerLabel: ${{ inputs.runnerLabel }}
 
   npmjs:
     name: NpmJS
@@ -378,10 +382,11 @@ jobs:
       slackChannel: ${{ inputs.slackChannel }}
       useNpmTrustedPublisher: ${{ inputs.useNpmTrustedPublisher }}
       githubEnvironment: ${{ inputs.githubEnvironment }}
+      runnerLabel: ${{ inputs.runnerLabel }}
 
   publish:
     name: Publish draft release
-    runs-on: sonar-xs
+    runs-on: ${{ inputs.runnerLabel || 'sonar-xs' }}
     needs:
       - release
       - mavenCentral
@@ -402,7 +407,7 @@ jobs:
 
   datadog:
     name: Push results to datadog
-    runs-on: github-ubuntu-latest-s
+    runs-on: ${{ inputs.runnerLabel || 'github-ubuntu-latest-s' }}
     environment: ${{ inputs.githubEnvironment }}
     needs:
       - release
@@ -417,12 +422,8 @@ jobs:
       # Clone gh-action_release repository to run actions locally
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          # Hardcode the repository name, because GitHub Actions does not provide a built-in context or variable
-          # to directly reference the repository where the reusable workflow is defined
-          repository: SonarSource/gh-action_release
-          # This property is changed during the release process to reference the correct tag
-          # During development change this to your branch name to run it in another repository
-          ref: ${{ github.ref }}
+          repository: ${{ job.workflow_repository }}
+          ref: ${{ job.workflow_sha }}
           path: gh-action_release
 
       - name: Vault

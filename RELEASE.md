@@ -19,7 +19,7 @@ scripts/release.sh <branch> <version> [true|false]
 This script will:
 
 1. capture the branch tip SHA (`original_sha`)
-2. in detached HEAD, replace all `@<branch>` and `ref: ${{ github.ref }}` self-references with `@<original_sha>`
+2. in detached HEAD, replace all `@<branch>` and `ref: ${{ job.workflow_sha }}` self-references with `@<original_sha>`
 3. commit and tag that detached commit as `<version>`
 4. push only the tag (the branch is left untouched)
 5. create a **draft** Release on GitHub (default) with auto-generated notes

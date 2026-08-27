@@ -31,11 +31,16 @@ name: Maven Central
         type: string
         description: GitHub Environment to set on the OIDC-using job
         required: false
+      runnerLabel:
+        type: string
+        description: Runner label override for this job
+        default: ''
+        required: false
 
 jobs:
   maven-central:
     name: Push to maven Central
-    runs-on: github-ubuntu-latest-s
+    runs-on: ${{ inputs.runnerLabel || 'github-ubuntu-latest-s' }}
     environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write  # to authenticate via OIDC

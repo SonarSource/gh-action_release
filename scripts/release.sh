@@ -16,8 +16,8 @@ original_sha=$(git rev-parse HEAD)
 git checkout --detach HEAD
 git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | \
   xargs sed -i "s,\(SonarSource/gh-action_release/.*@\)${branch},\1${original_sha},g"
-git grep -Hl SonarSource/gh-action_release -- .github/workflows/ | \
-  xargs sed -i "s/ref: \${{ github.ref }}/ref: ${original_sha}/g"
+git grep -Hl 'job.workflow_sha' -- .github/workflows/ | \
+  xargs sed -i "s/ref: \${{ job\.workflow_sha }}/ref: ${original_sha}/g"
 git commit -m "chore: release ${version}" -a
 git tag "$version"
 git checkout "${branch}"

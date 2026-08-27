@@ -116,6 +116,8 @@ If your repo has workflows that attach assets (e.g. SBOMs, installers) to the Gi
 - `isDummyProject`: The _dummy_ projects are treated differently regarding alerts and metrics. E.g.: in Datadog, the stats from dummy
   projects are excluded from some dashboards.
 
+- `runnerLabel`: Optional runner-label override for every job. When omitted, existing callers keep their current runners (`github-ubuntu-latest-s`, or `sonar-xs` for publishing). Callers in organizations without those labels can pass one their runners register, such as `warp-custom-ubuntu-24-04`.
+
 ## Custom .npmrc File for NpmJS
 
 When releasing a npm project using this action, you can specify a custom .npmrc file. To do this, place your .npmrc file in the
@@ -172,7 +174,8 @@ The releasability checks execute the lambdas deployed from the https://github.co
 ### Onboarding to ops-releasability
 
 The repository needs to be onboarded
-to [ops-releasability/projects.json](https://github.com/SonarSource/ops-releasability/blob/master/infra/projects.json).
+to [ops-releasability/projects.json](https://github.com/SonarSource/ops-releasability/blob/master/infra/projects.json)
+using the `owner/repo` catalog key for the calling GitHub organization.
 
 ### Onboarding to Vault
 
