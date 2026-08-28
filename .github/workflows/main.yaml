@@ -151,7 +151,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ job.workflow_repository }}
-          ref: ${{ job.workflow_sha }}
+          ref: 2efed8fc7e65f7dbd18943f3a2bef5eb5840d1a2
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -423,7 +423,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ job.workflow_repository }}
-          ref: ${{ job.workflow_sha }}
+          ref: 2efed8fc7e65f7dbd18943f3a2bef5eb5840d1a2
           path: gh-action_release
 
       - name: Vault
