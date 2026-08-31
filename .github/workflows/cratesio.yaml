@@ -1,0 +1,126 @@
+name: Crates.io
+"on":
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        description: Version (alternative to release event)
+        required: false
+      vaultAddr:
+        type: string
+        description: Custom Vault installation
+        default: https://vault.sonar.build:8200
+        required: false
+      vaultTokenKey:
+        type: string
+        description: Vault key to read the token from
+        default: crates-io
+        required: false
+      artifactoryRoleSuffix:
+        type: string
+        description: Artifactory reader suffix specified in vault repo config
+        default: private-reader
+        required: false
+      slackChannel:
+        type: string
+        description: Slack channel to post notifications
+        default: build
+        required: false
+      githubEnvironment:
+        type: string
+        description: GitHub Environment to set on the OIDC-using job
+        required: false
+
+jobs:
+  publish-to-cratesio:
+    name: Publish to crates.io
+    runs-on: github-ubuntu-latest-s
+    environment: ${{ inputs.githubEnvironment }}
+    permissions:
+      id-token: write
+      contents: read
+    timeout-minutes: 30
+    if: ${{ (github.event_name == 'release' && github.event.action == 'published') || inputs.version != '' }}
+    steps:
+      - name: Get the version
+        id: get_version
+        run: |
+          IFS=. read -r major minor patch build <<< "${{ inputs.version || github.event.release.tag_name }}"
+          version="${major}.${minor}.${patch}"
+          echo "build=${build}" >> $GITHUB_OUTPUT
+          echo "version=${version}" >> $GITHUB_OUTPUT
+
+      - name: Retrieve Secrets from Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        with:
+          url: ${{ inputs.vaultAddr }}
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
+            development/kv/data/${{ inputs.vaultTokenKey }} token | cratesio_token;
+            development/kv/data/slack webhook | slack_webhook;
+
+      # Cargo publish re-packages from source (there is no "publish this pre-built .crate file"
+      # command), so unlike the pypi/npmjs jobs there is no build artifact to download here.
+      - name: Checkout developer repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: ${{ github.event.repository.full_name }}
+          path: developer_repo
+          token: ${{ github.token }}
+
+      - name: Set the crate version
+        working-directory: developer_repo
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          # Assumes a single-crate repository with one top-level [package] version line.
+          sed -i "s/^version = .*/version = \"${VERSION}\"/" Cargo.toml
+          grep -m1 '^version = ' Cargo.toml
+
+      # Direct internet access to crates.io's index is not available from these runners;
+      # dependency resolution is routed through Repox's cargo proxy, same as the calling
+      # repo's own CI. The actual `cargo publish` target below is unaffected by this and
+      # still goes to the real, public crates.io.
+      - name: Route crates.io dependency resolution through Repox
+        working-directory: developer_repo
+        run: |
+          mkdir -p .cargo
+          cat > .cargo/config.toml <<'EOF'
+          [registry]
+          global-credential-providers = ["cargo:token"]
+
+          [registries.repox]
+          index = "sparse+https://repox.jfrog.io/artifactory/api/cargo/crates-io/index/"
+
+          [source.crates-io]
+          replace-with = "repox"
+          EOF
+
+      - name: Publish to crates.io
+        working-directory: developer_repo
+        env:
+          CARGO_REGISTRIES_REPOX_TOKEN: Bearer ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+          CARGO_REGISTRY_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).cratesio_token }}
+        run: cargo publish --locked
+
+      - name: Notify on Failure
+        if: ${{ failure() }}
+        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        with:
+          webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "channel": "${{ inputs.slackChannel }}",
+              "attachments": [
+                {
+                  "color": "#ff0000",
+                  "text": "crates.io publish failed in `${{ github.repository }}` (event: `${{ github.event_name }}`, triggered by `${{ github.actor }}`).\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View workflow run>"
+                }
+              ]
+            }
+
+      - name: Exit with Error
+        if: ${{ failure() }}
+        run: exit 1
