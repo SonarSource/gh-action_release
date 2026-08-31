@@ -148,13 +148,13 @@ jobs:
 
     steps:
       # Clone gh-action_release repository to run actions locally
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: ${{ job.workflow_repository }}
           ref: ${{ job.workflow_sha }}
           path: gh-action_release
       # Clone the calling repo for checking releasability prerequisites
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           path: ${{ github.event.repository.name }}
 
@@ -190,14 +190,14 @@ jobs:
           echo "release_id=$release_id" >> "$GITHUB_OUTPUT"
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@8df5847569e6427dd6c4fb1cf565c83acfa8afa7 # v6.0.0
+        uses: aws-actions/configure-aws-credentials@e6de054238d6b7531b4efff3b6587d9aade6a06c # v6.2.3
         with:
           aws-region: eu-central-1
           role-to-assume: "arn:aws:iam::064493320159:role/deploymentroles/ReleasbilityChecksCICDRoleV2"
       - name: Vault Secrets
         id: secrets
         if: ${{ inputs.dryRun != true }}
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e # 3.6.1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -208,7 +208,7 @@ jobs:
       - name: Vault Binaries AWS Secrets
         id: secrets-binaries-aws
         if: ${{ inputs.dryRun != true && inputs.publishToBinaries }}
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e # 3.6.1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -252,7 +252,7 @@ jobs:
             echo "skip_releasability_checks=false" >> "${GITHUB_OUTPUT}"
           fi
 
-      - uses: SonarSource/gh-action_releasability@52f09917764eac5a80045d103bfa91e7eaf0c8d6 # 3.0.5
+      - uses: SonarSource/gh-action_releasability@760079129287f6a5ae9ffcceecc5d73befdd700c # 3.3.0
         id: releasability
         if: ${{ steps.releasability_prerequisites.outputs.skip_releasability_checks != 'true' && inputs.dryRun != true }}
         with:
@@ -271,7 +271,7 @@ jobs:
 
       - name: Send Slack notification on releasability check failure
         if: failure() && steps.releasability.outcome == 'failure'
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        uses: slackapi/slack-github-action@0d95c9a7becc1e6e297d76df9bc735c44f4cbcbc # v3.0.5
         with:
           webhook: ${{ steps.parse_vault.outputs.slack_webhook }}
           webhook-type: incoming-webhook
@@ -420,7 +420,7 @@ jobs:
     if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
     steps:
       # Clone gh-action_release repository to run actions locally
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: ${{ job.workflow_repository }}
           ref: ${{ job.workflow_sha }}
@@ -428,7 +428,7 @@ jobs:
 
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e # 3.6.1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
