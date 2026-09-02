@@ -205,7 +205,6 @@ development/aws/sts/javadocs
 #### Additional permissions if using `mavenCentralSync`
 
 ```
-development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 development/kv/data/ossrh
 ```
 

@@ -60,12 +60,12 @@ on:
         required: false
       mavenCentralSync:
         type: boolean
-        description: Enable synchronization to Maven Central
+        description: Flag to enable synchronization to Maven Central
         default: false
         required: false
       mavenCentralSyncExclusions:
         type: string
-        description: exclusions for the JFrog build download
+        description: Glob pattern (matched against each artifact id) to exclude from the Maven Central sync
         default: "-"
         required: false
       publishToPyPI:
@@ -129,7 +129,7 @@ jobs:
     permissions:
       id-token: write  # to authenticate via OIDC
       contents: write  # to revert a github release
-    timeout-minutes: 30
+    timeout-minutes: 60
     if: ${{ inputs.dryRun == true || inputs.version != '' }}
     outputs:
       releasability: ${{ steps.release.outputs.releasability }}
@@ -137,6 +137,7 @@ jobs:
       publish_to_binaries: ${{ steps.release.outputs.publish_to_binaries }}
       release: ${{ steps.release.outputs.release }}
       project_name: ${{ steps.release.outputs.project_name }}
+      maven_central_deployment_id: ${{ steps.release.outputs.maven_central_deployment_id }}
       releasabilityCheckDependencies: ${{ steps.releasability.outputs.releasabilityCheckDependencies }}
       releasabilityQA: ${{ steps.releasability.outputs.releasabilityQA }}
       releasabilityJira: ${{ steps.releasability.outputs.releasabilityJira }}
@@ -215,12 +216,21 @@ jobs:
             development/aws/sts/downloads access_key | binaries_aws_access_key_id;
             development/aws/sts/downloads secret_key | binaries_aws_secret_access_key;
             development/aws/sts/downloads security_token | binaries_aws_security_token;
+      - name: Vault Maven Central Secrets
+        id: secrets-maven-central
+        if: ${{ inputs.dryRun != true && inputs.mavenCentralSync }}
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        with:
+          url: ${{ inputs.vaultAddr }}
+          secrets: |
+            development/kv/data/ossrh token | central_token;
       - name: Parse Vault Output
         id: parse_vault
         env:
           DUMMY_VALUES: ${{ inputs.dryRun }}
           SECRET_OUTPUTS: ${{ toJson(steps.secrets.outputs) }}
           SECRET_AWS_OUTPUTS: ${{ toJson(steps.secrets-binaries-aws.outputs) }}
+          SECRET_MAVEN_CENTRAL_OUTPUTS: ${{ toJson(steps.secrets-maven-central.outputs) }}
         run: |
           if [[ "${DUMMY_VALUES}" == "true" ]]; then
             {
@@ -235,6 +245,10 @@ jobs:
           echo "${SECRET_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
           if [[ "${SECRET_AWS_OUTPUTS}" != "{}" ]]; then
             echo "${SECRET_AWS_OUTPUTS}" | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
+          fi
+          if [[ "${SECRET_MAVEN_CENTRAL_OUTPUTS}" != "{}" ]]; then
+            echo "${SECRET_MAVEN_CENTRAL_OUTPUTS}" \
+              | jq -r '.vault | fromjson | to_entries[] | (.key + "<<EOF\n" + .value + "\nEOF")' >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Releasability check prerequisites
@@ -293,6 +307,8 @@ jobs:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
           dry_run: ${{ inputs.dryRun }}
+          maven_central_sync: ${{ inputs.mavenCentralSync }}
+          maven_central_sync_exclusions: ${{ inputs.mavenCentralSyncExclusions }}
         env:
           PYTHONUNBUFFERED: 1
           INPUT_VERSION: ${{ inputs.version }}
@@ -304,6 +320,7 @@ jobs:
           BINARIES_AWS_SECRET_ACCESS_KEY: ${{ steps.parse_vault.outputs.binaries_aws_secret_access_key }}
           BINARIES_AWS_SESSION_TOKEN: ${{ steps.parse_vault.outputs.binaries_aws_security_token }}
           BINARIES_AWS_DEFAULT_REGION: eu-central-1
+          CENTRAL_TOKEN: ${{ steps.parse_vault.outputs.central_token }}
 
       - name: Release action results
         if: always()
@@ -312,20 +329,6 @@ jobs:
           echo "${{ steps.release.outputs.promote }}"
           echo "${{ steps.release.outputs.publish_to_binaries }}"
           echo "${{ steps.release.outputs.release }}"
-
-  mavenCentral:
-    name: Maven Central
-    needs: release
-    if: ${{ inputs.mavenCentralSync && inputs.dryRun != true }}
-    uses: ./.github/workflows/maven-central.yaml
-    with:
-      version: ${{ inputs.version }}
-      vaultAddr: ${{ inputs.vaultAddr }}
-      artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
-      downloadExclusions: ${{ inputs.mavenCentralSyncExclusions }}
-      projectName: ${{ github.event.repository.name == 'sonar-enterprise' && needs.release.outputs.project_name || '' }}  # Only sonar-enterprise needs multi-artifact build info lookup
-      githubEnvironment: ${{ inputs.githubEnvironment }}
-      runnerLabel: ${{ inputs.runnerLabel }}
 
   javadocPublication:
     name: Javadoc publication
@@ -389,7 +392,6 @@ jobs:
     runs-on: ${{ inputs.runnerLabel || 'sonar-xs' }}
     needs:
       - release
-      - mavenCentral
       - javadocPublication
       - testPypi
       - pypi
@@ -411,7 +413,6 @@ jobs:
     environment: ${{ inputs.githubEnvironment }}
     needs:
       - release
-      - mavenCentral
       - javadocPublication
       - testPypi
       - pypi
@@ -447,12 +448,18 @@ jobs:
           releasabilityGitHub: ${{ needs.release.outputs.releasabilityGitHub }}
           releasabilityCheckManifestValues: ${{ needs.release.outputs.releasabilityCheckManifestValues }}
           release_passed: ${{ needs.release.result }}
-          maven_central_published: ${{ needs.mavenCentral.result }}
+          maven_central_published: >-
+            ${{ needs.release.outputs.maven_central_deployment_id != '' && 'success'
+            || (inputs.mavenCentralSync && 'failure' || 'skipped') }}
           javadoc_published: ${{ needs.javadocPublication.result }}
           testpypi_published: ${{ needs.testPypi.result }}
           pypi_published: ${{ needs.pypi.result }}
           npmjs_published: ${{ needs.npmjs.result }}
-          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' && needs.publish.result != 'failure' }}
+          status: >-
+            ${{ job.status == 'success' && needs.release.result == 'success' &&
+            needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' &&
+            needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' &&
+            needs.publish.result != 'failure' }}
           repo: ${{ github.repository }}
           run_id: ${{ github.run_id }}
           is_dummy_project: ${{ inputs.isDummyProject }}
