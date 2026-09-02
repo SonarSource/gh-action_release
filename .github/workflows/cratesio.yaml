@@ -121,7 +121,11 @@ jobs:
           url: ${{ inputs.vaultAddr }}
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
+            development/kv/data/slack webhook | slack_webhook;
 
+      # Only the publish credential is deferred. The Slack webhook stays above, because the failures
+      # worth alerting on include this step itself failing — `development/kv/data/crates-io` not yet
+      # granted, most likely — and a webhook fetched here would not be available to report that.
       - name: Retrieve Publishing Secrets from Vault
         id: publish_secrets
         if: ${{ steps.detect.outputs.cargo == 'true' && !inputs.dryRun }}
@@ -130,7 +134,6 @@ jobs:
           url: ${{ inputs.vaultAddr }}
           secrets: |
             development/kv/data/${{ inputs.vaultTokenKey }} token | cratesio_token;
-            development/kv/data/slack webhook | slack_webhook;
 
       # A repository that pins a channel in rust-toolchain.toml needs that channel materialised
       # before cargo runs, and a caller on a minimal self-hosted runner may have no rustup at all.
@@ -193,8 +196,16 @@ jobs:
             echo "::error::Cargo.toml declares no package name"
             exit 1
           fi
-          awk -v v="$VERSION" '!done && /^version = /{print "version = \"" v "\""; done=1; next} {print}' \
+          awk -v v="$VERSION" '!done && /^version *= */{print "version = \"" v "\""; done=1; next} {print}' \
             Cargo.toml > Cargo.toml.stamped && mv Cargo.toml.stamped Cargo.toml
+          # Never take the stamp on trust. If the pattern missed — an unusual manifest layout, or a
+          # first `version =` that is not the package's — cargo would happily publish the source
+          # version instead, and a crates.io release cannot be taken back.
+          stamped=$(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
+          if [[ "$stamped" != "$VERSION" ]]; then
+            echo "::error::Failed to stamp version $VERSION into Cargo.toml (found '${stamped:-none}')"
+            exit 1
+          fi
           if [[ -f Cargo.lock ]]; then
             awk -v n="$crate" -v v="$VERSION" \
               '$0 == "name = \"" n "\"" {print; getline; print "version = \"" v "\""; next} {print}' \
@@ -219,15 +230,23 @@ jobs:
         run: |
           set -euo pipefail
           crate=$(sed -n 's/^name *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
-          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+          # Only 404 is a definitive "not published". crates.io rate-limits its REST API, so a 429,
+          # a 5xx or a proxy error must not be read as "absent" in silence — bounded and retried,
+          # then reported, because publishing anyway is the safe default but the operator needs to
+          # know the check was inconclusive if cargo then rejects the upload as a duplicate.
+          code=$(curl -sS --max-time 30 --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' \
             -A "SonarSource gh-action_release (https://github.com/SonarSource/gh-action_release)" \
-            "https://crates.io/api/v1/crates/${crate}/${VERSION}" || echo 000)
-          if [[ "$code" == "200" ]]; then
-            echo "::notice::${crate} ${VERSION} is already on crates.io; skipping the publish"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
+            "https://crates.io/api/v1/crates/${crate}/${VERSION}") || code=000
+          case "$code" in
+            200)
+              echo "::notice::${crate} ${VERSION} is already on crates.io; skipping the publish"
+              echo "skip=true" >> "$GITHUB_OUTPUT" ;;
+            404)
+              echo "skip=false" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "::warning::crates.io returned HTTP ${code}; cannot tell whether ${crate} ${VERSION} exists, attempting the publish"
+              echo "skip=false" >> "$GITHUB_OUTPUT" ;;
+          esac
 
       # --allow-dirty: the version stamp above is an uncommitted edit, which cargo otherwise refuses
       # to publish. --registry crates-io: with crates-io replaced above, cargo will not pick a
@@ -249,11 +268,13 @@ jobs:
 
       # Silent on a dry run: a rehearsal is run on demand and its failure is already on the caller's
       # screen, so it is not worth waking the channel for.
+      # The `outputs.vault != ''` guard covers a failure before or in the Vault step itself, when
+      # there is no webhook to post to; the job still fails via "Exit with Error" below.
       - name: Notify on Failure
-        if: ${{ failure() && !inputs.dryRun }}
+        if: ${{ failure() && !inputs.dryRun && steps.secrets.outputs.vault != '' }}
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
-          webhook: ${{ fromJSON(steps.publish_secrets.outputs.vault).slack_webhook }}
+          webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
           payload: |
             {
