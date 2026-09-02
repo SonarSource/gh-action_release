@@ -175,6 +175,29 @@ jobs:
           fi
           echo "Publishing $crate $(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)"
 
+      # A crates.io version can only be uploaded once, so this job is not idempotent by itself. The
+      # release flow is built on "fix the root cause and re-run the failed workflow", and a re-run
+      # after a failure *downstream* of a successful upload would otherwise die here on "crate version
+      # already uploaded" and could never complete. Treat an already-published version as done.
+      - name: Check whether the version is already on crates.io
+        id: already_published
+        if: ${{ !inputs.dryRun }}
+        working-directory: developer_repo
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          set -euo pipefail
+          crate=$(sed -n 's/^name *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -A "SonarSource gh-action_release (https://github.com/SonarSource/gh-action_release)" \
+            "https://crates.io/api/v1/crates/${crate}/${VERSION}" || echo 000)
+          if [[ "$code" == "200" ]]; then
+            echo "::notice::${crate} ${VERSION} is already on crates.io; skipping the publish"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # --allow-dirty: the version stamp above is an uncommitted edit, which cargo otherwise refuses
       # to publish. --registry crates-io: with crates-io replaced above, cargo will not pick a
       # publish target on its own unless package.publish names exactly one registry.
@@ -184,6 +207,7 @@ jobs:
       # own fails here rather than on the one publish that cannot be taken back. No token is needed,
       # and none is fetched.
       - name: ${{ inputs.dryRun && 'Dry-run publish to crates.io' || 'Publish to crates.io' }}
+        if: ${{ inputs.dryRun || steps.already_published.outputs.skip != 'true' }}
         working-directory: developer_repo
         env:
           CARGO_REGISTRIES_REPOX_TOKEN: Bearer ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
