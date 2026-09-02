@@ -88,6 +88,11 @@ on:
         description: Use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
         default: false
         required: false
+      publishToCratesIo:
+        type: boolean
+        description: Publish Rust crates to https://crates.io
+        default: false
+        required: false
       skipPythonReleasabilityChecks:
         type: boolean
         description: Skip releasability checks for Python projects
@@ -384,6 +389,22 @@ jobs:
       githubEnvironment: ${{ inputs.githubEnvironment }}
       runnerLabel: ${{ inputs.runnerLabel }}
 
+  # Unlike the other publication targets, this one also runs on a dry run: a crates.io version is
+  # immutable, so `cargo publish --dry-run` is the only rehearsal available and it is worth having.
+  cratesIo:
+    name: crates.io
+    needs: release
+    if: ${{ inputs.publishToCratesIo }}
+    uses: ./.github/workflows/cratesio.yaml
+    with:
+      version: ${{ inputs.version }}
+      dryRun: ${{ inputs.dryRun }}
+      vaultAddr: ${{ inputs.vaultAddr }}
+      artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
+      slackChannel: ${{ inputs.slackChannel }}
+      githubEnvironment: ${{ inputs.githubEnvironment }}
+      runnerLabel: ${{ inputs.runnerLabel }}
+
   publish:
     name: Publish draft release
     runs-on: ${{ inputs.runnerLabel || 'sonar-xs' }}
@@ -394,6 +415,7 @@ jobs:
       - testPypi
       - pypi
       - npmjs
+      - cratesIo
     if: ${{ !failure() && !cancelled() && inputs.dryRun != true }}
     permissions:
       contents: write
@@ -416,6 +438,7 @@ jobs:
       - testPypi
       - pypi
       - npmjs
+      - cratesIo
       - publish
     if: ${{ always() && inputs.pushToDatadog && inputs.dryRun != true }}
     steps:
@@ -452,7 +475,8 @@ jobs:
           testpypi_published: ${{ needs.testPypi.result }}
           pypi_published: ${{ needs.pypi.result }}
           npmjs_published: ${{ needs.npmjs.result }}
-          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' && needs.publish.result != 'failure' }}
+          cratesio_published: ${{ needs.cratesIo.result }}
+          status: ${{ job.status == 'success' && needs.release.result == 'success' && needs.mavenCentral.result != 'failure' && needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' && needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' && needs.cratesIo.result != 'failure' && needs.publish.result != 'failure' }}
           repo: ${{ github.repository }}
           run_id: ${{ github.run_id }}
           is_dummy_project: ${{ inputs.isDummyProject }}

@@ -6,6 +6,11 @@ name: Crates.io
         type: string
         description: Version (alternative to release event)
         required: false
+      dryRun:
+        type: boolean
+        description: Package and verify the crate without uploading it
+        default: false
+        required: false
       vaultAddr:
         type: string
         description: Custom Vault installation
@@ -30,11 +35,16 @@ name: Crates.io
         type: string
         description: GitHub Environment to set on the OIDC-using job
         required: false
+      runnerLabel:
+        type: string
+        description: Runner label override for this job
+        default: ''
+        required: false
 
 jobs:
   publish-to-cratesio:
-    name: Publish to crates.io
-    runs-on: github-ubuntu-latest-s
+    name: ${{ inputs.dryRun && 'Dry-run publish to crates.io' || 'Publish to crates.io' }}
+    runs-on: ${{ inputs.runnerLabel || 'github-ubuntu-latest-s' }}
     environment: ${{ inputs.githubEnvironment }}
     permissions:
       id-token: write
@@ -42,14 +52,30 @@ jobs:
     timeout-minutes: 30
     if: ${{ (github.event_name == 'release' && github.event.action == 'published') || inputs.version != '' }}
     steps:
+      # crates.io versions are SemVer and immutable, so the build number has to come off before
+      # anything is published. The accepted shapes are the ones the release action itself enforces
+      # (main/release/utils/github.py): [ProjectName-]Major.Minor.Patch[-Mx][-.+]BuildNumber. Both
+      # separators occur in practice — Maven projects use '1.2.3.456', Cargo projects '1.2.3-456',
+      # because a dot is not legal in a crate version.
       - name: Get the version
         id: get_version
+        env:
+          FULL_VERSION: ${{ inputs.version || github.event.release.tag_name }}
         run: |
-          IFS=. read -r major minor patch build <<< "${{ inputs.version || github.event.release.tag_name }}"
-          version="${major}.${minor}.${patch}"
-          echo "build=${build}" >> $GITHUB_OUTPUT
-          echo "version=${version}" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          if [[ ! "$FULL_VERSION" =~ ^([a-zA-Z]+-)?([0-9]+\.[0-9]+\.[0-9]+(-M[0-9]+)?)[-.+]([0-9]+)$ ]]; then
+            echo "::error::'$FULL_VERSION' must follow [ProjectName-]Major.Minor.Patch[-Mx][-.+]BuildNumber"
+            exit 1
+          fi
+          version="${BASH_REMATCH[2]}"
+          build="${BASH_REMATCH[4]}"
+          echo "Publishing crate version $version (build $build) from $FULL_VERSION"
+          echo "build=${build}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
+      # Only what a dry run needs: the Repox reader, for dependency resolution while packaging and
+      # verifying. A dry run therefore works before the crates.io credential has been provisioned,
+      # which is what makes it usable for onboarding a repository.
       - name: Retrieve Secrets from Vault
         id: secrets
         uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
@@ -57,11 +83,20 @@ jobs:
           url: ${{ inputs.vaultAddr }}
           secrets: |
             development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
+
+      - name: Retrieve Publishing Secrets from Vault
+        id: publish_secrets
+        if: ${{ !inputs.dryRun }}
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        with:
+          url: ${{ inputs.vaultAddr }}
+          secrets: |
             development/kv/data/${{ inputs.vaultTokenKey }} token | cratesio_token;
             development/kv/data/slack webhook | slack_webhook;
 
       # Cargo publish re-packages from source (there is no "publish this pre-built .crate file"
-      # command), so unlike the pypi/npmjs jobs there is no build artifact to download here.
+      # command), so unlike the pypi/npmjs jobs there is no build artifact to download here. The
+      # bytes uploaded to crates.io are therefore rebuilt, not the ones promoted through Repox.
       - name: Checkout developer repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -69,24 +104,39 @@ jobs:
           path: developer_repo
           token: ${{ github.token }}
 
-      - name: Set the crate version
+      # A repository that pins a channel in rust-toolchain.toml needs that channel materialised
+      # before cargo runs, and a caller on a minimal self-hosted runner may have no rustup at all.
+      - name: Set up Rust
         working-directory: developer_repo
-        env:
-          VERSION: ${{ steps.get_version.outputs.version }}
         run: |
-          # Assumes a single-crate repository with one top-level [package] version line.
-          sed -i "s/^version = .*/version = \"${VERSION}\"/" Cargo.toml
-          grep -m1 '^version = ' Cargo.toml
+          set -euo pipefail
+          if ! command -v rustup > /dev/null; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+              | sh -s -- -y --default-toolchain stable --profile minimal
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.cargo/bin:$PATH"
+          fi
+          # Installs whatever rust-toolchain.toml pins, so the publish uses the toolchain the
+          # project builds with rather than whatever the runner image happens to carry.
+          rustup show
+          cargo --version
 
       # Direct internet access to crates.io's index is not available from these runners;
       # dependency resolution is routed through Repox's cargo proxy, same as the calling
       # repo's own CI. The actual `cargo publish` target below is unaffected by this and
       # still goes to the real, public crates.io.
+      #
+      # Written to CARGO_HOME rather than into the checkout: a `.cargo/config.toml` inside the
+      # package directory would be packaged into the published .crate unless the caller happens to
+      # gitignore or exclude it, and this config must also apply to the verification build, which
+      # cargo runs from target/package/.
       - name: Route crates.io dependency resolution through Repox
-        working-directory: developer_repo
         run: |
-          mkdir -p .cargo
-          cat > .cargo/config.toml <<'EOF'
+          set -euo pipefail
+          mkdir -p "${CARGO_HOME:-$HOME/.cargo}"
+          cat >> "${CARGO_HOME:-$HOME/.cargo}/config.toml" <<'EOF'
+
+          # Added by SonarSource/gh-action_release cratesio.yaml
           [registry]
           global-credential-providers = ["cargo:token"]
 
@@ -97,18 +147,58 @@ jobs:
           replace-with = "repox"
           EOF
 
-      - name: Publish to crates.io
+      # Cargo has no flag for "publish as this version", so the manifest is edited in place.
+      # Cargo.lock records the package's own version too, and `--locked` compares the two, so both
+      # files move together — the same reason the calling repo's build stamps both.
+      - name: Set the crate version
+        working-directory: developer_repo
+        env:
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Assumes a single-crate repository with one top-level [package] section.
+          crate=$(sed -n 's/^name *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
+          if [[ -z "$crate" ]]; then
+            echo "::error::Cargo.toml declares no package name"
+            exit 1
+          fi
+          awk -v v="$VERSION" '!done && /^version = /{print "version = \"" v "\""; done=1; next} {print}' \
+            Cargo.toml > Cargo.toml.stamped && mv Cargo.toml.stamped Cargo.toml
+          if [[ -f Cargo.lock ]]; then
+            awk -v n="$crate" -v v="$VERSION" \
+              '$0 == "name = \"" n "\"" {print; getline; print "version = \"" v "\""; next} {print}' \
+              Cargo.lock > Cargo.lock.stamped && mv Cargo.lock.stamped Cargo.lock
+            echo "LOCKED=--locked" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No Cargo.lock; publishing without --locked"
+            echo "LOCKED=" >> "$GITHUB_ENV"
+          fi
+          echo "Publishing $crate $(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)"
+
+      # --allow-dirty: the version stamp above is an uncommitted edit, which cargo otherwise refuses
+      # to publish. --registry crates-io: with crates-io replaced above, cargo will not pick a
+      # publish target on its own unless package.publish names exactly one registry.
+      #
+      # --dry-run runs everything except the upload: it packages the crate and compiles it in
+      # isolation, so a bad version, a missing manifest field or a file that does not build on its
+      # own fails here rather than on the one publish that cannot be taken back. No token is needed,
+      # and none is fetched.
+      - name: ${{ inputs.dryRun && 'Dry-run publish to crates.io' || 'Publish to crates.io' }}
         working-directory: developer_repo
         env:
           CARGO_REGISTRIES_REPOX_TOKEN: Bearer ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
-          CARGO_REGISTRY_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).cratesio_token }}
-        run: cargo publish --locked
+          # Empty on a dry run: the secrets step is skipped, so its output defaults to an empty object.
+          CARGO_REGISTRY_TOKEN: ${{ fromJSON(steps.publish_secrets.outputs.vault || '{}').cratesio_token }}
+          DRY_RUN: ${{ inputs.dryRun && '--dry-run' || '' }}
+        run: cargo publish ${LOCKED} ${DRY_RUN} --allow-dirty --registry crates-io
 
+      # Silent on a dry run: a rehearsal is run on demand and its failure is already on the caller's
+      # screen, so it is not worth waking the channel for.
       - name: Notify on Failure
-        if: ${{ failure() }}
+        if: ${{ failure() && !inputs.dryRun }}
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
-          webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+          webhook: ${{ fromJSON(steps.publish_secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
           payload: |
             {
