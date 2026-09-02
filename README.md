@@ -172,6 +172,11 @@ A crates.io version is public and immutable, so this is the one publication targ
 then stops short of the upload (`cargo publish --dry-run`). A bad version string, a missing manifest field or a
 file that does not build on its own fails there instead of on the publish that cannot be taken back.
 
+`dryRun: true` runs it **regardless of `publishToCratesIo`**, so a rehearsal cannot silently skip the one
+irreversible step. Callers that publish no crate at all are not affected: the job checks out the repository,
+finds no `Cargo.toml`, and exits early with a notice. On a real run a missing `Cargo.toml` is an error instead,
+since the only way to get there is for the caller to have set `publishToCratesIo`.
+
 A dry run fetches only the Repox reader token, never the crates.io one, and stays silent on Slack. It therefore
 works before `development/kv/data/crates-io` has been granted, which makes it the right first step when
 onboarding a repository.
