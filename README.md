@@ -152,7 +152,15 @@ are therefore equivalent to, but not identical with, the `.crate` promoted in Re
 **Version.** The `version` input carries a build number; crates.io requires SemVer. The job strips the build number
 and publishes the `Major.Minor.Patch[-Mx]` prefix, accepting either separator — `1.2.3.456` and `1.2.3-456` both
 publish as `1.2.3`. The dash form is what Cargo projects use, since a dot is not a legal separator in a crate
-version. The version is stamped into both `Cargo.toml` and `Cargo.lock` before publishing.
+version. The version is stamped into `Cargo.toml`, and into `Cargo.lock` when the repository has one — a
+repository without a committed lock file is published without `--locked`, with a warning. The stamp is verified
+before the publish, so a manifest the stamp cannot match fails the job rather than shipping the wrong version.
+
+**Re-running a failed release.** A crates.io version can only be uploaded once. If the upload succeeded and the
+release failed further downstream, re-running finds the version on crates.io, logs a `::notice::` and reports
+the job successful without uploading again — so the retry procedure in
+[Recovering from a failed release](#recovering-from-a-failed-release) works unchanged. If crates.io cannot be
+reached to answer the question, the check logs a `::warning::` and attempts the publish anyway.
 
 **Requirements before enabling:**
 1. A single-crate repository. The job stamps the first `[package]` version in `Cargo.toml`; a workspace with
@@ -217,6 +225,9 @@ Since v6.8.1, when a release workflow fails (releasability checks, Artifactory p
 
 1. Fix the root cause (e.g. merge the missing Jira fix-version, resolve the releasability check).
 2. Re-run the failed workflow from the GitHub Actions UI ("Re-run jobs"). No new build is needed.
+
+A re-run is safe for `publishToCratesIo` too: an already-uploaded version is detected and skipped rather than
+retried, since crates.io refuses a duplicate. See [Publishing to crates.io](#publishing-to-cratesio).
 
 ### Abandoning a failed release
 
