@@ -35,6 +35,7 @@ jobs:
       publishToTestPyPI: false # for OSS projects only, publish PyPI artifacts to https://test.pypi.org/
       publishToNpmJS: false # for OSS projects only, publish npm artifacts to https://www.npmjs.com/
       useNpmTrustedPublisher: false # use npm Trusted Publishers (OIDC) instead of Vault token for npm publish
+      publishToCratesIo: false # for OSS projects only, publish Rust crates to https://crates.io/
       skipPythonReleasabilityChecks: false # skip releasability checks for Python projects
       skipJavascriptReleasabilityChecks: false # skip releasability checks for Javascript projects
       slackChannel: build # define the Slack channel to use for notifications
@@ -50,6 +51,10 @@ Notes:
 - `publishToBinaries`: Only if the binaries are delivered to customers - "binaries" is an AWS S3 bucket. The `ARTIFACTORY_DEPLOY_REPO` environment variable is required in the release Build Info. The CycloneDX
   SBOM is also uploaded next to the artifacts. Products that do not publish an SBOM to Repox are
   silently skipped.
+
+- `publishToCratesIo`: See [Publishing to crates.io](#publishing-to-cratesio) — unlike every other
+  publication target, this one **re-packages from source** instead of promoting a built artifact, and
+  it is the only one that also runs under `dryRun`.
 
 ## Migrating from v6 to v7 (draft-first, `workflow_dispatch`)
 
@@ -132,6 +137,65 @@ Setting `useNpmTrustedPublisher: true` switches npm publishing from the Vault-st
 2. Create a `release` environment in the product repo on GitHub (Settings → Environments) and configure branch rules.
 3. The calling workflow must have `id-token: write` permission (already standard for Vault-based workflows).
 4. The Vault permission `development/kv/data/npmjs` is no longer needed when using Trusted Publishers.
+
+## Publishing to crates.io
+
+`publishToCratesIo: true` publishes the project's crate to [crates.io](https://crates.io/) with a Vault-sourced
+`CARGO_REGISTRY_TOKEN` (`development/kv/data/crates-io`, key `token`).
+
+**This target is not a promotion.** Every other publication step downloads the artifact that was built, QA'd and
+promoted through Repox. `cargo publish` has no "upload this pre-built `.crate`" mode — it always re-packages from
+source — so this job checks out the calling repository at the released commit and rebuilds. The bytes on crates.io
+are therefore equivalent to, but not identical with, the `.crate` promoted in Repox. A published crate version is
+**public and immutable**: it cannot be overwritten, and yanking hides it without removing it.
+
+**Version.** The `version` input carries a build number; crates.io requires SemVer. The job strips the build number
+and publishes the `Major.Minor.Patch[-Mx]` prefix, accepting either separator — `1.2.3.456` and `1.2.3-456` both
+publish as `1.2.3`. The dash form is what Cargo projects use, since a dot is not a legal separator in a crate
+version. The version is stamped into both `Cargo.toml` and `Cargo.lock` before publishing.
+
+**Requirements before enabling:**
+1. A single-crate repository. The job stamps the first `[package]` version in `Cargo.toml`; a workspace with
+   several publishable crates is not supported.
+2. `Cargo.toml` declares `publish = ["crates-io"]`, a non-empty `description`, and either an SPDX `license`
+   expression or a packaged `license-file`.
+3. The crate name is owned by the `sonartech` crates.io account, or is unclaimed — the first publish takes
+   ownership. Add a team owner immediately after the first publish:
+   `cargo owner --add github:SonarSource:<team> <crate>`.
+4. Vault permission for `development/kv/data/crates-io` (see below).
+5. The build uploads its crate with a synthetic Maven module ID — see the next section.
+
+### Rehearsing with `dryRun`
+
+A crates.io version is public and immutable, so this is the one publication target that still runs when
+`dryRun: true`. It resolves the version, stamps the manifest, packages the crate and compiles it in isolation,
+then stops short of the upload (`cargo publish --dry-run`). A bad version string, a missing manifest field or a
+file that does not build on its own fails there instead of on the publish that cannot be taken back.
+
+A dry run fetches only the Repox reader token, never the crates.io one, and stays silent on Slack. It therefore
+works before `development/kv/data/crates-io` has been granted, which makes it the right first step when
+onboarding a repository.
+
+### Releasability and non-Maven builds
+
+Releasability's `CheckManifestValues` reads every Repox build-info module ID through `ArtifactoryId.create`, which
+requires `groupId:artifactId:version` and throws `IllegalArgumentException: <id> could not be parsed` otherwise.
+`jf rt upload` without `--module` defaults the module ID to the build name, so a project with no Maven/Gradle
+build-info collector fails this check on its bare project name.
+
+The fix belongs in the calling repository's build, not here: pass a synthetic GAV, as `sonarqube-cli` does.
+
+```bash
+jf rt upload --flat=true --fail-no-op \
+  --build-name="$BUILD_NAME" --build-number="$BUILD_NUMBER" \
+  --module="org.sonarsource.scanner.cargo:cargo-sonar-scanner:${PROJECT_VERSION}" \
+  ...
+```
+
+Every `jf rt upload` contributing to the build info needs it, or the ones that lack it register a second module
+under the build name and the check throws anyway. An `org.sonarsource.*` group ID also makes the check pass rather
+than merely parse: it filters on `isCommercial()` (group ID starting `com.sonarsource.`), so the module is
+excluded and the check returns PASSED.
 
 ## Recovering from a failed release
 
@@ -228,6 +292,13 @@ development/kv/data/pypi-test
 ```
 development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
 development/kv/data/npmjs
+```
+
+#### Additional permissions if using `publishToCratesIo`
+
+```
+development/artifactory/token/{REPO_OWNER_NAME_DASH}-private-reader
+development/kv/data/crates-io
 ```
 
 ## Versioning
