@@ -2,13 +2,12 @@
 #
 # Manual re-sync of a SonarSource build to Maven Central via the Central Portal.
 #
-# Use this when the `mavenCentral` job in `gh-action_release/.github/workflows/main.yaml` was skipped at release time and you need to push
-# the already-built artifacts to Maven Central after the fact
+# Use this when a release with mavenCentralSync: true still didn't end up on Central and you
+# need to push the already-built artifacts after the fact.
 #
-# This script mirrors what `.github/workflows/maven-central.yaml` does in CI:
 #   1. Download the build's artifacts + checksums from JFrog (sonarsource-public-releases) into a temp dir.
-#   2. Bundle and upload them to the Central Portal via the existing `maven-central-sync/maven-central-publish.sh` script, then poll for
-#      validation/publication.
+#   2. Validate the bundle against the Central Portal via `maven-central-sync/maven-central-publish.sh`,
+#      then finalize (publish) it unless AUTO_PUBLISH=false.
 #
 # Prerequisites:
 #   - `jfrog` (v1) or `jf` (v2) CLI configured against repox.jfrog.io with read access to the build's `sonarsource-public-releases` repo
@@ -104,6 +103,9 @@ export CENTRAL_TOKEN
 WORK_DIR="$(mktemp -d -t manual-mc-sync-XXXXXX)"
 LOCAL_REPO_DIR="$WORK_DIR/repo"
 mkdir -p "$LOCAL_REPO_DIR"
+GITHUB_OUTPUT="$WORK_DIR/deployment-id"
+export GITHUB_OUTPUT
+: > "$GITHUB_OUTPUT"
 
 cleanup() {
     local rc=$?
@@ -175,7 +177,20 @@ fi
 echo "Downloaded layout (top 3 levels):"
 ( cd "$LOCAL_REPO_DIR" && find . -mindepth 1 -maxdepth 3 -type d | sort )
 
-echo "Publishing to Central Portal..."
-"$PUBLISH_SCRIPT" "$LOCAL_REPO_DIR" "$CENTRAL_URL" "$AUTO_PUBLISH"
+echo "Validating against Central Portal..."
+"$PUBLISH_SCRIPT" "$LOCAL_REPO_DIR" "$CENTRAL_URL" validate ""
+
+DEPLOYMENT_ID="$(sed -n 's/^deployment-id=//p' "$GITHUB_OUTPUT" | tail -1)"
+if [[ -z "$DEPLOYMENT_ID" ]]; then
+    echo "ERROR: validation succeeded but no deployment id was captured" >&2
+    exit 1
+fi
+
+if [[ "$AUTO_PUBLISH" == "true" ]]; then
+    echo "Publishing deployment $DEPLOYMENT_ID..."
+    "$PUBLISH_SCRIPT" "" "$CENTRAL_URL" finalize "$DEPLOYMENT_ID"
+else
+    echo "Validated only (AUTO_PUBLISH=false). Deployment $DEPLOYMENT_ID is pending-publish at $CENTRAL_URL."
+fi
 
 echo "Manual Maven Central sync completed for ${BUILD_NAME}/${BUILD_NUMBER}."

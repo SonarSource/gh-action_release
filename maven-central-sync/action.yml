@@ -2,24 +2,32 @@ name: "Maven Central Sync"
 description: "Syncs a open source project with maven central"
 inputs:
   local-repo-dir:
-    description: "Directory of artifacts to sync"
-    required: true
+    description: "Directory of artifacts to sync. Required for mode validate, ignored for finalize."
+    required: false
+    default: ""
   central-url:
     description: "URL to the Central Portal instance"
     required: false
     default: "https://central.sonatype.com"
-  auto-publish:
-    description: "If true, automatically publish after upload and validation"
+  mode:
+    description: "validate (default): upload USER_MANAGED and wait for VALIDATED. finalize: publish an already-validated deployment-id."
     required: false
-    default: "true"
+    default: "validate"
+  deployment-id:
+    description: "Deployment to publish. Required for mode finalize."
+    required: false
+    default: ""
 outputs:
   deployment-id:
-    description: "ID of the deployment"
-    value: ${{ steps.upload.outputs.deployment-id }}
+    description: "ID of the deployment (validate only)"
+    value: ${{ steps.run.outputs.deployment-id }}
 runs:
   using: "composite"
   steps:
-    - name: Upload to Central Portal
-      id: upload
+    - name: Maven Central Sync
+      id: run
       shell: bash
-      run: ${{ github.action_path }}/maven-central-publish.sh "${{ inputs.local-repo-dir }}" "${{ inputs.central-url }}" "${{ inputs.auto-publish }}"
+      run: >-
+        ${{ github.action_path }}/maven-central-publish.sh
+        "${{ inputs.local-repo-dir }}" "${{ inputs.central-url }}"
+        "${{ inputs.mode }}" "${{ inputs.deployment-id }}"
