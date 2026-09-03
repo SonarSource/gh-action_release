@@ -298,7 +298,12 @@ jobs:
         if: ${{ steps.detect.outputs.cargo == 'true' && (inputs.dryRun || steps.already_published.outputs.skip != 'true') }}
         working-directory: developer_repo
         env:
-          CARGO_REGISTRIES_REPOX_TOKEN: Bearer ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+          # `|| '{}'` for the same reason as the line below: a skipped Vault step leaves its output an
+          # empty string, and `env` is evaluated even when the step's own `if` will skip it — so an
+          # unguarded fromJSON('') fails the whole job with "Error reading JToken from JsonReader".
+          # That is what a caller with no Cargo.toml hits, gh-action_release's own it-test.yml among
+          # them, since the Vault step above is gated on having detected a Cargo project.
+          CARGO_REGISTRIES_REPOX_TOKEN: Bearer ${{ fromJSON(steps.secrets.outputs.vault || '{}').artifactory_access_token }}
           # Empty on a dry run: the secrets step is skipped, so its output defaults to an empty object.
           CARGO_REGISTRY_TOKEN: ${{ fromJSON(steps.publish_secrets.outputs.vault || '{}').cratesio_token }}
           DRY_RUN: ${{ inputs.dryRun && '--dry-run' || '' }}
@@ -312,7 +317,7 @@ jobs:
         if: ${{ failure() && !inputs.dryRun && steps.secrets.outputs.vault != '' }}
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
-          webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
+          webhook: ${{ fromJSON(steps.secrets.outputs.vault || '{}').slack_webhook }}
           webhook-type: incoming-webhook
           payload: |
             {
