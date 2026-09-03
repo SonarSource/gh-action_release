@@ -217,6 +217,44 @@ jobs:
           fi
           echo "Publishing $crate $(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)"
 
+      # The build number is stripped from the crate version above, but the artifacts a release
+      # publishes elsewhere — Repox, binaries.sonarsource.com — are all named `<version>-<build>`.
+      # Anything in the manifest that has to name one of those files therefore cannot be written in
+      # terms of the crate version alone. `[package.metadata.binstall]` is the case that motivated
+      # this: `cargo binstall` templates `{ version }` from crates.io, so a `pkg-url` built only
+      # from it points at a path that does not exist.
+      #
+      # `{ build }` closes the gap. The manifest in the repository keeps a template, and the
+      # manifest inside the published `.crate` — which is what `cargo binstall` reads — carries the
+      # build number of the release it belongs to. The spelling deliberately matches binstall's own
+      # `{ version }` so the two read alike side by side.
+      #
+      # Substituted across the whole file rather than within a section, because `[package.metadata]`
+      # cannot be delimited reliably in sed and `{ build }` means nothing to Cargo anywhere else. A
+      # manifest that never uses it is left byte-for-byte alone.
+      - name: Substitute the build number
+        if: ${{ steps.detect.outputs.cargo == 'true' }}
+        working-directory: developer_repo
+        env:
+          BUILD: ${{ steps.get_version.outputs.build }}
+        run: |
+          set -euo pipefail
+          placeholder='\{[[:space:]]*build[[:space:]]*\}'
+          occurrences=$(grep -c -E "$placeholder" Cargo.toml || true)
+          if [[ "$occurrences" -eq 0 ]]; then
+            echo "No { build } placeholder in Cargo.toml; nothing to substitute"
+            exit 0
+          fi
+          sed -E "s/$placeholder/${BUILD}/g" Cargo.toml > Cargo.toml.build && mv Cargo.toml.build Cargo.toml
+          # Same reasoning as the version stamp: a placeholder that survives into a published crate
+          # cannot be taken back, and `cargo binstall` would fail on it for every user.
+          if grep -q -E "$placeholder" Cargo.toml; then
+            echo "::error::{ build } survived substitution in Cargo.toml"
+            exit 1
+          fi
+          echo "Substituted { build } -> ${BUILD} on ${occurrences} line(s):"
+          grep -n -F "${BUILD}" Cargo.toml || true
+
       # A crates.io version can only be uploaded once, so this job is not idempotent by itself. The
       # release flow is built on "fix the root cause and re-run the failed workflow", and a re-run
       # after a failure *downstream* of a successful upload would otherwise die here on "crate version
