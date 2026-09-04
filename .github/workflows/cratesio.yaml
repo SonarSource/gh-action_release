@@ -6,11 +6,6 @@ name: Crates.io
         type: string
         description: Version (alternative to release event)
         required: false
-      dryRun:
-        type: boolean
-        description: Package and verify the crate without uploading it
-        default: false
-        required: false
       vaultAddr:
         type: string
         description: Custom Vault installation
@@ -43,7 +38,7 @@ name: Crates.io
 
 jobs:
   publish-to-cratesio:
-    name: ${{ inputs.dryRun && 'Dry-run publish to crates.io' || 'Publish to crates.io' }}
+    name: Publish to crates.io
     runs-on: ${{ inputs.runnerLabel || 'github-ubuntu-latest-s' }}
     environment: ${{ inputs.githubEnvironment }}
     permissions:
@@ -73,12 +68,19 @@ jobs:
           echo "build=${build}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
+      - name: Retrieve Secrets from Vault
+        id: secrets
+        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        with:
+          url: ${{ inputs.vaultAddr }}
+          secrets: |
+            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
+            development/kv/data/${{ inputs.vaultTokenKey }} token | cratesio_token;
+            development/kv/data/slack webhook | slack_webhook;
+
       # Cargo publish re-packages from source (there is no "publish this pre-built .crate file"
       # command), so unlike the pypi/npmjs jobs there is no build artifact to download here. The
       # bytes uploaded to crates.io are therefore rebuilt, not the ones promoted through Repox.
-      #
-      # Ahead of Vault, so that a caller which turns out not to be a Cargo project drops out below
-      # without having been asked for credentials it may not even be granted.
       - name: Checkout developer repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -86,59 +88,9 @@ jobs:
           path: developer_repo
           token: ${{ github.token }}
 
-      # main.yaml forces this job on for every dry run, so that a rehearsal cannot silently skip the
-      # one irreversible step. That sweeps in callers who publish no crate at all — gh-action_release's
-      # own it-test.yml among them — so they exit here rather than failing further down.
-      #
-      # `dryRun` is a reliable proxy for how we got here: on a real run this job only exists because
-      # the caller set publishToCratesIo, and then a missing manifest is a misconfiguration worth
-      # failing on rather than passing over in silence.
-      - name: Detect a Cargo project
-        id: detect
-        env:
-          DRY_RUN: ${{ inputs.dryRun }}
-          REPO: ${{ github.event.repository.full_name }}
-        run: |
-          set -euo pipefail
-          if [[ -f developer_repo/Cargo.toml ]]; then
-            echo "cargo=true" >> "$GITHUB_OUTPUT"
-          elif [[ "$DRY_RUN" == "true" ]]; then
-            echo "::notice::No Cargo.toml in ${REPO}; nothing to rehearse"
-            echo "cargo=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error::publishToCratesIo is set but ${REPO} has no Cargo.toml"
-            exit 1
-          fi
-
-      # Only what a dry run needs: the Repox reader, for dependency resolution while packaging and
-      # verifying. A dry run therefore works before the crates.io credential has been provisioned,
-      # which is what makes it usable for onboarding a repository.
-      - name: Retrieve Secrets from Vault
-        id: secrets
-        if: ${{ steps.detect.outputs.cargo == 'true' }}
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
-        with:
-          url: ${{ inputs.vaultAddr }}
-          secrets: |
-            development/artifactory/token/{REPO_OWNER_NAME_DASH}-${{ inputs.artifactoryRoleSuffix }} access_token | artifactory_access_token;
-            development/kv/data/slack webhook | slack_webhook;
-
-      # Only the publish credential is deferred. The Slack webhook stays above, because the failures
-      # worth alerting on include this step itself failing — `development/kv/data/crates-io` not yet
-      # granted, most likely — and a webhook fetched here would not be available to report that.
-      - name: Retrieve Publishing Secrets from Vault
-        id: publish_secrets
-        if: ${{ steps.detect.outputs.cargo == 'true' && !inputs.dryRun }}
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
-        with:
-          url: ${{ inputs.vaultAddr }}
-          secrets: |
-            development/kv/data/${{ inputs.vaultTokenKey }} token | cratesio_token;
-
       # A repository that pins a channel in rust-toolchain.toml needs that channel materialised
       # before cargo runs, and a caller on a minimal self-hosted runner may have no rustup at all.
       - name: Set up Rust
-        if: ${{ steps.detect.outputs.cargo == 'true' }}
         working-directory: developer_repo
         run: |
           set -euo pipefail
@@ -163,7 +115,6 @@ jobs:
       # gitignore or exclude it, and this config must also apply to the verification build, which
       # cargo runs from target/package/.
       - name: Route crates.io dependency resolution through Repox
-        if: ${{ steps.detect.outputs.cargo == 'true' }}
         run: |
           set -euo pipefail
           mkdir -p "${CARGO_HOME:-$HOME/.cargo}"
@@ -184,7 +135,6 @@ jobs:
       # Cargo.lock records the package's own version too, and `--locked` compares the two, so both
       # files move together — the same reason the calling repo's build stamps both.
       - name: Set the crate version
-        if: ${{ steps.detect.outputs.cargo == 'true' }}
         working-directory: developer_repo
         env:
           VERSION: ${{ steps.get_version.outputs.version }}
@@ -233,7 +183,6 @@ jobs:
       # cannot be delimited reliably in sed and `{ build }` means nothing to Cargo anywhere else. A
       # manifest that never uses it is left byte-for-byte alone.
       - name: Substitute the build number
-        if: ${{ steps.detect.outputs.cargo == 'true' }}
         working-directory: developer_repo
         env:
           BUILD: ${{ steps.get_version.outputs.build }}
@@ -261,7 +210,6 @@ jobs:
       # already uploaded" and could never complete. Treat an already-published version as done.
       - name: Check whether the version is already on crates.io
         id: already_published
-        if: ${{ steps.detect.outputs.cargo == 'true' && !inputs.dryRun }}
         working-directory: developer_repo
         env:
           VERSION: ${{ steps.get_version.outputs.version }}
@@ -290,31 +238,25 @@ jobs:
       # to publish. --registry crates-io: with crates-io replaced above, cargo will not pick a
       # publish target on its own unless package.publish names exactly one registry.
       #
-      # --dry-run runs everything except the upload: it packages the crate and compiles it in
-      # isolation, so a bad version, a missing manifest field or a file that does not build on its
-      # own fails here rather than on the one publish that cannot be taken back. No token is needed,
-      # and none is fetched.
-      - name: ${{ inputs.dryRun && 'Dry-run publish to crates.io' || 'Publish to crates.io' }}
-        if: ${{ steps.detect.outputs.cargo == 'true' && (inputs.dryRun || steps.already_published.outputs.skip != 'true') }}
+      # The dry run first, against the same working tree and the same flags: it packages the crate
+      # and compiles it in isolation, so a bad version, a missing manifest field or a file that does
+      # not build on its own fails before the upload rather than after it. It costs a second
+      # verification build, which is worth it for the one step here that cannot be undone.
+      - name: Publish to crates.io
+        if: ${{ steps.already_published.outputs.skip != 'true' }}
         working-directory: developer_repo
         env:
-          # `|| '{}'` for the same reason as the line below: a skipped Vault step leaves its output an
-          # empty string, and `env` is evaluated even when the step's own `if` will skip it — so an
-          # unguarded fromJSON('') fails the whole job with "Error reading JToken from JsonReader".
-          # That is what a caller with no Cargo.toml hits, gh-action_release's own it-test.yml among
-          # them, since the Vault step above is gated on having detected a Cargo project.
-          CARGO_REGISTRIES_REPOX_TOKEN: Bearer ${{ fromJSON(steps.secrets.outputs.vault || '{}').artifactory_access_token }}
-          # Empty on a dry run: the secrets step is skipped, so its output defaults to an empty object.
-          CARGO_REGISTRY_TOKEN: ${{ fromJSON(steps.publish_secrets.outputs.vault || '{}').cratesio_token }}
-          DRY_RUN: ${{ inputs.dryRun && '--dry-run' || '' }}
-        run: cargo publish ${LOCKED} ${DRY_RUN} --allow-dirty --registry crates-io
+          CARGO_REGISTRIES_REPOX_TOKEN: Bearer ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
+          CARGO_REGISTRY_TOKEN: ${{ fromJSON(steps.secrets.outputs.vault).cratesio_token }}
+        run: |
+          set -euo pipefail
+          cargo publish ${LOCKED} --allow-dirty --registry crates-io --dry-run
+          cargo publish ${LOCKED} --allow-dirty --registry crates-io
 
-      # Silent on a dry run: a rehearsal is run on demand and its failure is already on the caller's
-      # screen, so it is not worth waking the channel for.
       # The `outputs.vault != ''` guard covers a failure before or in the Vault step itself, when
       # there is no webhook to post to; the job still fails via "Exit with Error" below.
       - name: Notify on Failure
-        if: ${{ failure() && !inputs.dryRun && steps.secrets.outputs.vault != '' }}
+        if: ${{ failure() && steps.secrets.outputs.vault != '' }}
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault || '{}').slack_webhook }}
