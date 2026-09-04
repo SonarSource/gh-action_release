@@ -53,8 +53,7 @@ Notes:
   silently skipped.
 
 - `publishToCratesIo`: See [Publishing to crates.io](#publishing-to-cratesio) — unlike every other
-  publication target, this one **re-packages from source** instead of promoting a built artifact, and
-  it is the only one that also runs under `dryRun`.
+  publication target, this one **re-packages from source** instead of promoting a built artifact.
 
 ## Migrating from v6 to v7 (draft-first, `workflow_dispatch`)
 
@@ -187,21 +186,14 @@ pkg-fmt = "tgz"
 and it is gone by the time binstall sees the manifest. It follows that the placeholder only resolves on a real
 release: `cargo binstall` run against a working copy will not understand it.
 
-### Rehearsing with `dryRun`
+### The rehearsal before the upload
 
-A crates.io version is public and immutable, so this is the one publication target that still runs when
-`dryRun: true`. It resolves the version, stamps the manifest, packages the crate and compiles it in isolation,
-then stops short of the upload (`cargo publish --dry-run`). A bad version string, a missing manifest field or a
-file that does not build on its own fails there instead of on the publish that cannot be taken back.
+A crates.io version is public and immutable, so the job always runs `cargo publish --dry-run` immediately before
+the real `cargo publish`, against the same working tree and the same flags. The dry run packages the crate and
+compiles it in isolation, so a bad version string, a missing manifest field or a file that does not build on its
+own fails before anything is uploaded rather than after. It costs a second verification build.
 
-`dryRun: true` runs it **regardless of `publishToCratesIo`**, so a rehearsal cannot silently skip the one
-irreversible step. Callers that publish no crate at all are not affected: the job checks out the repository,
-finds no `Cargo.toml`, and exits early with a notice. On a real run a missing `Cargo.toml` is an error instead,
-since the only way to get there is for the caller to have set `publishToCratesIo`.
-
-A dry run fetches only the Repox reader token, never the crates.io one, and stays silent on Slack. It therefore
-works before `development/kv/data/crates-io` has been granted, which makes it the right first step when
-onboarding a repository.
+Like every other publication target, the job itself is skipped when `dryRun: true`.
 
 ### Releasability and non-Maven builds
 

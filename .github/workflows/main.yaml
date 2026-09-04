@@ -389,21 +389,13 @@ jobs:
       githubEnvironment: ${{ inputs.githubEnvironment }}
       runnerLabel: ${{ inputs.runnerLabel }}
 
-  # Unlike the other publication targets, this one also runs on a dry run: a crates.io version is
-  # immutable, so `cargo publish --dry-run` is the only rehearsal available and it is worth having.
-  #
-  # `|| inputs.dryRun` rather than the publish flag alone, so that a rehearsal exercises the publish
-  # path whether or not the operator remembered to also turn publishing on. Gating on the flag alone
-  # made `dryRun: true, publishToCratesIo: false` a green run that never touched the one irreversible
-  # step. Callers with no Cargo.toml drop out inside the job — see cratesio.yaml.
   cratesIo:
     name: crates.io
     needs: release
-    if: ${{ inputs.publishToCratesIo || inputs.dryRun }}
+    if: ${{ inputs.publishToCratesIo && inputs.dryRun != true }}
     uses: ./.github/workflows/cratesio.yaml
     with:
       version: ${{ inputs.version }}
-      dryRun: ${{ inputs.dryRun }}
       vaultAddr: ${{ inputs.vaultAddr }}
       artifactoryRoleSuffix: ${{ inputs.artifactoryRoleSuffix }}
       slackChannel: ${{ inputs.slackChannel }}
