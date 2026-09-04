@@ -150,6 +150,10 @@ are therefore equivalent to, but not identical with, the `.crate` promoted in Re
 
 **Version.** The `version` input carries a build number; crates.io requires SemVer. The job strips the build number and publishes the `Major.Minor.Patch[-Mx]` prefix. A repository without a committed lock file is published without `--locked`, with a warning.
 
+**Dry run first.** The job runs `cargo publish --dry-run` immediately before the real publish, same tree and same
+flags, so a crate that does not package or build standalone fails before it ships. The job itself is skipped when
+`dryRun: true`, like every other publication target.
+
 **Requirements before enabling:**
 1. A single-crate repository. The job stamps the first `[package]` version in `Cargo.toml`; a workspace with
    several publishable crates is not supported.
@@ -159,7 +163,8 @@ are therefore equivalent to, but not identical with, the `.crate` promoted in Re
    ownership. Add a team owner immediately after the first publish:
    `cargo owner --add github:SonarSource:<team> <crate>`.
 4. Vault permission for `development/kv/data/crates-io` (see below).
-5. The build uploads its crate with a synthetic Maven module ID — see the next section.
+5. The build uploads its crate with a synthetic Maven module ID — see
+   [Releasability and non-Maven builds](#releasability-and-non-maven-builds).
 
 ### Referring to the build number from the manifest: `{ build }`
 
@@ -185,15 +190,6 @@ pkg-fmt = "tgz"
 `{ build }` is substituted by this workflow, not by binstall — it is not one of binstall's template variables,
 and it is gone by the time binstall sees the manifest. It follows that the placeholder only resolves on a real
 release: `cargo binstall` run against a working copy will not understand it.
-
-### The rehearsal before the upload
-
-A crates.io version is public and immutable, so the job always runs `cargo publish --dry-run` immediately before
-the real `cargo publish`, against the same working tree and the same flags. The dry run packages the crate and
-compiles it in isolation, so a bad version string, a missing manifest field or a file that does not build on its
-own fails before anything is uploaded rather than after. It costs a second verification build.
-
-Like every other publication target, the job itself is skipped when `dryRun: true`.
 
 ### Releasability and non-Maven builds
 
