@@ -159,19 +159,14 @@ Setting `useNpmTrustedPublisher: true` switches npm publishing from the Vault-st
 5. The build uploads its crate with a synthetic Maven module ID — see
    [Releasability and non-Maven builds](#releasability-and-non-maven-builds).
 
-### Referring to the build number from the manifest: `{ build }`
+### The `{ build }` placeholder
 
-The crate version on crates.io is plain SemVer, but everything else a release publishes — the artifacts in
-Repox, the archives on `binaries.sonarsource.com` — is named `<version>-<build>`. A manifest field that has to
-name one of those files cannot be written in terms of the crate version alone.
+The crate version is plain SemVer, but the archives on `binaries.sonarsource.com` are named
+`<version>-<build>`. Before packaging, the job replaces every `{ build }` in `Cargo.toml` with the build number
+from the `version` input (`46`, for `0.1.0-46`); `{build}` works too. Manifests that do not use it are untouched.
 
-Before packaging, the job replaces every `{ build }` in `Cargo.toml` with the build number taken from the
-`version` input (`46`, for `0.1.0-46`). Whitespace inside the braces is optional, `{build}` works too. A manifest
-that does not use the placeholder is left untouched; one where a placeholder somehow survives the substitution
-fails the job, for the same reason the version stamp is verified.
-
-The case this exists for is `cargo binstall`, which reads `[package.metadata.binstall]` out of the **published**
-crate and templates `{ version }` from crates.io. Adding `{ build }` makes a `pkg-url` resolvable:
+This exists for `cargo binstall`, which reads `[package.metadata.binstall]` from the **published** crate and
+templates `{ version }` from crates.io — not enough on its own to name the archive:
 
 ```toml
 [package.metadata.binstall]
@@ -180,9 +175,8 @@ pkg-url = "https://binaries.sonarsource.com/Distribution/{ name }/{ name }-{ ver
 pkg-fmt = "tgz"
 ```
 
-`{ build }` is substituted by this workflow, not by binstall — it is not one of binstall's template variables,
-and it is gone by the time binstall sees the manifest. It follows that the placeholder only resolves on a real
-release: `cargo binstall` run against a working copy will not understand it.
+`{ build }` is ours, not one of binstall's variables, and is gone by the time binstall sees the manifest — so it
+only resolves on a real release.
 
 ### Releasability and non-Maven builds
 

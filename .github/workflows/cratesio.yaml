@@ -92,7 +92,6 @@ jobs:
             export PATH="$HOME/.cargo/bin:$PATH"
           fi
           rustup show  # materialises the toolchain rust-toolchain.toml pins
-          cargo --version
 
       # The crates.io index is not reachable from these runners, so resolution goes through Repox.
       # The publish itself still targets the real crates.io.
@@ -119,6 +118,7 @@ jobs:
       # Cargo has no "publish as this version" flag, so the manifest is edited in place. Cargo.lock
       # carries the package version too and `--locked` compares them, so both move together.
       - name: Set the crate version
+        id: stamp
         working-directory: developer_repo
         env:
           VERSION: ${{ steps.get_version.outputs.version }}
@@ -138,6 +138,7 @@ jobs:
             echo "::error::Failed to stamp version $VERSION into Cargo.toml (found '${stamped:-none}')"
             exit 1
           fi
+          echo "crate=$crate" >> "$GITHUB_OUTPUT"
           if [[ -f Cargo.lock ]]; then
             awk -v n="$crate" -v v="$VERSION" \
               '$0 == "name = \"" n "\"" {print; getline; print "version = \"" v "\""; next} {print}' \
@@ -147,7 +148,7 @@ jobs:
             echo "::warning::No Cargo.lock; publishing without --locked"
             echo "LOCKED=" >> "$GITHUB_ENV"
           fi
-          echo "Publishing $crate $(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)"
+          echo "Publishing $crate $stamped"
 
       # Release artifacts elsewhere (Repox, binaries.sonarsource.com) are named `<version>-<build>`,
       # which the crate version cannot express — `[package.metadata.binstall]`'s pkg-url needs it.
@@ -171,19 +172,17 @@ jobs:
             echo "::error::{ build } survived substitution in Cargo.toml"
             exit 1
           fi
-          echo "Substituted { build } -> ${BUILD} on ${occurrences} line(s):"
-          grep -n -F "${BUILD}" Cargo.toml || true
+          echo "Substituted { build } -> ${BUILD} on ${occurrences} line(s)"
 
       # A version uploads only once, so re-running a release that failed downstream of a successful
       # upload would die on "already uploaded". Treat an already-published version as done.
       - name: Check whether the version is already on crates.io
         id: already_published
-        working-directory: developer_repo
         env:
           VERSION: ${{ steps.get_version.outputs.version }}
+          crate: ${{ steps.stamp.outputs.crate }}
         run: |
           set -euo pipefail
-          crate=$(sed -n 's/^name *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
           # Only 404 is a definitive "not published"; a rate limit or 5xx must not read as absent.
           code=$(curl -sS --max-time 30 --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' \
             -A "SonarSource gh-action_release (https://github.com/SonarSource/gh-action_release)" \
@@ -199,11 +198,9 @@ jobs:
               echo "skip=false" >> "$GITHUB_OUTPUT" ;;
           esac
 
-      # --allow-dirty: the edits above are uncommitted. --registry crates-io: with crates-io replaced
-      # above, cargo needs the target named unless package.publish names exactly one registry.
-      #
-      # The dry run is the same command minus the upload, so a crate that does not package or build
-      # standalone fails before it ships rather than after. It costs a second verification build.
+      # --allow-dirty: the edits above are uncommitted. --registry crates-io: crates-io is replaced
+      # above, so cargo needs the target named unless package.publish names exactly one registry.
+      # The dry run is the same command minus the upload; it costs a second verification build.
       - name: Publish to crates.io
         if: ${{ steps.already_published.outputs.skip != 'true' }}
         working-directory: developer_repo
@@ -215,7 +212,7 @@ jobs:
           cargo publish ${LOCKED} --allow-dirty --registry crates-io --dry-run
           cargo publish ${LOCKED} --allow-dirty --registry crates-io
 
-      # No webhook to post to if Vault itself failed; the job still fails via "Exit with Error".
+      # No webhook to post to if Vault itself failed.
       - name: Notify on Failure
         if: ${{ failure() && steps.secrets.outputs.vault != '' }}
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
@@ -233,6 +230,3 @@ jobs:
               ]
             }
 
-      - name: Exit with Error
-        if: ${{ failure() }}
-        run: exit 1
