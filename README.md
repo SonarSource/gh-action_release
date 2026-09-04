@@ -52,8 +52,7 @@ Notes:
   SBOM is also uploaded next to the artifacts. Products that do not publish an SBOM to Repox are
   silently skipped.
 
-- `publishToCratesIo`: See [Publishing to crates.io](#publishing-to-cratesio) — unlike every other
-  publication target, this one **re-packages from source** instead of promoting a built artifact.
+- `publishToCratesIo`: See [Publishing to crates.io](#publishing-to-cratesio). This **re-packages from source** instead of promoting a built artifact.
 
 ## Migrating from v6 to v7 (draft-first, `workflow_dispatch`)
 
@@ -142,17 +141,11 @@ Setting `useNpmTrustedPublisher: true` switches npm publishing from the Vault-st
 `publishToCratesIo: true` publishes the project's crate to [crates.io](https://crates.io/) with a Vault-sourced
 `CARGO_REGISTRY_TOKEN` (`development/kv/data/crates-io`, key `token`).
 
-**This target is not a promotion.** Every other publication step downloads the artifact that was built, QA'd and
-promoted through Repox. `cargo publish` has no "upload this pre-built `.crate`" mode — it always re-packages from
-source — so this job checks out the calling repository at the released commit and rebuilds. The bytes on crates.io
-are therefore equivalent to, but not identical with, the `.crate` promoted in Repox. A published crate version is
-**public and immutable**: it cannot be overwritten, and yanking hides it without removing it.
+**This is not a promotion.** `cargo publish` has no "upload this pre-built `.crate`" mode. It re-packages from source at the released commit. The bytes on crates.io are therefore equivalent to, but not identical with, the `.crate` promoted in Repox. A published crate version is **public and immutable**.
 
 **Version.** The `version` input carries a build number; crates.io requires SemVer. The job strips the build number and publishes the `Major.Minor.Patch[-Mx]` prefix. A repository without a committed lock file is published without `--locked`, with a warning.
 
-**Dry run first.** The job runs `cargo publish --dry-run` immediately before the real publish, same tree and same
-flags, so a crate that does not package or build standalone fails before it ships. The job itself is skipped when
-`dryRun: true`, like every other publication target.
+**Dry run first.** The job runs `cargo publish --dry-run` immediately before the real publish, same tree and same flags, so a crate that does not package or build standalone fails before it ships.
 
 **Requirements before enabling:**
 1. A single-crate repository. The job stamps the first `[package]` version in `Cargo.toml`; a workspace with
@@ -162,7 +155,7 @@ flags, so a crate that does not package or build standalone fails before it ship
 3. The crate name is owned by the `sonartech` crates.io account, or is unclaimed — the first publish takes
    ownership. Add a team owner immediately after the first publish:
    `cargo owner --add github:SonarSource:<team> <crate>`.
-4. Vault permission for `development/kv/data/crates-io` (see below).
+4. Vault permission for `development/kv/data/crates-io`.
 5. The build uploads its crate with a synthetic Maven module ID — see
    [Releasability and non-Maven builds](#releasability-and-non-maven-builds).
 
