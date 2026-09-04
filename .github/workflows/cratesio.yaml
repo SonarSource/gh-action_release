@@ -47,11 +47,8 @@ jobs:
     timeout-minutes: 30
     if: ${{ (github.event_name == 'release' && github.event.action == 'published') || inputs.version != '' }}
     steps:
-      # crates.io versions are SemVer and immutable, so the build number has to come off before
-      # anything is published. The accepted shapes are the ones the release action itself enforces
-      # (main/release/utils/github.py): [ProjectName-]Major.Minor.Patch[-Mx][-.+]BuildNumber. Both
-      # separators occur in practice — Maven projects use '1.2.3.456', Cargo projects '1.2.3-456',
-      # because a dot is not legal in a crate version.
+      # crates.io versions are SemVer, so the build number comes off. Both separators occur: Maven
+      # projects use '1.2.3.456', Cargo ones '1.2.3-456', a dot being illegal in a crate version.
       - name: Get the version
         id: get_version
         env:
@@ -78,9 +75,8 @@ jobs:
             development/kv/data/${{ inputs.vaultTokenKey }} token | cratesio_token;
             development/kv/data/slack webhook | slack_webhook;
 
-      # Cargo publish re-packages from source (there is no "publish this pre-built .crate file"
-      # command), so unlike the pypi/npmjs jobs there is no build artifact to download here. The
-      # bytes uploaded to crates.io are therefore rebuilt, not the ones promoted through Repox.
+      # `cargo publish` always re-packages from source, so unlike pypi/npmjs there is no promoted
+      # artifact to download: the published bytes are rebuilt here.
       - name: Checkout developer repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -88,8 +84,8 @@ jobs:
           path: developer_repo
           token: ${{ github.token }}
 
-      # A repository that pins a channel in rust-toolchain.toml needs that channel materialised
-      # before cargo runs, and a caller on a minimal self-hosted runner may have no rustup at all.
+      # rust-toolchain.toml may pin a channel the runner lacks, and a minimal runner may have no
+      # rustup at all.
       - name: Set up Rust
         working-directory: developer_repo
         run: |
@@ -100,20 +96,14 @@ jobs:
             echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
             export PATH="$HOME/.cargo/bin:$PATH"
           fi
-          # Installs whatever rust-toolchain.toml pins, so the publish uses the toolchain the
-          # project builds with rather than whatever the runner image happens to carry.
-          rustup show
+          rustup show  # materialises the toolchain rust-toolchain.toml pins
           cargo --version
 
-      # Direct internet access to crates.io's index is not available from these runners;
-      # dependency resolution is routed through Repox's cargo proxy, same as the calling
-      # repo's own CI. The actual `cargo publish` target below is unaffected by this and
-      # still goes to the real, public crates.io.
+      # The crates.io index is not reachable from these runners, so resolution goes through Repox.
+      # The publish itself still targets the real crates.io.
       #
-      # Written to CARGO_HOME rather than into the checkout: a `.cargo/config.toml` inside the
-      # package directory would be packaged into the published .crate unless the caller happens to
-      # gitignore or exclude it, and this config must also apply to the verification build, which
-      # cargo runs from target/package/.
+      # In CARGO_HOME, not the checkout: a .cargo/config.toml inside the package would be packaged
+      # into the .crate, and this must also cover the verification build under target/package/.
       - name: Route crates.io dependency resolution through Repox
         run: |
           set -euo pipefail
@@ -131,9 +121,8 @@ jobs:
           replace-with = "repox"
           EOF
 
-      # Cargo has no flag for "publish as this version", so the manifest is edited in place.
-      # Cargo.lock records the package's own version too, and `--locked` compares the two, so both
-      # files move together — the same reason the calling repo's build stamps both.
+      # Cargo has no "publish as this version" flag, so the manifest is edited in place. Cargo.lock
+      # carries the package version too and `--locked` compares them, so both move together.
       - name: Set the crate version
         working-directory: developer_repo
         env:
@@ -148,9 +137,7 @@ jobs:
           fi
           awk -v v="$VERSION" '!done && /^version *= */{print "version = \"" v "\""; done=1; next} {print}' \
             Cargo.toml > Cargo.toml.stamped && mv Cargo.toml.stamped Cargo.toml
-          # Never take the stamp on trust. If the pattern missed — an unusual manifest layout, or a
-          # first `version =` that is not the package's — cargo would happily publish the source
-          # version instead, and a crates.io release cannot be taken back.
+          # A missed pattern would publish the source version instead, immutably.
           stamped=$(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
           if [[ "$stamped" != "$VERSION" ]]; then
             echo "::error::Failed to stamp version $VERSION into Cargo.toml (found '${stamped:-none}')"
@@ -167,21 +154,10 @@ jobs:
           fi
           echo "Publishing $crate $(sed -n 's/^version *= *"\(.*\)"/\1/p' Cargo.toml | head -1)"
 
-      # The build number is stripped from the crate version above, but the artifacts a release
-      # publishes elsewhere — Repox, binaries.sonarsource.com — are all named `<version>-<build>`.
-      # Anything in the manifest that has to name one of those files therefore cannot be written in
-      # terms of the crate version alone. `[package.metadata.binstall]` is the case that motivated
-      # this: `cargo binstall` templates `{ version }` from crates.io, so a `pkg-url` built only
-      # from it points at a path that does not exist.
-      #
-      # `{ build }` closes the gap. The manifest in the repository keeps a template, and the
-      # manifest inside the published `.crate` — which is what `cargo binstall` reads — carries the
-      # build number of the release it belongs to. The spelling deliberately matches binstall's own
-      # `{ version }` so the two read alike side by side.
-      #
-      # Substituted across the whole file rather than within a section, because `[package.metadata]`
-      # cannot be delimited reliably in sed and `{ build }` means nothing to Cargo anywhere else. A
-      # manifest that never uses it is left byte-for-byte alone.
+      # Release artifacts elsewhere (Repox, binaries.sonarsource.com) are named `<version>-<build>`,
+      # which the crate version cannot express — `[package.metadata.binstall]`'s pkg-url needs it.
+      # So `{ build }` is ours, resolved here: the repository keeps the template, the published
+      # .crate carries the value. Substituted file-wide; it means nothing to Cargo elsewhere.
       - name: Substitute the build number
         working-directory: developer_repo
         env:
@@ -195,8 +171,7 @@ jobs:
             exit 0
           fi
           sed -E "s/$placeholder/${BUILD}/g" Cargo.toml > Cargo.toml.build && mv Cargo.toml.build Cargo.toml
-          # Same reasoning as the version stamp: a placeholder that survives into a published crate
-          # cannot be taken back, and `cargo binstall` would fail on it for every user.
+          # A surviving placeholder would break `cargo binstall` for every user, immutably.
           if grep -q -E "$placeholder" Cargo.toml; then
             echo "::error::{ build } survived substitution in Cargo.toml"
             exit 1
@@ -204,10 +179,8 @@ jobs:
           echo "Substituted { build } -> ${BUILD} on ${occurrences} line(s):"
           grep -n -F "${BUILD}" Cargo.toml || true
 
-      # A crates.io version can only be uploaded once, so this job is not idempotent by itself. The
-      # release flow is built on "fix the root cause and re-run the failed workflow", and a re-run
-      # after a failure *downstream* of a successful upload would otherwise die here on "crate version
-      # already uploaded" and could never complete. Treat an already-published version as done.
+      # A version uploads only once, so re-running a release that failed downstream of a successful
+      # upload would die on "already uploaded". Treat an already-published version as done.
       - name: Check whether the version is already on crates.io
         id: already_published
         working-directory: developer_repo
@@ -216,10 +189,7 @@ jobs:
         run: |
           set -euo pipefail
           crate=$(sed -n 's/^name *= *"\(.*\)"/\1/p' Cargo.toml | head -1)
-          # Only 404 is a definitive "not published". crates.io rate-limits its REST API, so a 429,
-          # a 5xx or a proxy error must not be read as "absent" in silence — bounded and retried,
-          # then reported, because publishing anyway is the safe default but the operator needs to
-          # know the check was inconclusive if cargo then rejects the upload as a duplicate.
+          # Only 404 is a definitive "not published"; a rate limit or 5xx must not read as absent.
           code=$(curl -sS --max-time 30 --retry 3 --retry-all-errors -o /dev/null -w '%{http_code}' \
             -A "SonarSource gh-action_release (https://github.com/SonarSource/gh-action_release)" \
             "https://crates.io/api/v1/crates/${crate}/${VERSION}") || code=000
@@ -234,14 +204,11 @@ jobs:
               echo "skip=false" >> "$GITHUB_OUTPUT" ;;
           esac
 
-      # --allow-dirty: the version stamp above is an uncommitted edit, which cargo otherwise refuses
-      # to publish. --registry crates-io: with crates-io replaced above, cargo will not pick a
-      # publish target on its own unless package.publish names exactly one registry.
+      # --allow-dirty: the edits above are uncommitted. --registry crates-io: with crates-io replaced
+      # above, cargo needs the target named unless package.publish names exactly one registry.
       #
-      # The dry run first, against the same working tree and the same flags: it packages the crate
-      # and compiles it in isolation, so a bad version, a missing manifest field or a file that does
-      # not build on its own fails before the upload rather than after it. It costs a second
-      # verification build, which is worth it for the one step here that cannot be undone.
+      # The dry run is the same command minus the upload, so a crate that does not package or build
+      # standalone fails before it ships rather than after. It costs a second verification build.
       - name: Publish to crates.io
         if: ${{ steps.already_published.outputs.skip != 'true' }}
         working-directory: developer_repo
@@ -253,13 +220,12 @@ jobs:
           cargo publish ${LOCKED} --allow-dirty --registry crates-io --dry-run
           cargo publish ${LOCKED} --allow-dirty --registry crates-io
 
-      # The `outputs.vault != ''` guard covers a failure before or in the Vault step itself, when
-      # there is no webhook to post to; the job still fails via "Exit with Error" below.
+      # No webhook to post to if Vault itself failed; the job still fails via "Exit with Error".
       - name: Notify on Failure
         if: ${{ failure() && steps.secrets.outputs.vault != '' }}
         uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
         with:
-          webhook: ${{ fromJSON(steps.secrets.outputs.vault || '{}').slack_webhook }}
+          webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
           payload: |
             {
