@@ -62,7 +62,7 @@ jobs:
 
       - name: Retrieve Secrets from Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
+        uses: SonarSource/vault-action-wrapper@881045d830534a70ec3c7c275fa3714412c8ff6e # 3.6.1
         with:
           url: ${{ inputs.vaultAddr }}
           secrets: |
@@ -73,7 +73,7 @@ jobs:
       # `cargo publish` always re-packages from source, so unlike pypi/npmjs there is no promoted
       # artifact to download: the published bytes are rebuilt here.
       - name: Checkout developer repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
         with:
           repository: ${{ github.event.repository.full_name }}
           path: developer_repo
@@ -215,7 +215,7 @@ jobs:
       # No webhook to post to if Vault itself failed.
       - name: Notify on Failure
         if: ${{ failure() && steps.secrets.outputs.vault != '' }}
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        uses: slackapi/slack-github-action@0d95c9a7becc1e6e297d76df9bc735c44f4cbcbc # v3.0.5
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
