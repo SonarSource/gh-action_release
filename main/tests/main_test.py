@@ -16,9 +16,9 @@ from release.utils.buildinfo import BuildInfo
 from release.utils.github import GitHub
 
 
-def test_set_output():
+def test_set_output(monkeypatch):
     with tempfile.NamedTemporaryFile(suffix="", prefix=os.path.basename(__file__)) as temp_file:
-        os.environ['GITHUB_OUTPUT'] = temp_file.name
+        monkeypatch.setenv('GITHUB_OUTPUT', temp_file.name)
 
         set_output('function', 'output')
 
@@ -202,12 +202,9 @@ If needed, please contact the Engineering Experience squad.""")
         os.environ["SLACK_API_TOKEN"] = "some channel"
         os.environ["INPUT_PUBLISH_TO_BINARIES"] = "true"
         os.environ["BINARIES_AWS_DEPLOY"] = "bin"
-        try:
-            check_params(BuildInfo({
-                'buildInfo': {
-                    'properties': {'buildInfo.env.ARTIFACTORY_DEPLOY_REPO': 'deploy-repo-qa'},
-                    'modules': [{}]
-                }
-            }))
-        except InvalidInputParametersException:
-            self.fail("check_params() raised an Exception")
+        check_params(BuildInfo({
+            'buildInfo': {
+                'properties': {'buildInfo.env.ARTIFACTORY_DEPLOY_REPO': 'deploy-repo-qa'},
+                'modules': [{}]
+            }
+        }))

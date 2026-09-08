@@ -43,18 +43,18 @@ def build_info_with_no_artefacts():
 def test_get_artifacts_to_publish(build_info_with_artefacts):
     artifacts = build_info_with_artefacts.get_artifacts_to_publish()
     assert artifacts is not None
-    assert 'org.sonarsource.test:test1:jar,org.sonarsource.test:test2:jar' == artifacts
-    assert 'org.sonarsource.test' == build_info_with_artefacts.get_package()
+    assert artifacts == 'org.sonarsource.test:test1:jar,org.sonarsource.test:test2:jar'
+    assert build_info_with_artefacts.get_package() == 'org.sonarsource.test'
 
 
 def test_get_artifacts_to_publish_returns_property_when_no_module_property(build_info_with_artefacts_by_env):
-    assert 'ARTIFACTS_TO_PUBLISH' == build_info_with_artefacts_by_env.get_artifacts_to_publish()
+    assert build_info_with_artefacts_by_env.get_artifacts_to_publish() == 'ARTIFACTS_TO_PUBLISH'
 
 
 def test_get_artifacts_to_publish_prints_message_when_no_artifacts(build_info_with_no_artefacts, capsys):
     assert build_info_with_no_artefacts.get_artifacts_to_publish() is None
     captured = capsys.readouterr().out.split('\n')
-    assert "No artifacts to publish" == captured[0]
+    assert captured[0] == "No artifacts to publish"
 
 
 @fixture
