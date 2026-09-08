@@ -62,12 +62,12 @@ class MainTest(unittest.TestCase):
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
                 with pytest.raises(Exception):
                     main()
-                    check_params.assert_called_once()
-                    open_mock.assert_called_once()
-                    github_event.assert_called_once()
-                    github_release_request.assert_called_once()
-                    notify_slack.assert_called_once_with('"Released project:version failed')
-                    github_revoke_release.assert_called_once()
+                check_params.assert_called_once()
+                open_mock.assert_called_once()
+                github_event.assert_called_once()
+                github_release_request.assert_called_once()
+                notify_slack.assert_called_once_with('"Released project:version failed')
+                github_revoke_release.assert_called_once()
 
     @patch.dict(os.environ, {'GITHUB_EVENT_NAME': 'release'}, clear=True)
     @patch('release.main.check_params')
@@ -86,12 +86,12 @@ class MainTest(unittest.TestCase):
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
                 with pytest.raises(Exception):
                     main()
-                    check_params.assert_called_once()
-                    open_mock.assert_called_once()
-                    github_event.assert_called_once()
-                    github_release_request.assert_called_once()
-                    notify_slack.assert_called_once_with('"Released project:version failed')
-                    github_revoke_release.assert_called_once()
+                check_params.assert_called_once()
+                open_mock.assert_called_once()
+                github_event.assert_called_once()
+                github_release_request.assert_called_once()
+                notify_slack.assert_called_once_with('"Released project:version failed')
+                github_revoke_release.assert_called_once()
 
     @patch.dict(os.environ, {
         'GITHUB_EVENT_NAME': 'release',
@@ -152,14 +152,14 @@ class MainTest(unittest.TestCase):
             with patch.object(GitHub, 'get_release_request', return_value=release_request) as github_release_request:
                 with pytest.raises(Exception):
                     main()
-                    check_params.assert_called_once()
-                    open_mock.assert_called_once()
-                    github_event.assert_called_once()
-                    github_release_request.assert_called_once()
-                    artifactory_receive_build_info.assert_called_once_with(release_request)
-                    artifactory_promote.assert_called_once_with(release_request, ANY)
-                    notify_slack.assert_called_once_with('"Released project:version failed')
-                    abort_release(ANY, ANY, ANY, release_request)
+                check_params.assert_called_once()
+                open_mock.assert_called_once()
+                github_event.assert_called_once()
+                github_release_request.assert_called_once()
+                artifactory_receive_build_info.assert_called_once_with(release_request)
+                artifactory_promote.assert_called_once_with(release_request, ANY)
+                notify_slack.assert_called_once_with('"Released project:version failed')
+                abort_release(ANY, ANY, ANY, release_request)
 
     @parameterized.expand([
         "ARTIFACTORY_ACCESS_TOKEN"
