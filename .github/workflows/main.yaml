@@ -35,7 +35,7 @@ on:
         required: false
       publicRelease:
         type: boolean
-        description: Indicate if the project is generating a public release or not
+        description: For a mixed-privacy release (both org.sonarsource.* and com.sonarsource.* javadoc exist), also publish the private half; ignored otherwise -- a single-privacy build's javadoc is always published
         required: false
         default: false
       binariesS3Bucket:
