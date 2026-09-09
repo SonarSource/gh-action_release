@@ -27,7 +27,7 @@ jobs:
       publishToBinaries: false # enable the publication to binaries
       binariesS3Bucket: downloads-cdn-eu-central-1-prod # S3 bucket to use for the binaries
       publishJavadoc: false # enable the publication of the Javadoc to https://javadocs.sonarsource.org/
-      publicRelease: false # define if the Javadoc is stored in 'sonarsource-public-releases' (or 'sonarsource-private-releases' if false)
+      publicRelease: false # for a mixed-privacy release, also publish com.sonarsource.* (private) javadoc alongside org.sonarsource.* (public); ignored for a single-privacy build
       javadocDestinationDirectory: <repository name> # define the subdir to use in https://javadocs.sonarsource.org/
       mavenCentralSync: false # for OSS projects only, enable synchronization to Maven Central
       mavenCentralSyncExclusions: '' # exclude some artifacts from synchronization

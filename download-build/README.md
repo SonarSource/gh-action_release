@@ -52,3 +52,4 @@ jobs:
 | `exclusions`         | Exclude pattern from downloaded files                                                                                      | `-`                           |
 | `flat-download`      | Set to true if you do not wish to have the Artifactory repository path structure created locally for your downloaded files | `false`                       |
 | `download-checksums` | Set to false if you want to skip downloading the checksums                                                                 | `true`                        |
+| `fail-no-op`         | Set to false to succeed (downloading nothing) instead of failing when no artifact matches                                  | `true`                        |

@@ -4,7 +4,9 @@ on:
   pull_request:
     paths:
       - 'scripts/extract-javadoc.sh'
+      - 'scripts/select-javadoc.sh'
       - 'spec/extract_javadoc_spec.sh'
+      - 'spec/select_javadoc_spec.sh'
       - '.github/workflows/javadoc-publication.yaml'
       - 'mise.toml'
 
