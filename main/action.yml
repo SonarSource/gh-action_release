@@ -13,6 +13,14 @@ inputs:
     description: "Don't actually do anything, report what would have been done."
     default: 'false'
     required: false
+  maven_central_sync:
+    description: "If true, validate and publish the build to Maven Central as part of the release"
+    default: 'false'
+    required: false
+  maven_central_sync_exclusions:
+    description: "Glob pattern (matched against each artifact id) to exclude from the Maven Central sync"
+    default: '-'
+    required: false
 outputs:
   promote:
     description: "Output to detect if promote was executed"
@@ -20,6 +28,8 @@ outputs:
     description: "Output to detect if publish_to_binaries was executed"
   release:
     description: "Output to detect if release was revoked"
+  maven_central_deployment_id:
+    description: "Central deployment id, set once it has been published (maven_central_sync only)"
 runs:
   using: "docker"
   image: "Dockerfile"

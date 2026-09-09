@@ -8,7 +8,8 @@ import pytest
 from parameterized import parameterized
 
 from release.exceptions.invalid_input_parameters_exception import InvalidInputParametersException
-from release.main import abort_release, main, set_output, check_params, MANDATORY_ENV_VARIABLES
+from release.main import (
+    abort_release, check_params, is_maven_central_sync_enabled, main, set_output, MANDATORY_ENV_VARIABLES)
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
@@ -194,6 +195,58 @@ class MainTest(unittest.TestCase):
 env BINARIES_AWS_DEPLOY is empty but required as INPUT_PUBLISH_TO_BINARIES is true
 buildInfo.env.ARTIFACTORY_DEPLOY_REPO is required as INPUT_PUBLISH_TO_BINARIES is true
 If needed, please contact the Engineering Experience squad.""")
+
+    @patch.dict(os.environ, {'INPUT_MAVEN_CENTRAL_SYNC': 'true', 'INPUT_DRY_RUN': 'true'}, clear=True)
+    def test_is_maven_central_sync_enabled_false_in_dry_run(self):
+        # A dry run never fetches CENTRAL_TOKEN (main.yaml gates that Vault step on dryRun != true),
+        # so this must stay disabled even when the input flag is true.
+        assert is_maven_central_sync_enabled() is False
+
+    @patch.dict(os.environ, {'INPUT_MAVEN_CENTRAL_SYNC': 'true'}, clear=True)
+    def test_is_maven_central_sync_enabled_true_outside_dry_run(self):
+        assert is_maven_central_sync_enabled() is True
+
+    @patch.dict(os.environ, {
+        'GITHUB_EVENT_NAME': 'release',
+        'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken',
+        'INPUT_MAVEN_CENTRAL_SYNC': 'true',
+        'CENTRAL_TOKEN': 'mockCentralToken',
+    }, clear=True)
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Artifactory, 'receive_build_info')
+    @patch.object(Artifactory, 'promote')
+    @patch.object(GitHub, 'is_publish_to_binaries', return_value=False)
+    @patch('release.main.download_artifacts_for_central')
+    @patch('release.main.validate_before_promote', return_value='deployment-123')
+    @patch('release.main.finalize', side_effect=RuntimeError('publish failed'))
+    @patch('release.main.notify_slack')
+    @patch('release.main.abort_release')
+    @patch('release.main.set_output')
+    def test_finalize_failure_after_promotion_does_not_revoke(self,
+                                                               set_output,
+                                                               abort_release_mock,
+                                                               notify_slack,
+                                                               finalize_mock,
+                                                               validate_before_promote_mock,
+                                                               download_artifacts_mock,
+                                                               github_is_publish_to_binaries,
+                                                               artifactory_promote,
+                                                               artifactory_receive_build_info,
+                                                               github_event,
+                                                               check_params):
+        """A finalize() failure after Repox promotion must exit without calling abort_release —
+        un-promoting Repox at that point would fight an already-irreversible Central publish."""
+        with patch('release.utils.github.open', mock_open()):
+            release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+            with patch.object(GitHub, 'get_release_request', return_value=release_request):
+                with pytest.raises(SystemExit):
+                    main()
+
+        artifactory_promote.assert_called_once()
+        finalize_mock.assert_called_once_with('deployment-123', ANY, 'mockCentralToken')
+        abort_release_mock.assert_not_called()
+        assert call('maven_central_deployment_id', ANY) not in set_output.call_args_list
 
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
         for variable_name in MANDATORY_ENV_VARIABLES:
