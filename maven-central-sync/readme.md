@@ -10,20 +10,26 @@ This action takes artifacts that have already been downloaded by the `download-b
 
 ## How it works
 
-1. **Takes artifacts** from a local directory (provided by `download-build` action)
-2. **Creates a zip bundle** preserving the Maven repository structure
-3. **Uploads via curl** to Central Portal `/api/v1/publisher/upload` endpoint
-4. **Monitors status** via polling until deployment is complete
+Two modes, selected via the `mode` input:
+
+- **validate** (default): build a zip bundle, upload it as a `USER_MANAGED` deployment, and poll
+  until `VALIDATED`. The deployment is left pending-publish; on `FAILED` it is dropped
+  automatically.
+- **finalize**: publish an already-validated `deployment-id` (no re-upload).
+
+The bundle is uploaded once: `validate` → `finalize`.
 
 ## Inputs
 
-- `local-repo-dir` (required): Directory containing artifacts in Maven repository structure
+- `local-repo-dir`: Directory containing artifacts in Maven repository structure. Required for
+  `mode: validate`; ignored for `finalize`.
 - `central-url` (optional): Central Portal URL (default: `https://central.sonatype.com`)
-- `auto-publish` (optional): Whether to automatically publish after validation (default: `true`)
+- `mode` (optional): `validate` (default) | `finalize`
+- `deployment-id`: Deployment to publish. Required for `mode: finalize`.
 
 ## Outputs
 
-- `deployment-id`: The deployment ID from Central Portal (for tracking/debugging)
+- `deployment-id`: The deployment ID from Central Portal (for tracking/debugging; `validate` only)
 
 ## Environment Variables
 
@@ -37,7 +43,6 @@ This action takes artifacts that have already been downloaded by the `download-b
   with:
     local-repo-dir: ${{ steps.local_repo.outputs.dir }}
     central-url: https://central.sonatype.com
-    auto-publish: "true"
   env:
     CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
 ```
