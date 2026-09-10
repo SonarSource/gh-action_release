@@ -84,4 +84,19 @@ Describe 'select-javadoc.sh'
     The stdout should include "Found 0 public and 0 private javadoc jar(s)"
     The contents of file "$GITHUB_OUTPUT" should include "mixed=false"
   End
+
+  It 'keeps the public jar and warns instead of silently overwriting it with a same-named private one'
+    echo "public content" > "$public_dir/sonar-foo-1.0-javadoc.jar"
+    echo "private content" > "$private_dir/sonar-foo-1.0-javadoc.jar"
+
+    When call select_javadoc "true"
+
+    The status should be success
+    The file "$dest_dir/sonar-foo-1.0-javadoc.jar" should be exist
+    The contents of file "$dest_dir/sonar-foo-1.0-javadoc.jar" should include "public content"
+    The stdout should include "::warning::Duplicate javadoc jar name sonar-foo-1.0-javadoc.jar"
+
+    # The private jar was entirely skipped as a collision, so this was not a genuine mixed-privacy selection.
+    The contents of file "$GITHUB_OUTPUT" should include "mixed=false"
+  End
 End
