@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ job.workflow_repository }}
-          ref: ${{ job.workflow_sha }}
+          ref: 7549bbe53e69c555767eae251e247e3a183a9a6d
           path: gh-action_release
       - name: Get the version
         id: get_version
@@ -91,7 +91,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download public javadoc (org.sonarsource.*)
-        uses: SonarSource/gh-action_release/download-build@master
+        uses: SonarSource/gh-action_release/download-build@7549bbe53e69c555767eae251e247e3a183a9a6d
         with:
           flat-download: true
           fail-no-op: false
@@ -100,7 +100,7 @@ jobs:
           filter: org/sonarsource
           remote-repo: sonarsource-public-releases
       - name: Download private javadoc (com.sonarsource.*)
-        uses: SonarSource/gh-action_release/download-build@master
+        uses: SonarSource/gh-action_release/download-build@7549bbe53e69c555767eae251e247e3a183a9a6d
         with:
           flat-download: true
           fail-no-op: false
