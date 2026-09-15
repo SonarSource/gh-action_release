@@ -16,7 +16,7 @@ jobs:
         uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
         with:
           artifactoryRoleSuffix: "private-reader"
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 (Necessary to access local action)
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0 (Necessary to access local action)
       - uses: ./download-build/
         name: Given download-build is used with default values and dryRun enabled
         id: test-data
@@ -27,7 +27,7 @@ jobs:
           # use default values for the following:
           #flat-download:
           #exclusions:
-      - uses: nick-fields/assert-action@22dd2a66ef733fe92022d3704183ac007463eecb # v3.0.0
+      - uses: nick-fields/assert-action@9d4e34b06ce426ffbec11d91e220b8a90fd36bdb # v3.0.1
         name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
         with:
           expected: '--exclusions - --dry-run=true'
@@ -45,7 +45,7 @@ jobs:
         uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
         with:
           artifactoryRoleSuffix: "private-reader"
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 (Necessary to access local action)
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0 (Necessary to access local action)
       - uses: ./download-build/
         name: Given download-build is used with flat-download=true, exclusions and dryRun enabled
         id: test-data
@@ -55,7 +55,7 @@ jobs:
           flat-download: 'true'
           exclusions: '-'
           local-repo-dir: '.'
-      - uses: nick-fields/assert-action@22dd2a66ef733fe92022d3704183ac007463eecb # v3.0.0
+      - uses: nick-fields/assert-action@9d4e34b06ce426ffbec11d91e220b8a90fd36bdb # v3.0.1
         name: Then outputs.jfrog_dl_options value must contains --flat, --exclusions and --dry-run
         with:
           expected: '--exclusions - --dry-run=true --flat'
@@ -71,6 +71,6 @@ jobs:
         - it-tests-default-values
         - it-tests-use-flat-download-true
       steps:
-        - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
           with:
             jobs: ${{ toJSON(needs) }}
