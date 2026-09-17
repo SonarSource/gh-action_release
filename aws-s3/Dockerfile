@@ -1,4 +1,4 @@
-FROM amazon/aws-cli:2.33.14@sha256:b4dad9a6eba9c7b8d076e36552ebacab9932a452ee3a7f137c3b0cc9281ee979
+FROM amazon/aws-cli:2.36.44@sha256:e8467f2c319f9bc9a1471808a69949a76915e9c95eaf4a09ece9f9e85fd32747
 
 WORKDIR /
 ADD ./ /
