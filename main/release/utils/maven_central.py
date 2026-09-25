@@ -25,14 +25,14 @@ PUBLIC_GROUP_ID_PREFIX = "org.sonarsource"
 
 
 def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions="-"):
-    """Download this build's to-publish artifacts (pre-promotion) into dest_dir, Maven-repo-shaped.
+    """Download this build's public artifacts (pre-promotion) into dest_dir, Maven-repo-shaped.
 
     Only org.sonarsource.* artifacts are considered — com.sonarsource.* are commercial/private and
     must never reach a Central bundle. exclusions is one or more ";"-separated glob patterns
     matched against each artifact id and its Maven path; "-" means none (e.g. sonar-enterprise
     excludes its shaded scanner-engine jar).
     """
-    allartifacts = buildinfo.get_artifacts_to_publish()
+    allartifacts = _artifacts_for_central(buildinfo)
     if not allartifacts:
         return
     try:
@@ -44,7 +44,9 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
     version = buildinfo.get_version()
     patterns = [p for p in exclusions.split(";") if p and p != "-"] if exclusions else []
     seen_parents = set()
-    for artifact_to_publish in allartifacts.split(","):
+    seen_pom = set()
+    seen_companions = set()
+    for artifact_to_publish in allartifacts:
         gid, aid, ext = artifact_to_publish.split(":")[:3]
         if not gid.startswith(PUBLIC_GROUP_ID_PREFIX):
             print(f"skipping non-public artifact {artifact_to_publish} for Maven Central")
@@ -54,11 +56,36 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
             continue
         qual = artifact_to_publish.split(":")[3] if artifact_to_publish.count(":") > 2 else ""
         _download_optional(artifactory, dest_dir, sourcerepo, gid, aid, qual, ext, version)
-        _download_optional(artifactory, dest_dir, sourcerepo, gid, aid, "", "pom", version)
-        if ext == "jar":
-            _download_optional(artifactory, dest_dir, sourcerepo, gid, aid, "sources", "jar", version)
-            _download_optional(artifactory, dest_dir, sourcerepo, gid, aid, "javadoc", "jar", version)
+        _download_pom_and_companions_once(
+            artifactory, dest_dir, sourcerepo, gid, aid, ext, version, seen_pom, seen_companions)
         _download_parent_poms(artifactory, dest_dir, sourcerepo, gid, aid, version, patterns, seen_parents)
+
+
+def _download_pom_and_companions_once(artifactory, dest_dir, repo, gid, aid, ext, version, seen_pom, seen_companions):
+    """Fetch a module's pom, and its sources/javadoc jars for a jar-typed entry, at most once per
+    (gid, aid) - a module can yield several entries (a main jar plus classified variants) that all
+    share the same pom and sources/javadoc jars.
+    """
+    if (gid, aid) not in seen_pom:
+        seen_pom.add((gid, aid))
+        _download_optional(artifactory, dest_dir, repo, gid, aid, "", "pom", version)
+    if ext == "jar" and (gid, aid) not in seen_companions:
+        seen_companions.add((gid, aid))
+        _download_optional(artifactory, dest_dir, repo, gid, aid, "sources", "jar", version)
+        _download_optional(artifactory, dest_dir, repo, gid, aid, "javadoc", "jar", version)
+
+
+def _artifacts_for_central(buildinfo):
+    """Every 'groupId:artifactId:ext' to bundle for Central: every build module, plus any
+    artifactsToPublish entries not already covered by an identical module-derived entry (kept for
+    a classified declaration, e.g. a scanner's zip classifiers, that a bare module id can't
+    express).
+    """
+    from_modules = buildinfo.get_public_module_artifacts()
+    seen = set(from_modules)
+    explicit = (buildinfo.get_artifacts_to_publish() or "").split(",")
+    extra = [a for a in explicit if a and a not in seen]
+    return from_modules + extra
 
 
 def _download_parent_poms(artifactory, dest_dir, repo, gid, aid, version, patterns, seen):

@@ -41,6 +41,68 @@ class BuildInfo:
             print("No artifacts to publish")
         return artifacts
 
+    def get_public_module_artifacts(self):
+        """Every module of this build, as 'groupId:artifactId:ext[:qualifier]' strings, deduplicated.
+
+        Reads each module's own declared artifacts (falling back to a plain 'jar' guess when that
+        list is absent) so a module whose main artifact isn't a jar, or that attaches extra
+        classified files, is still represented correctly. A module's sources/javadoc companions
+        are only dropped here when it also has a genuine jar-typed entry, which is the only case
+        the Central download loop re-fetches them on its own; otherwise (e.g. a zip-packaged
+        module that still attaches sources/javadoc jars) they're kept as explicit entries.
+
+        Deliberately independent of artifactsToPublish, which governs a different, narrower
+        selection (what reaches binaries.sonarsource.com) and is often scoped to just the
+        customer-facing plugin jar even for a build that produces other public modules (e.g. a
+        language frontend or checks jar).
+        """
+        modules = self.json.get('buildInfo', {}).get('modules', [])
+        gavs = []
+        for module in modules:
+            parts = module.get('id', '').split(':')
+            if len(parts) < 2:
+                continue
+            gavs.extend(self._module_gavs(parts[0], parts[1], parts[-1], module.get('artifacts')))
+        return list(dict.fromkeys(gavs))
+
+    @staticmethod
+    def _module_gavs(gid, aid, version, artifacts):
+        """One module's own artifacts as 'groupId:artifactId:ext[:qualifier]' strings; falls back
+        to a plain jar guess when the module declares none of its own.
+
+        Extension and qualifier are parsed from each artifact's filename, not its buildInfo
+        'type' - JFrog's extractors write a mangled string there for jar artifacts (e.g.
+        'test-jar', 'javadoc-jar'), not a plain extension.
+        """
+        prefix = f"{aid}-{version}"
+        artifacts = artifacts or [{'name': f"{prefix}.jar"}]
+        parsed = [p for p in (BuildInfo._parse_artifact_name(prefix, a.get('name', '')) for a in artifacts) if p]
+        has_plain_jar = any(ext == 'jar' and qualifier not in ('sources', 'javadoc') for ext, qualifier in parsed)
+        gavs = []
+        for ext, qualifier in parsed:
+            if ext == 'pom' or (has_plain_jar and qualifier in ('sources', 'javadoc')):
+                continue
+            gavs.append(f"{gid}:{aid}:{ext}:{qualifier}" if qualifier else f"{gid}:{aid}:{ext}")
+        if not gavs and any(ext == 'pom' for ext, _ in parsed):
+            # A pom-packaged module (e.g. a BOM) with no jar/zip/... sibling: the loop above
+            # skips its only artifact as a would-be companion, so emit it directly or it's
+            # dropped from the bundle unless some other module happens to <parent> it.
+            gavs.append(f"{gid}:{aid}:pom")
+        return gavs
+
+    @staticmethod
+    def _parse_artifact_name(prefix, name):
+        """Split a '<prefix>[-qualifier].ext' filename into (ext, qualifier), or None if name
+        doesn't start with prefix or has no extension.
+        """
+        rest = name[len(prefix):] if name.startswith(prefix) else ''
+        if '.' not in rest:
+            return None
+        if rest.startswith('-'):
+            qualifier, _, ext = rest[1:].rpartition('.')
+            return ext, qualifier
+        return rest[1:], ''
+
     def is_public(self):
         artifacts = self.get_artifacts_to_publish()
         if artifacts:
