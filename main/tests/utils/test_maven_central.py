@@ -218,13 +218,16 @@ class TestDownloadArtifactsForCentral:
         buildinfo = BuildInfo({
             'buildInfo': {
                 'statuses': [{'repository': 'sonarsource-public-qa'}],
-                'modules': [{
-                    'id': 'org.sonarsource.dummy:dummy-maven:16.1.0.3465',
-                    'properties': {
-                        'artifactsToPublish':
-                            'org.sonarsource.dummy:plugin-a:jar,org.sonarsource.dummy:plugin-b:jar'
-                    }
-                }]
+                'modules': [
+                    {
+                        'id': 'org.sonarsource.dummy:plugin-a:16.1.0.3465',
+                        'properties': {'artifactsToPublish': 'org.sonarsource.dummy:plugin-a:jar'}
+                    },
+                    {
+                        'id': 'org.sonarsource.dummy:plugin-b:16.1.0.3465',
+                        'properties': {'artifactsToPublish': 'org.sonarsource.dummy:plugin-b:jar'}
+                    },
+                ]
             }
         })
         artifactory = MagicMock()
@@ -235,6 +238,119 @@ class TestDownloadArtifactsForCentral:
         seen_sets = [c.args[7] for c in mock_download_parent_poms.call_args_list]
         assert len(seen_sets) == 2
         assert seen_sets[0] is seen_sets[1]
+
+    @patch('release.utils.maven_central.shutil.move')
+    def test_bundles_every_module_even_when_narrower_than_artifacts_to_publish(self, mock_move, tmp_path):
+        # artifactsToPublish governs a different, narrower selection (what reaches
+        # binaries.sonarsource.com) and must not gate Central bundling: a module can be a real,
+        # published part of the build without being listed there.
+        buildinfo = BuildInfo({
+            'buildInfo': {
+                'statuses': [{'repository': 'sonarsource-public-qa'}],
+                'modules': [
+                    {
+                        'id': 'org.sonarsource.dummy:dummy-plugin:16.1.0.3465',
+                        'properties': {'artifactsToPublish': 'org.sonarsource.dummy:dummy-plugin:jar'}
+                    },
+                    {'id': 'org.sonarsource.dummy:dummy-frontend:16.1.0.3465'},
+                    {'id': 'org.sonarsource.dummy:dummy-checks:16.1.0.3465'},
+                ]
+            }
+        })
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path))
+
+        aids_downloaded = {c.args[2] for c in artifactory.download_named.call_args_list}
+        assert aids_downloaded == {"dummy-plugin", "dummy-frontend", "dummy-checks"}
+
+    @patch('release.utils.maven_central.shutil.move')
+    def test_keeps_explicit_classified_artifacts_with_a_type_the_module_id_cant_express(self, mock_move, tmp_path):
+        # A module can explicitly publish artifacts under a type/classifier a bare module id can't
+        # express (e.g. sonar-scanner-msbuild's net/net-framework classified zips) - these must
+        # stay included alongside the module's own default jar guess, not replace it.
+        buildinfo = BuildInfo({
+            'buildInfo': {
+                'statuses': [{'repository': 'sonarsource-public-qa'}],
+                'modules': [{
+                    'id': 'org.sonarsource.dummy:dummy-maven:16.1.0.3465',
+                    'properties': {
+                        'artifactsToPublish':
+                            'org.sonarsource.dummy:dummy-maven:zip:net,org.sonarsource.dummy:dummy-maven:zip:net-fw'
+                    }
+                }]
+            }
+        })
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path))
+
+        filenames = {c.args[4] for c in artifactory.download_named.call_args_list}
+        assert "dummy-maven-16.1.0.3465.jar" in filenames
+        assert "dummy-maven-16.1.0.3465-net.zip" in filenames
+        assert "dummy-maven-16.1.0.3465-net-fw.zip" in filenames
+
+    @patch('release.utils.maven_central.shutil.move')
+    def test_fetches_pom_and_companions_only_once_across_a_modules_multiple_entries(self, mock_move, tmp_path):
+        # A module with a main jar plus a classified jar (e.g. a '-tests.jar') yields two entries
+        # for the same (gid, aid); its pom and sources/javadoc jars must still be fetched once,
+        # not once per entry.
+        buildinfo = BuildInfo({
+            'buildInfo': {
+                'statuses': [{'repository': 'sonarsource-public-qa'}],
+                'modules': [{
+                    'id': 'org.sonarsource.dummy:dummy-maven:16.1.0.3465',
+                    'artifacts': [
+                        {'name': 'dummy-maven-16.1.0.3465.jar'},
+                        {'name': 'dummy-maven-16.1.0.3465.pom'},
+                        {'name': 'dummy-maven-16.1.0.3465-sources.jar'},
+                        {'name': 'dummy-maven-16.1.0.3465-javadoc.jar'},
+                        {'name': 'dummy-maven-16.1.0.3465-tests.jar'},
+                    ]
+                }]
+            }
+        })
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path))
+
+        filenames = [c.args[4] for c in artifactory.download_named.call_args_list]
+        assert filenames.count("dummy-maven-16.1.0.3465.pom") == 1
+        assert filenames.count("dummy-maven-16.1.0.3465-sources.jar") == 1
+        assert filenames.count("dummy-maven-16.1.0.3465-javadoc.jar") == 1
+        assert "dummy-maven-16.1.0.3465.jar" in filenames
+        assert "dummy-maven-16.1.0.3465-tests.jar" in filenames
+
+    @patch('release.utils.maven_central.shutil.move')
+    def test_fetches_kept_sources_and_javadoc_only_once_when_module_has_no_plain_jar(self, mock_move, tmp_path):
+        # A module with no plain jar (here a zip) that still attaches sources/javadoc jars keeps
+        # them as their own entries (get_public_module_artifacts()); those entries are themselves
+        # jar-typed, but must not re-trigger the sources/javadoc companion fetch a second time.
+        buildinfo = BuildInfo({
+            'buildInfo': {
+                'statuses': [{'repository': 'sonarsource-public-qa'}],
+                'modules': [{
+                    'id': 'org.sonarsource.dummy:dummy-tool:1.0',
+                    'artifacts': [
+                        {'name': 'dummy-tool-1.0.zip'},
+                        {'name': 'dummy-tool-1.0-sources.jar'},
+                        {'name': 'dummy-tool-1.0-javadoc.jar'},
+                    ]
+                }]
+            }
+        })
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path))
+
+        filenames = [c.args[4] for c in artifactory.download_named.call_args_list]
+        assert filenames.count("dummy-tool-1.0-sources.jar") == 1
+        assert filenames.count("dummy-tool-1.0-javadoc.jar") == 1
+        assert "dummy-tool-1.0.zip" in filenames
 
 
 class TestReadParentGav:
