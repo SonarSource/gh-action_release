@@ -117,7 +117,8 @@ If your repo has workflows that attach assets (e.g. SBOMs, installers) to the Gi
 - `createDraftRelease`: To require a pre-created draft release set `createDraftRelease: false`. If the draft release for `version` does not already exist, the workflow fails.
 
 - `isDummyProject`: The _dummy_ projects are treated differently regarding alerts and metrics. E.g.: in Datadog, the stats from dummy
-  projects are excluded from some dashboards.
+  projects are excluded from some dashboards. With `mavenCentralSync: true`, dummy releases still upload and validate against Maven Central,
+  then drop the `VALIDATED` deployment instead of publishing it (so Sonatype usage limits are not consumed).
 
 - `runnerLabel`: Optional runner-label override for every job. When omitted, existing callers keep their current runners (`github-ubuntu-latest-s`, or `sonar-xs` for publishing). Callers in organizations without those labels can pass one their runners register, such as `warp-custom-ubuntu-24-04`.
 

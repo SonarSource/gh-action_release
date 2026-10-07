@@ -9,7 +9,7 @@ from release.utils.binaries import Binaries
 from release.utils.buildinfo import BuildInfo
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
-from release.utils.maven_central import download_artifacts_for_central, finalize, validate_before_promote
+from release.utils.maven_central import download_artifacts_for_central, drop_validated, finalize, validate_before_promote
 from release.utils.release import publish_all_artifacts_to_binaries, revoke_release, set_output
 from release.utils.slack import notify_slack
 from release.vars import binaries_bucket_name
@@ -93,13 +93,19 @@ def main():
         set_output("promote", 'done')  # There is no value to do it except to not break existing workflows
 
         if deployment_id:
+            dummy = os.environ.get('INPUT_IS_DUMMY_PROJECT', 'false').lower() == "true"
             try:
-                finalize(deployment_id, CENTRAL_URL, os.environ.get('CENTRAL_TOKEN'))
+                central_token = os.environ.get('CENTRAL_TOKEN')
+                if dummy:
+                    drop_validated(deployment_id, CENTRAL_URL, central_token)
+                else:
+                    finalize(deployment_id, CENTRAL_URL, central_token)
                 set_output("maven_central_deployment_id", deployment_id)
             except Exception as e:
                 # Never revoke here: Repox is already promoted and Central may already be publishing.
+                action = "drop" if dummy else "publish"
                 message = (f"Released {release_request.project}:{release_request.version} to Repox, "
-                           f"but Maven Central publish of deployment {deployment_id} failed ({e}). "
+                           f"but Maven Central {action} of deployment {deployment_id} failed ({e}). "
                            f"Check {CENTRAL_URL} and publish/drop it manually. Do NOT re-run the release.")
                 print(f"::error::{message}")
                 notify_slack(message)

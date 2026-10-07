@@ -21,6 +21,10 @@ inputs:
     description: "Glob pattern (matched against each artifact id) to exclude from the Maven Central sync"
     default: '-'
     required: false
+  is_dummy_project:
+    description: "If true with maven_central_sync, validate the Central bundle then drop the deployment instead of publishing"
+    default: 'false'
+    required: false
 outputs:
   promote:
     description: "Output to detect if promote was executed"
@@ -29,7 +33,7 @@ outputs:
   release:
     description: "Output to detect if release was revoked"
   maven_central_deployment_id:
-    description: "Central deployment id, set once it has been published (maven_central_sync only)"
+    description: "Central deployment id after publish or drop (maven_central_sync only)"
 runs:
   using: "docker"
   image: "Dockerfile"

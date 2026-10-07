@@ -4,8 +4,8 @@ set -euo pipefail
 
 LOCAL_REPO_DIR="$1"
 CENTRAL_URL="$2"
-MODE="${3:-validate}" # validate (default) | finalize
-DEPLOYMENT_ID="${4:-}" # required for finalize
+MODE="${3:-validate}" # validate (default) | finalize | drop
+DEPLOYMENT_ID="${4:-}" # required for finalize and drop
 DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-central-bundle}"
 
 if [ -z "${CENTRAL_TOKEN:-}" ]; then
@@ -14,6 +14,20 @@ if [ -z "${CENTRAL_TOKEN:-}" ]; then
 fi
 
 AUTH_HEADER="Authorization: Bearer $CENTRAL_TOKEN"
+
+drop_deployment() {
+    local id="$1"
+    echo "Dropping deployment $id..."
+    local drop_status
+    drop_status=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "$AUTH_HEADER" \
+        "$CENTRAL_URL/api/v1/publisher/deployment/$id")
+    if [[ "$drop_status" -lt 200 || "$drop_status" -ge 300 ]]; then
+        echo "ERROR: drop request failed with HTTP $drop_status" >&2
+        return 1
+    fi
+    echo "Dropped deployment $id."
+    return 0
+}
 
 poll_status() {
     echo "Polling deployment status..."
@@ -73,6 +87,15 @@ poll_status() {
     echo "Check deployment status manually using: $CENTRAL_URL/api/v1/publisher/status?id=$DEPLOYMENT_ID"
     return 1
 }
+
+if [[ "$MODE" = "drop" ]]; then
+    if [[ -z "$DEPLOYMENT_ID" ]]; then
+        echo "ERROR: drop mode requires a deployment id" >&2
+        exit 1
+    fi
+    drop_deployment "$DEPLOYMENT_ID"
+    exit $?
+fi
 
 if [ "$MODE" = "finalize" ]; then
     if [ -z "$DEPLOYMENT_ID" ]; then
@@ -146,10 +169,7 @@ if poll_status; then
     exit 0
 fi
 
-echo "Dropping failed deployment $DEPLOYMENT_ID..."
-drop_status=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "$AUTH_HEADER" \
-    "$CENTRAL_URL/api/v1/publisher/deployment/$DEPLOYMENT_ID")
-if [ "$drop_status" -lt 200 ] || [ "$drop_status" -ge 300 ]; then
-    echo "::warning::Could not drop failed deployment $DEPLOYMENT_ID (HTTP $drop_status) — drop it manually at $CENTRAL_URL"
+if ! drop_deployment "$DEPLOYMENT_ID"; then
+    echo "::warning::Could not drop failed deployment $DEPLOYMENT_ID — drop it manually at $CENTRAL_URL"
 fi
 exit 1

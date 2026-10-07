@@ -16,16 +16,17 @@ Two modes, selected via the `mode` input:
   until `VALIDATED`. The deployment is left pending-publish; on `FAILED` it is dropped
   automatically.
 - **finalize**: publish an already-validated `deployment-id` (no re-upload).
+- **drop**: delete an already-validated `deployment-id` without publishing (dummy-project releases).
 
-The bundle is uploaded once: `validate` → `finalize`.
+The bundle is uploaded once: `validate` → `finalize` (or `drop` for dummy projects).
 
 ## Inputs
 
 - `local-repo-dir`: Directory containing artifacts in Maven repository structure. Required for
-  `mode: validate`; ignored for `finalize`.
+  `mode: validate`; ignored for `finalize` and `drop`.
 - `central-url` (optional): Central Portal URL (default: `https://central.sonatype.com`)
-- `mode` (optional): `validate` (default) | `finalize`
-- `deployment-id`: Deployment to publish. Required for `mode: finalize`.
+- `mode` (optional): `validate` (default) | `finalize` | `drop`
+- `deployment-id`: Deployment to publish or drop. Required for `mode: finalize` and `mode: drop`.
 
 ## Outputs
 

@@ -199,15 +199,25 @@ def validate_before_promote(local_repo_dir, central_url, central_token, deployme
     return deployment_id
 
 
-def finalize(deployment_id, central_url, central_token):
-    """Publish an already-validated deployment (no re-upload)."""
+def _run_central_script(deployment_id, central_url, central_token, mode):
     env = {**os.environ, "CENTRAL_TOKEN": central_token}
     result = subprocess.run(
-        [PUBLISH_SCRIPT, "", central_url, "finalize", deployment_id],
+        [PUBLISH_SCRIPT, "", central_url, mode, deployment_id],
         env=env, check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError(f"Maven Central publish failed for deployment {deployment_id}")
+        verb = "drop" if mode == "drop" else "publish"
+        raise RuntimeError(f"Maven Central {verb} failed for deployment {deployment_id}")
+
+
+def finalize(deployment_id, central_url, central_token):
+    """Publish an already-validated deployment (no re-upload)."""
+    _run_central_script(deployment_id, central_url, central_token, "finalize")
+
+
+def drop_validated(deployment_id, central_url, central_token):
+    """Drop an already-validated deployment without publishing."""
+    _run_central_script(deployment_id, central_url, central_token, "drop")
 
 
 def _read_deployment_id():
