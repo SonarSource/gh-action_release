@@ -314,6 +314,7 @@ jobs:
           dry_run: ${{ inputs.dryRun }}
           maven_central_sync: ${{ inputs.mavenCentralSync }}
           maven_central_sync_exclusions: ${{ inputs.mavenCentralSyncExclusions }}
+          is_dummy_project: ${{ inputs.isDummyProject }}
         env:
           PYTHONUNBUFFERED: 1
           INPUT_VERSION: ${{ inputs.version }}

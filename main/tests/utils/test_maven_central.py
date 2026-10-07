@@ -3,12 +3,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
+from parameterized import parameterized
 
 from release.utils.buildinfo import BuildInfo
 from release.utils.maven_central import (
     _download_parent_poms,
     _read_parent_gav,
     download_artifacts_for_central,
+    drop_validated,
     finalize,
     validate_before_promote,
 )
@@ -521,21 +523,29 @@ class TestValidateBeforePromote:
                 validate_before_promote("/repo", "https://central.example", "token", "name")
 
 
-class TestFinalize:
+class TestCentralPostValidate:
 
+    @parameterized.expand([
+        ("finalize", finalize),
+        ("drop", drop_validated),
+    ])
     @patch('release.utils.maven_central.subprocess.run')
-    def test_calls_script_in_finalize_mode(self, mock_run):
+    def test_calls_script_in_mode(self, mode, fn, mock_run):
         mock_run.return_value = MagicMock(returncode=0)
 
-        finalize("abc-123", "https://central.example", "token")
+        fn("abc-123", "https://central.example", "token")
 
         args = mock_run.call_args.args[0]
-        assert args[1:] == ["", "https://central.example", "finalize", "abc-123"]
+        assert args[1:] == ["", "https://central.example", mode, "abc-123"]
         assert mock_run.call_args.kwargs['env']['CENTRAL_TOKEN'] == "token"
 
+    @parameterized.expand([
+        ("finalize", finalize),
+        ("drop", drop_validated),
+    ])
     @patch('release.utils.maven_central.subprocess.run')
-    def test_failure_raises(self, mock_run):
+    def test_failure_raises(self, _mode, fn, mock_run):
         mock_run.return_value = MagicMock(returncode=1)
 
         with pytest.raises(RuntimeError):
-            finalize("abc-123", "https://central.example", "token")
+            fn("abc-123", "https://central.example", "token")

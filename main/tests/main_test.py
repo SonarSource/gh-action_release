@@ -248,6 +248,54 @@ If needed, please contact the Engineering Experience squad.""")
         abort_release_mock.assert_not_called()
         assert call('maven_central_deployment_id', ANY) not in set_output.call_args_list
 
+    @parameterized.expand([
+        ("false", "finalize", "drop_validated"),
+        ("true", "drop_validated", "finalize"),
+    ])
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Artifactory, 'receive_build_info')
+    @patch.object(Artifactory, 'promote')
+    @patch.object(GitHub, 'is_publish_to_binaries', return_value=False)
+    @patch('release.main.download_artifacts_for_central')
+    @patch('release.main.validate_before_promote', return_value='deployment-123')
+    @patch('release.main.finalize')
+    @patch('release.main.drop_validated')
+    @patch('release.main.notify_slack')
+    @patch('release.main.set_output')
+    def test_maven_central_post_promote(self,
+                                        is_dummy,
+                                        called_fn,
+                                        skipped_fn,
+                                        set_output,
+                                        notify_slack,
+                                        drop_validated_mock,
+                                        finalize_mock,
+                                        validate_before_promote_mock,
+                                        download_artifacts_mock,
+                                        github_is_publish_to_binaries,
+                                        artifactory_promote,
+                                        artifactory_receive_build_info,
+                                        github_event,
+                                        check_params):
+        env = {
+            'GITHUB_EVENT_NAME': 'release',
+            'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken',
+            'INPUT_MAVEN_CENTRAL_SYNC': 'true',
+            'INPUT_IS_DUMMY_PROJECT': is_dummy,
+            'CENTRAL_TOKEN': 'mockCentralToken',
+        }
+        mocks = {"finalize": finalize_mock, "drop_validated": drop_validated_mock}
+        with patch.dict(os.environ, env, clear=True):
+            with patch('release.utils.github.open', mock_open()):
+                release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+                with patch.object(GitHub, 'get_release_request', return_value=release_request):
+                    main()
+
+        mocks[called_fn].assert_called_once_with('deployment-123', ANY, 'mockCentralToken')
+        mocks[skipped_fn].assert_not_called()
+        set_output.assert_any_call('maven_central_deployment_id', 'deployment-123')
+
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
         for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"

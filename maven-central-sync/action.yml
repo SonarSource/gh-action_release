@@ -2,7 +2,7 @@ name: "Maven Central Sync"
 description: "Syncs a open source project with maven central"
 inputs:
   local-repo-dir:
-    description: "Directory of artifacts to sync. Required for mode validate, ignored for finalize."
+    description: "Directory of artifacts to sync. Required for mode validate, ignored for finalize and drop."
     required: false
     default: ""
   central-url:
@@ -10,11 +10,11 @@ inputs:
     required: false
     default: "https://central.sonatype.com"
   mode:
-    description: "validate (default): upload USER_MANAGED and wait for VALIDATED. finalize: publish an already-validated deployment-id."
+    description: "validate (default): upload USER_MANAGED and wait for VALIDATED. finalize: publish an already-validated deployment-id. drop: delete a VALIDATED deployment without publishing."
     required: false
     default: "validate"
   deployment-id:
-    description: "Deployment to publish. Required for mode finalize."
+    description: "Deployment id. Required for mode finalize and drop."
     required: false
     default: ""
 outputs:
