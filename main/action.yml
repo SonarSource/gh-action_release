@@ -21,6 +21,10 @@ inputs:
     description: "Glob pattern (matched against each artifact id) to exclude from the Maven Central sync"
     default: '-'
     required: false
+  maven_central_sync_exclude:
+    description: "Comma-separated patterns of files left out of the Maven Central sync: [group][:artifact[:classifier]][@extension] or artifactId=..:classifier=..:extension=.."
+    default: '-'
+    required: false
   is_dummy_project:
     description: "If true with maven_central_sync, validate the Central bundle then drop the deployment instead of publishing"
     default: 'false'
