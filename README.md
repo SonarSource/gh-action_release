@@ -30,7 +30,8 @@ jobs:
       publicRelease: false # for a mixed-privacy release, also publish com.sonarsource.* (private) javadoc alongside org.sonarsource.* (public); ignored for a single-privacy build
       javadocDestinationDirectory: <repository name> # define the subdir to use in https://javadocs.sonarsource.org/
       mavenCentralSync: false # for OSS projects only, enable synchronization to Maven Central
-      mavenCentralSyncExclusions: '' # exclude some artifacts from synchronization
+      mavenCentralSyncExclusions: '' # deprecated, use mavenCentralSyncExclude
+      mavenCentralSyncExclude: '' # comma-separated patterns of files left out of the Central bundle, e.g. ':my-artifact@zip'
       publishToPyPI: false # for OSS projects only, publish PyPI artifacts to https://pypi.org/
       publishToTestPyPI: false # for OSS projects only, publish PyPI artifacts to https://test.pypi.org/
       publishToNpmJS: false # for OSS projects only, publish npm artifacts to https://www.npmjs.com/
@@ -115,6 +116,19 @@ Three changes: the `on:` block (drop `release: types: [published]`, make `versio
 If your repo has workflows that attach assets (e.g. SBOMs, installers) to the GitHub release, those must run **before** v7 publishes the draft. Create the draft first, attach assets using the draft's `release-id`, then call v7 (which reuses the draft and publishes it atomically). See [`gh-action_sbom`](https://github.com/SonarSource/gh-action_sbom) for an example with SBOMs.
 
 - `createDraftRelease`: To require a pre-created draft release set `createDraftRelease: false`. If the draft release for `version` does not already exist, the workflow fails.
+
+- `mavenCentralSyncExclude`: Leaves individual files out of the Maven Central bundle (with their `.asc`, `.md5` and `.sha1`); the files are
+  still promoted to Repox. Comma-separated patterns, each matched against the group, artifact id, classifier and extension of every file
+  (`pom`, `sources` and `javadoc` files included). `*` wildcards are accepted and a blank or missing field matches anything. Two notations:
+  - positional `[group][:artifact[:classifier]][@extension]`: `org.sonarsource.x` (a whole group), `:my-artifact` (a whole artifact),
+    `:my-artifact:linux-*` (the classified files of an artifact), `:my-artifact@zip` (its zip), `::@zip` (every zip), `x.y:art:win-x64@jar`;
+  - Artifactory search style, colon-separated conditions combined with AND: `artifactId=my-artifact:extension=tar.gz`
+    (keys `groupId`, `artifactId`, `classifier`, `extension`).
+
+  A pattern that would match every file is rejected, so is an unknown key. Prefer the most specific pattern: `mavenCentralSyncExclude: ':sonarlint-backend-cli@zip,:sonarlint-backend-cli@tar.gz'`.
+  `mavenCentralSyncExclude` replaces `mavenCentralSyncExclusions` (deprecated, `;`-separated globs matched against the artifact id and the Maven path of an artifact, which
+  drops the whole artifact, pom included, and logs a warning). Equivalent: `my-artifact` becomes `:my-artifact`. An extension pattern such as `::@nupkg` drops only
+  the files with that extension and keeps the artifact's pom, so name the artifact ids to leave out a whole artifact.
 
 - `isDummyProject`: The _dummy_ projects are treated differently regarding alerts and metrics. E.g.: in Datadog, the stats from dummy
   projects are excluded from some dashboards. With `mavenCentralSync: true`, dummy releases still upload and validate against Maven Central,

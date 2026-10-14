@@ -9,7 +9,8 @@ from release.utils.binaries import Binaries
 from release.utils.buildinfo import BuildInfo
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
-from release.utils.maven_central import download_artifacts_for_central, drop_validated, finalize, validate_before_promote
+from release.utils.maven_central import (
+    download_artifacts_for_central, drop_validated, finalize, parse_exclusions, validate_before_promote)
 from release.utils.release import publish_all_artifacts_to_binaries, revoke_release, set_output
 from release.utils.slack import notify_slack
 from release.vars import binaries_bucket_name
@@ -37,6 +38,25 @@ def is_maven_central_sync_enabled():
             and not DryRunHelper.is_dry_run_enabled())
 
 
+def _maven_central_input_errors():
+    if not is_maven_central_sync_enabled():
+        return []
+    errors = []
+    if not os.environ.get('CENTRAL_TOKEN'):
+        errors.append('env CENTRAL_TOKEN is empty but required as INPUT_MAVEN_CENTRAL_SYNC is true')
+    try:
+        parse_exclusions(os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', '-'))
+    except ValueError as e:
+        errors.append(f'INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE is invalid: {e}')
+    return errors
+
+
+def _warn_if_deprecated_exclusions(exclusions):
+    if exclusions not in ('', '-'):
+        print("::warning::maven_central_sync_exclusions is deprecated, use maven_central_sync_exclude instead "
+              "(':my-artifact' drops every file of an artifact; '::@nupkg' drops only the .nupkg files and keeps their pom)")
+
+
 def check_params(buildinfo=BuildInfo({})):
     """A function that prevent further execution when input and output gh-action parameters are not valid
     :param buildinfo: Artifactory Build Info
@@ -58,8 +78,7 @@ def check_params(buildinfo=BuildInfo({})):
         if not DryRunHelper.is_dry_run_enabled() and not buildinfo.get_property('buildInfo.env.ARTIFACTORY_DEPLOY_REPO'):
             errors.append('buildInfo.env.ARTIFACTORY_DEPLOY_REPO is required as INPUT_PUBLISH_TO_BINARIES is true')
 
-    if is_maven_central_sync_enabled() and not os.environ.get('CENTRAL_TOKEN'):
-        errors.append('env CENTRAL_TOKEN is empty but required as INPUT_MAVEN_CENTRAL_SYNC is true')
+    errors.extend(_maven_central_input_errors())
 
     if errors:
         new_line = "\n"
@@ -84,7 +103,10 @@ def main():
         if is_maven_central_sync_enabled():
             with tempfile.TemporaryDirectory() as local_repo_dir:
                 exclusions = os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUSIONS', '-')
-                download_artifacts_for_central(artifactory, buildinfo, local_repo_dir, exclusions)
+                _warn_if_deprecated_exclusions(exclusions)
+                download_artifacts_for_central(
+                    artifactory, buildinfo, local_repo_dir, exclusions,
+                    os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', '-'))
                 deployment_name = f"{release_request.project}-{release_request.buildnumber}"
                 deployment_id = validate_before_promote(
                     local_repo_dir, CENTRAL_URL, os.environ.get('CENTRAL_TOKEN'), deployment_name)
