@@ -25,6 +25,10 @@ inputs:
     description: "Comma-separated patterns of files left out of the Maven Central sync (replaces maven_central_sync_exclusions): [group][:artifact[:classifier]][@extension] or artifactId=..:classifier=..:extension=.."
     default: '-'
     required: false
+  maven_central_sync_placeholder_javadoc:
+    description: "Comma-separated [groupId]:artifactId patterns of the artifacts whose Javadoc jar is replaced by a placeholder jar in the Maven Central sync"
+    default: '-'
+    required: false
   is_dummy_project:
     description: "If true with maven_central_sync, validate the Central bundle then drop the deployment instead of publishing"
     default: 'false'

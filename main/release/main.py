@@ -10,7 +10,8 @@ from release.utils.buildinfo import BuildInfo
 from release.utils.dryrun import DryRunHelper
 from release.utils.github import GitHub
 from release.utils.maven_central import (
-    download_artifacts_for_central, drop_validated, finalize, parse_exclusions, validate_before_promote)
+    download_artifacts_for_central, drop_validated, finalize, parse_exclusions, parse_placeholder_javadoc,
+    validate_before_promote)
 from release.utils.release import publish_all_artifacts_to_binaries, revoke_release, set_output
 from release.utils.slack import notify_slack
 from release.vars import binaries_bucket_name
@@ -44,10 +45,12 @@ def _maven_central_input_errors():
     errors = []
     if not os.environ.get('CENTRAL_TOKEN'):
         errors.append('env CENTRAL_TOKEN is empty but required as INPUT_MAVEN_CENTRAL_SYNC is true')
-    try:
-        parse_exclusions(os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', '-'))
-    except ValueError as e:
-        errors.append(f'INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE is invalid: {e}')
+    for name, parse in (('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', parse_exclusions),
+                        ('INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC', parse_placeholder_javadoc)):
+        try:
+            parse(os.environ.get(name, '-'))
+        except ValueError as e:
+            errors.append(f'{name} is invalid: {e}')
     return errors
 
 
@@ -106,7 +109,8 @@ def main():
                 _warn_if_deprecated_exclusions(exclusions)
                 download_artifacts_for_central(
                     artifactory, buildinfo, local_repo_dir, exclusions,
-                    os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', '-'))
+                    os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', '-'),
+                    os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC', '-'))
                 deployment_name = f"{release_request.project}-{release_request.buildnumber}"
                 deployment_id = validate_before_promote(
                     local_repo_dir, CENTRAL_URL, os.environ.get('CENTRAL_TOKEN'), deployment_name)
