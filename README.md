@@ -32,6 +32,7 @@ jobs:
       mavenCentralSync: false # for OSS projects only, enable synchronization to Maven Central
       mavenCentralSyncExclusions: '' # exclude some artifacts from synchronization
       mavenCentralSyncExclude: '' # comma-separated patterns of files left out of the Central bundle, e.g. ':my-artifact@zip'
+      mavenCentralSyncPlaceholderJavadoc: '' # comma-separated groupId:artifactId patterns whose Javadoc jar is replaced by a placeholder in the Central bundle, e.g. 'org.sonarsource.java:*'
       publishToPyPI: false # for OSS projects only, publish PyPI artifacts to https://pypi.org/
       publishToTestPyPI: false # for OSS projects only, publish PyPI artifacts to https://test.pypi.org/
       publishToNpmJS: false # for OSS projects only, publish npm artifacts to https://www.npmjs.com/
@@ -131,6 +132,12 @@ If your repo has workflows that attach assets (e.g. SBOMs, installers) to the Gi
 - `isDummyProject`: The _dummy_ projects are treated differently regarding alerts and metrics. E.g.: in Datadog, the stats from dummy
   projects are excluded from some dashboards. With `mavenCentralSync: true`, dummy releases still upload and validate against Maven Central,
   then drop the `VALIDATED` deployment instead of publishing it (so Sonatype usage limits are not consumed).
+
+- `mavenCentralSyncPlaceholderJavadoc`: For multi-module projects whose modules each ship the same standard Javadoc assets (about 4 MB per
+  module), replaces the Javadoc jar of the selected artifacts by one small placeholder jar in the Maven Central bundle. The real Javadoc is
+  still published to https://javadocs.sonarsource.org/. Comma-separated `[groupId]:artifactId` patterns, `*` wildcards accepted and a blank
+  field matching anything, with the same notation as `mavenCentralSyncExclude` without classifier and extension:
+  `org.sonarsource.java:java-checks` (one artifact), `org.sonarsource.java:*` (a group), `:*` (every artifact).
 
 - `runnerLabel`: Optional runner-label override for every job. When omitted, existing callers keep their current runners (`github-ubuntu-latest-s`, or `sonar-xs` for publishing). Callers in organizations without those labels can pass one their runners register, such as `warp-custom-ubuntu-24-04`.
 
