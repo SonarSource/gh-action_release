@@ -8,10 +8,12 @@ from parameterized import parameterized
 from release.utils.buildinfo import BuildInfo
 from release.utils.maven_central import (
     _download_parent_poms,
+    _file_exclusion,
     _read_parent_gav,
     download_artifacts_for_central,
     drop_validated,
     finalize,
+    parse_exclusions,
     validate_before_promote,
 )
 
@@ -169,6 +171,82 @@ class TestDownloadArtifactsForCentral:
 
         aids_downloaded = {c.args[2] for c in artifactory.download_named.call_args_list}
         assert aids_downloaded == {"dummy-maven"}
+
+    @staticmethod
+    def _classified_buildinfo():
+        return BuildInfo({
+            'buildInfo': {
+                'statuses': [{'repository': 'sonarsource-public-qa'}],
+                'modules': [{
+                    'id': 'org.sonarsource.dummy:dummy-maven:16.1.0.3465',
+                    'properties': {
+                        'artifactsToPublish': 'org.sonarsource.dummy:dummy-maven:jar,'
+                                              'org.sonarsource.dummy:dummy-maven:jar:linux-x64,'
+                                              'org.sonarsource.dummy:dummy-maven:zip,'
+                                              'org.sonarsource.dummy:other-maven:zip,'
+                                              'org.sonarsource.other:third-maven:jar'
+                    }
+                }]
+            }
+        })
+
+    @staticmethod
+    def _downloaded_filenames(artifactory):
+        return {c.args[4] for c in artifactory.download_named.call_args_list}
+
+    ALL_FILES = {
+        "dummy-maven-16.1.0.3465.jar", "dummy-maven-16.1.0.3465-linux-x64.jar", "dummy-maven-16.1.0.3465.zip",
+        "dummy-maven-16.1.0.3465.pom", "dummy-maven-16.1.0.3465-sources.jar", "dummy-maven-16.1.0.3465-javadoc.jar",
+        "other-maven-16.1.0.3465.zip", "other-maven-16.1.0.3465.pom",
+        "third-maven-16.1.0.3465.jar", "third-maven-16.1.0.3465.pom",
+        "third-maven-16.1.0.3465-sources.jar", "third-maven-16.1.0.3465-javadoc.jar",
+    }
+
+    @pytest.mark.parametrize("_name, exclude, removed", [
+        ("none", "-", set()),
+        ("artifact_and_extension", ":dummy-maven@zip", {"dummy-maven-16.1.0.3465.zip"}),
+        ("artifactory_style", "artifactId=dummy-maven:extension=zip", {"dummy-maven-16.1.0.3465.zip"}),
+        ("artifactory_style_keys_are_case_insensitive_and_combined", "ArtifactId=dummy-maven:Ext=zip",
+         {"dummy-maven-16.1.0.3465.zip"}),
+        ("every_zip", "@zip", {"dummy-maven-16.1.0.3465.zip", "other-maven-16.1.0.3465.zip"}),
+        ("every_zip_with_dot_prefix", "::@.zip", {"dummy-maven-16.1.0.3465.zip", "other-maven-16.1.0.3465.zip"}),
+        ("classifier_glob", "::linux-*", {"dummy-maven-16.1.0.3465-linux-x64.jar"}),
+        ("artifact_classifier_extension", ":dummy-maven:linux-x64@jar", {"dummy-maven-16.1.0.3465-linux-x64.jar"}),
+        ("classifier_of_another_artifact_matches_nothing", ":other-maven:linux-x64", set()),
+        ("whole_artifact_with_pom", ":other-maven", {"other-maven-16.1.0.3465.zip", "other-maven-16.1.0.3465.pom"}),
+        ("whole_group", "groupId=org.sonarsource.other", {
+            "third-maven-16.1.0.3465.jar", "third-maven-16.1.0.3465.pom",
+            "third-maven-16.1.0.3465-sources.jar", "third-maven-16.1.0.3465-javadoc.jar"}),
+        ("companion_classifiers", "::javadoc,::sources", {
+            "dummy-maven-16.1.0.3465-sources.jar", "dummy-maven-16.1.0.3465-javadoc.jar",
+            "third-maven-16.1.0.3465-sources.jar", "third-maven-16.1.0.3465-javadoc.jar"}),
+        ("every_jar_of_an_artifact", "org.sonarsource.dummy:dummy-maven@jar", {
+            "dummy-maven-16.1.0.3465.jar", "dummy-maven-16.1.0.3465-linux-x64.jar",
+            "dummy-maven-16.1.0.3465-sources.jar", "dummy-maven-16.1.0.3465-javadoc.jar"}),
+        ("several_patterns_with_spaces", ":other-maven@zip , ::linux-*", {
+            "other-maven-16.1.0.3465.zip", "dummy-maven-16.1.0.3465-linux-x64.jar"}),
+    ])
+    @patch('release.utils.maven_central.shutil.move')
+    def test_excludes_files_matching_the_patterns(self, mock_move, tmp_path, _name, exclude, removed):
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, self._classified_buildinfo(), str(tmp_path), "-", exclude)
+
+        assert self._downloaded_filenames(artifactory) == self.ALL_FILES - removed
+
+    @patch('release.utils.maven_central.shutil.move')
+    def test_file_patterns_combine_with_artifact_id_exclusions(self, mock_move, tmp_path):
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, self._classified_buildinfo(), str(tmp_path),
+                                       exclusions="third-*", exclude=":dummy-maven@zip")
+
+        assert self._downloaded_filenames(artifactory) == {
+            "dummy-maven-16.1.0.3465.jar", "dummy-maven-16.1.0.3465-linux-x64.jar",
+            "dummy-maven-16.1.0.3465.pom", "dummy-maven-16.1.0.3465-sources.jar",
+            "dummy-maven-16.1.0.3465-javadoc.jar", "other-maven-16.1.0.3465.zip", "other-maven-16.1.0.3465.pom"}
 
     def test_skips_non_public_group_ids(self, tmp_path):
         # com.sonarsource.* is commercial/private and must never reach a Central bundle.
@@ -456,6 +534,19 @@ class TestDownloadParentPoms:
 
         mock_download_optional.assert_not_called()
 
+    def test_stops_at_ancestor_excluded_by_a_file_pattern_without_downloading_it(self, tmp_path):
+        _write_pom(str(tmp_path), "org.sonarsource.dummy", "sonar-dummy-maven-plugin", "16.1.0.3465",
+                   parent=("org.sonarsource.dummy", "dummy-parent", "1.0.0"))
+        artifactory = MagicMock()
+        is_excluded = _file_exclusion(":dummy-parent")
+
+        with patch('release.utils.maven_central._download_optional') as mock_download_optional:
+            _download_parent_poms(artifactory, str(tmp_path), "sonarsource-public-builds",
+                                   "org.sonarsource.dummy", "sonar-dummy-maven-plugin", "16.1.0.3465",
+                                   [], set(), is_excluded)
+
+        mock_download_optional.assert_not_called()
+
     @patch('release.utils.maven_central._download_optional')
     def test_stops_on_cycle_without_infinite_loop(self, mock_download_optional, tmp_path):
         # a <- b <- a: a real-world impossibility (Maven itself rejects parent cycles), but the
@@ -549,3 +640,39 @@ class TestCentralPostValidate:
 
         with pytest.raises(RuntimeError):
             fn("abc-123", "https://central.example", "token")
+
+
+class TestParseExclusions:
+
+    @pytest.mark.parametrize("value", [None, "", "-", " , ,"])
+    def test_no_patterns(self, value):
+        assert parse_exclusions(value) == []
+
+    def test_positional_notation(self):
+        assert parse_exclusions("g:a:c@zip") == [
+            {"group": "g", "artifact": "a", "classifier": "c", "extension": "zip"}]
+        assert parse_exclusions(":a") == [
+            {"group": "*", "artifact": "a", "classifier": "*", "extension": "*"}]
+        assert parse_exclusions("::@zip") == [
+            {"group": "*", "artifact": "*", "classifier": "*", "extension": "zip"}]
+
+    @pytest.mark.parametrize("group", [
+        "org.sonarsource.javascript*", "org.sonarsource.x", "org.sonarsource.?", "org.sonarsource.[a-z]",
+    ])
+    def test_a_group_glob_that_does_not_cover_every_public_group_is_accepted(self, group):
+        assert parse_exclusions(group)[0]["group"] == group
+        assert parse_exclusions(f"groupId={group}")[0]["group"] == group
+
+    def test_artifactory_notation(self):
+        assert parse_exclusions("groupId=g:artifactId=a:classifier=c:extension=.tar.gz") == [
+            {"group": "g", "artifact": "a", "classifier": "c", "extension": "tar.gz"}]
+        assert parse_exclusions("extention=zip") == [
+            {"group": "*", "artifact": "*", "classifier": "*", "extension": "zip"}]
+
+    @pytest.mark.parametrize("value", [
+        "::", "@", "*", "*:*:*@*", ":", "artifactId=*", "unknown=x", "artifactId=", "a:b:c:d", "a=b:c",
+        "**", ":**", "org.*", "org.sonarsource*", "org.sonarsource.*", "groupId=org.sonarsource.*:artifactId=*",
+    ])
+    def test_rejects_invalid_or_catch_all_patterns(self, value):
+        with pytest.raises(ValueError):
+            parse_exclusions(value)

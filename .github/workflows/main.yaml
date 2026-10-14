@@ -65,7 +65,12 @@ on:
         required: false
       mavenCentralSyncExclusions:
         type: string
-        description: Glob pattern (matched against each artifact id) to exclude from the Maven Central sync
+        description: Deprecated, use mavenCentralSyncExclude. Glob pattern (matched against each artifact id) to exclude from the Maven Central sync
+        default: "-"
+        required: false
+      mavenCentralSyncExclude:
+        type: string
+        description: "Comma-separated patterns of files left out of the Maven Central sync (replaces mavenCentralSyncExclusions): [group][:artifact[:classifier]][@extension] or artifactId=..:classifier=..:extension=.."
         default: "-"
         required: false
       publishToPyPI:
@@ -314,6 +319,7 @@ jobs:
           dry_run: ${{ inputs.dryRun }}
           maven_central_sync: ${{ inputs.mavenCentralSync }}
           maven_central_sync_exclusions: ${{ inputs.mavenCentralSyncExclusions }}
+          maven_central_sync_exclude: ${{ inputs.mavenCentralSyncExclude }}
           is_dummy_project: ${{ inputs.isDummyProject }}
         env:
           PYTHONUNBUFFERED: 1

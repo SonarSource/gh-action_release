@@ -24,13 +24,97 @@ MULTI_REPO_PROMOTE_PUBLIC_SOURCE = "sonarsource-public-builds"
 PUBLIC_GROUP_ID_PREFIX = "org.sonarsource"
 
 
-def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions="-"):
+def _split_patterns(value, separator):
+    return [p.strip() for p in value.split(separator) if p.strip() and p.strip() != "-"] if value else []
+
+
+EXCLUSION_FIELDS = ("group", "artifact", "classifier", "extension")
+_EXCLUSION_KEY_ALIASES = {
+    "group": "group", "groupid": "group",
+    "artifact": "artifact", "artifactid": "artifact",
+    "classifier": "classifier",
+    "extension": "extension", "extention": "extension", "ext": "extension",
+}
+
+
+def _parse_conditions(entry, fields):
+    for condition in entry.split(":"):
+        key, _, value = condition.partition("=")
+        field = _EXCLUSION_KEY_ALIASES.get(key.strip().lower())
+        if field is None or not value.strip():
+            raise ValueError(f"invalid condition '{condition}' in exclusion '{entry}'")
+        fields[field] = value.strip()
+
+
+def _parse_positional(entry, fields):
+    coordinates, _, extension = entry.partition("@")
+    parts = coordinates.split(":")
+    if len(parts) > 3:
+        raise ValueError(f"exclusion '{entry}' has more than group:artifact:classifier")
+    values = dict(zip(EXCLUSION_FIELDS, (part.strip() for part in parts)))
+    values["extension"] = extension.strip()
+    fields.update({field: value for field, value in values.items() if value})
+
+
+def _matches_everything(value):
+    return value.strip("*") == ""
+
+
+# Probes that cannot be real group ids and differ in shape: only a glob covering every public group matches them all
+_GROUP_SENTINELS = (PUBLIC_GROUP_ID_PREFIX + ".#", PUBLIC_GROUP_ID_PREFIX + ".#.#-#_#")
+
+
+def _covers_every_file(fields):
+    """Whether the patterns select every file that can reach the bundle: all fields are glob-only, or the group glob
+    covers the org.sonarsource groups, the only ones bundled."""
+    return all(_matches_everything(fields[f]) for f in ("artifact", "classifier", "extension")) and (
+        _matches_everything(fields["group"])
+        or all(fnmatch.fnmatchcase(sentinel, fields["group"]) for sentinel in _GROUP_SENTINELS))
+
+
+def _parse_exclusion(entry):
+    """Parse one exclusion pattern into a {group, artifact, classifier, extension} dict of globs.
+
+    Two notations, a blank or missing field matches anything:
+    - positional "[group][:artifact[:classifier]][@extension]", e.g. "org.sonarsource.x", ":my-artifact",
+      "org.sonarsource.x::linux-*", "::@zip", ":my-artifact@tar.gz"
+    - Artifactory search style, colon-separated "key=value" conditions combined with AND:
+      "artifactId=my-artifact:classifier=linux-*:extension=zip" (keys: groupId, artifactId, classifier, extension)
+    """
+    fields = dict.fromkeys(EXCLUSION_FIELDS, "*")
+    (_parse_conditions if "=" in entry else _parse_positional)(entry, fields)
+    fields["extension"] = fields["extension"].lstrip(".") or "*"
+    if _covers_every_file(fields):
+        raise ValueError(f"exclusion '{entry}' would exclude every file")
+    return fields
+
+
+def parse_exclusions(value):
+    """Parse a comma-separated list of exclusion patterns ("-" or empty means none); see _parse_exclusion."""
+    return [_parse_exclusion(entry) for entry in _split_patterns(value, ",")]
+
+
+def _file_exclusion(value):
+    """Return is_excluded(gid, aid, qual, ext): whether a file matches any exclusion pattern (all its fields match)."""
+    rules = parse_exclusions(value)
+
+    def is_excluded(gid, aid, qual, ext):
+        file_fields = dict(zip(EXCLUSION_FIELDS, (gid, aid, qual, ext)))
+        return any(all(fnmatch.fnmatchcase(file_fields[f], rule[f]) for f in EXCLUSION_FIELDS) for rule in rules)
+
+    return is_excluded
+
+
+def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions="-", exclude="-"):
     """Download this build's public artifacts (pre-promotion) into dest_dir, Maven-repo-shaped.
 
     Only org.sonarsource.* artifacts are considered — com.sonarsource.* are commercial/private and
     must never reach a Central bundle. exclusions is one or more ";"-separated glob patterns
     matched against each artifact id and its Maven path; "-" means none (e.g. sonar-enterprise
-    excludes its shaded scanner-engine jar).
+    excludes its shaded scanner-engine jar). exclude is a ","-separated list of
+    "[group][:artifact[:classifier]][@extension]" or "artifactId=..:classifier=..:extension=.." patterns
+    (see _parse_exclusion) matched against every single file of the bundle, companion sources and Javadoc
+    jars and poms included, so that only the matching files leave it, with their signature and checksums.
     """
     allartifacts = _artifacts_for_central(buildinfo)
     if not allartifacts:
@@ -42,7 +126,8 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
         # statuses[0].repository. Central only ever gets org.sonarsource.* (public) artifacts.
         sourcerepo = MULTI_REPO_PROMOTE_PUBLIC_SOURCE
     version = buildinfo.get_version()
-    patterns = [p for p in exclusions.split(";") if p and p != "-"] if exclusions else []
+    patterns = _split_patterns(exclusions, ";")
+    is_excluded = _file_exclusion(exclude)
     seen_parents = set()
     seen_pom = set()
     seen_companions = set()
@@ -55,14 +140,22 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
         if any(fnmatch.fnmatchcase(aid, p) or fnmatch.fnmatchcase(artifact_path, p) for p in patterns):
             continue
         qual = artifact_to_publish.split(":")[3] if artifact_to_publish.count(":") > 2 else ""
-        _download_optional(artifactory, dest_dir, sourcerepo, gid, aid, qual, ext, version)
+        _fetch_file(artifactory, dest_dir, sourcerepo, gid, aid, qual, ext, version, is_excluded)
         _download_pom_and_companions_once(
-            artifactory, dest_dir, sourcerepo, gid, aid, ext, qual, version, seen_pom, seen_companions)
-        _download_parent_poms(artifactory, dest_dir, sourcerepo, gid, aid, version, patterns, seen_parents)
+            artifactory, dest_dir, sourcerepo, gid, aid, ext, qual, version, seen_pom, seen_companions,
+            is_excluded)
+        _download_parent_poms(
+            artifactory, dest_dir, sourcerepo, gid, aid, version, patterns, seen_parents, is_excluded)
+
+
+def _fetch_file(artifactory, dest_dir, repo, gid, aid, qual, ext, version, is_excluded):
+    """Bundle one file with its checksums and signature, unless an exclusion pattern matches it."""
+    if not is_excluded(gid, aid, qual, ext):
+        _download_optional(artifactory, dest_dir, repo, gid, aid, qual, ext, version)
 
 
 def _download_pom_and_companions_once(artifactory, dest_dir, repo, gid, aid, ext, qual, version,
-                                       seen_pom, seen_companions):
+                                       seen_pom, seen_companions, is_excluded=lambda gid, aid, qual, ext: False):
     """Fetch a module's pom, and its sources/javadoc jars for a genuine jar-typed entry, at most
     once per (gid, aid) - a module can yield several entries (a main jar plus classified variants)
     that all share the same pom and sources/javadoc jars. A sources/javadoc entry itself is one of
@@ -70,11 +163,11 @@ def _download_pom_and_companions_once(artifactory, dest_dir, repo, gid, aid, ext
     """
     if (gid, aid) not in seen_pom:
         seen_pom.add((gid, aid))
-        _download_optional(artifactory, dest_dir, repo, gid, aid, "", "pom", version)
+        _fetch_file(artifactory, dest_dir, repo, gid, aid, "", "pom", version, is_excluded)
     if ext == "jar" and qual not in ("sources", "javadoc") and (gid, aid) not in seen_companions:
         seen_companions.add((gid, aid))
-        _download_optional(artifactory, dest_dir, repo, gid, aid, "sources", "jar", version)
-        _download_optional(artifactory, dest_dir, repo, gid, aid, "javadoc", "jar", version)
+        for companion in ("sources", "javadoc"):
+            _fetch_file(artifactory, dest_dir, repo, gid, aid, companion, "jar", version, is_excluded)
 
 
 def _artifacts_for_central(buildinfo):
@@ -90,7 +183,8 @@ def _artifacts_for_central(buildinfo):
     return from_modules + extra
 
 
-def _download_parent_poms(artifactory, dest_dir, repo, gid, aid, version, patterns, seen):
+def _download_parent_poms(artifactory, dest_dir, repo, gid, aid, version, patterns, seen,
+                          is_excluded=lambda gid, aid, qual, ext: False):
     """Walk up a just-downloaded artifact's <parent> chain, downloading each ancestor's own pom.
 
     Central's bundle validator reads groupId/artifactId/version/licenses/scm/developers directly
@@ -115,7 +209,8 @@ def _download_parent_poms(artifactory, dest_dir, repo, gid, aid, version, patter
                   "the published pom's <parent> will not resolve from Maven Central")
             return
         ancestor_path = f"{gid.replace('.', '/')}/{aid}/{version}/{aid}-{version}.pom"
-        if any(fnmatch.fnmatchcase(aid, p) or fnmatch.fnmatchcase(ancestor_path, p) for p in patterns):
+        if (any(fnmatch.fnmatchcase(aid, p) or fnmatch.fnmatchcase(ancestor_path, p) for p in patterns)
+                or is_excluded(gid, aid, "", "pom")):
             print(f"::warning::stopping parent walk at excluded {gid}:{aid}:{version}")
             return
         seen.add((gid, aid, version))
