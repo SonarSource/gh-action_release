@@ -296,6 +296,51 @@ If needed, please contact the Engineering Experience squad.""")
         mocks[skipped_fn].assert_not_called()
         set_output.assert_any_call('maven_central_deployment_id', 'deployment-123')
 
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Artifactory, 'receive_build_info')
+    @patch.object(Artifactory, 'promote')
+    @patch.object(GitHub, 'is_publish_to_binaries', return_value=False)
+    @patch('release.main.download_artifacts_for_central')
+    @patch('release.main.validate_before_promote', return_value='deployment-123')
+    @patch('release.main.finalize')
+    @patch('release.main.notify_slack')
+    @patch('release.main.set_output')
+    def test_maven_central_file_exclusions_are_passed_to_the_download(self,
+                                                                       set_output,
+                                                                       notify_slack,
+                                                                       finalize_mock,
+                                                                       validate_before_promote_mock,
+                                                                       download_artifacts_mock,
+                                                                       github_is_publish_to_binaries,
+                                                                       artifactory_promote,
+                                                                       artifactory_receive_build_info,
+                                                                       github_event,
+                                                                       check_params):
+        env = {
+            'GITHUB_EVENT_NAME': 'release',
+            'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken',
+            'INPUT_MAVEN_CENTRAL_SYNC': 'true',
+            'INPUT_MAVEN_CENTRAL_SYNC_EXCLUSIONS': '*shaded*',
+            'INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE': ':dummy@zip',
+            'CENTRAL_TOKEN': 'mockCentralToken',
+        }
+        with patch.dict(os.environ, env, clear=True):
+            with patch('release.utils.github.open', mock_open()):
+                release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+                with patch.object(GitHub, 'get_release_request', return_value=release_request):
+                    main()
+
+        download_artifacts_mock.assert_called_once_with(ANY, ANY, ANY, '*shaded*', ':dummy@zip')
+
+    def test_check_params_rejects_an_invalid_maven_central_exclude_pattern(self):
+        env = {name: 'value' for name in MANDATORY_ENV_VARIABLES}
+        env.update({'INPUT_MAVEN_CENTRAL_SYNC': 'true', 'CENTRAL_TOKEN': 'token',
+                    'INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE': '::'})
+        with patch.dict(os.environ, env, clear=True):
+            with pytest.raises(InvalidInputParametersException, match='INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE is invalid'):
+                check_params()
+
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
         for variable_name in MANDATORY_ENV_VARIABLES:
             os.environ[variable_name] = "some value"
