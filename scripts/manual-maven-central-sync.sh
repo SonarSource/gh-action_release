@@ -140,17 +140,19 @@ echo "Downloading build artifacts from JFrog..."
         "${DOWNLOAD_TARGET}"
 )
 
-echo "Downloading checksums (md5/sha1/sha256) for every artifact..."
+echo "Downloading checksums (md5/sha1) for every artifact..."
 # Note: `{{}}` is intentional — find substitutes the inner `{}` with the file
 # path and leaves the outer braces in place, so `jfrog rt curl` sees two
 # URL `{...}` expansions and the `#1.#2` output template resolves correctly
-# (#1 = path, #2 = md5|sha1|sha256). With a single `{}` curl writes the
+# (#1 = path, #2 = md5|sha1). With a single `{}` curl writes the
 # literal string `#2` into the working directory.
 (
     cd "$LOCAL_REPO_DIR"
     find . -type f \
         -not \( -name "*.asc" -or -name "*.md5" -or -name "*.sha1" -or -name "*.sha256" \) \
-        -exec "$JFROG_CLI" rt curl "${REMOTE_REPO}/{{}}.{md5,sha1,sha256}" --output "#1.#2" \;
+        -exec "$JFROG_CLI" rt curl "${REMOTE_REPO}/{{}}.{md5,sha1}" --output "#1.#2" \;
+    # Central only requires .asc, .md5 and .sha1: keep the optional .sha256 out of the bundle.
+    find . -type f -name "*.sha256" -delete
 )
 
 # Sanity check 1: there must be at least one Maven-shaped artifact.
