@@ -1,4 +1,7 @@
+import hashlib
+import importlib.util
 import os
+import zipfile
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -9,11 +12,13 @@ from release.utils.buildinfo import BuildInfo
 from release.utils.maven_central import (
     _download_parent_poms,
     _file_exclusion,
+    _placeholder_javadoc_files,
     _read_parent_gav,
     download_artifacts_for_central,
     drop_validated,
     finalize,
     parse_exclusions,
+    parse_placeholder_javadoc,
     validate_before_promote,
 )
 
@@ -247,6 +252,112 @@ class TestDownloadArtifactsForCentral:
             "dummy-maven-16.1.0.3465.jar", "dummy-maven-16.1.0.3465-linux-x64.jar",
             "dummy-maven-16.1.0.3465.pom", "dummy-maven-16.1.0.3465-sources.jar",
             "dummy-maven-16.1.0.3465-javadoc.jar", "other-maven-16.1.0.3465.zip", "other-maven-16.1.0.3465.pom"}
+
+    @patch('release.utils.maven_central._placeholder_javadoc_files', return_value=(b"jar", b"signature"))
+    @patch('release.utils.maven_central.shutil.move')
+    def test_replaces_javadoc_jar_of_matching_artifacts_by_placeholder(self, mock_move, mock_files, tmp_path):
+        buildinfo = BuildInfo({
+            'buildInfo': {
+                'statuses': [{'repository': 'sonarsource-public-qa'}],
+                'modules': [{
+                    'id': 'org.sonarsource.dummy:dummy-maven:16.1.0.3465',
+                    'properties': {
+                        'artifactsToPublish': 'org.sonarsource.dummy:dummy-maven:jar,'
+                                              'org.sonarsource.dummy:other-maven:jar'
+                    }
+                }]
+            }
+        })
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path), placeholder_javadoc="org.sonarsource.dummy:dummy-*")
+
+        assert "dummy-maven-16.1.0.3465-javadoc.jar" not in self._downloaded_filenames(artifactory)
+        assert "other-maven-16.1.0.3465-javadoc.jar" in self._downloaded_filenames(artifactory)
+        target = tmp_path / "org/sonarsource/dummy/dummy-maven/16.1.0.3465"
+        jar = target / "dummy-maven-16.1.0.3465-javadoc.jar"
+        assert jar.read_bytes() == b"jar"
+        assert (target / "dummy-maven-16.1.0.3465-javadoc.jar.asc").read_bytes() == b"signature"
+        assert (target / "dummy-maven-16.1.0.3465-javadoc.jar.md5").read_text() == hashlib.md5(b"jar").hexdigest()
+        assert (target / "dummy-maven-16.1.0.3465-javadoc.jar.sha1").read_text() == hashlib.sha1(b"jar").hexdigest()
+
+    @patch('release.utils.maven_central._placeholder_javadoc_files', return_value=(b"jar", b"signature"))
+    @patch('release.utils.maven_central.shutil.move')
+    def test_placeholder_is_scoped_by_group(self, mock_move, mock_files, tmp_path):
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, self._classified_buildinfo(), str(tmp_path),
+                                       placeholder_javadoc="org.sonarsource.other:*")
+
+        downloaded = self._downloaded_filenames(artifactory)
+        assert "third-maven-16.1.0.3465-javadoc.jar" not in downloaded
+        assert "dummy-maven-16.1.0.3465-javadoc.jar" in downloaded
+
+    @patch('release.utils.maven_central._placeholder_javadoc_files', return_value=(b"jar", b"signature"))
+    @patch('release.utils.maven_central.shutil.move')
+    def test_replaces_explicit_javadoc_entry_by_placeholder(self, mock_move, mock_files, tmp_path):
+        buildinfo = BuildInfo({
+            'buildInfo': {
+                'statuses': [{'repository': 'sonarsource-public-qa'}],
+                'modules': [{
+                    'id': 'org.sonarsource.dummy:dummy-maven:16.1.0.3465',
+                    'properties': {'artifactsToPublish': 'org.sonarsource.dummy:dummy-maven:jar:javadoc'}
+                }]
+            }
+        })
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path), placeholder_javadoc=":*")
+
+        assert "dummy-maven-16.1.0.3465-javadoc.jar" not in self._downloaded_filenames(artifactory)
+        assert (tmp_path / "org/sonarsource/dummy/dummy-maven/16.1.0.3465"
+                / "dummy-maven-16.1.0.3465-javadoc.jar.asc").exists()
+
+    @patch('release.utils.maven_central.shutil.move')
+    def test_no_placeholder_by_default(self, mock_move, buildinfo, tmp_path):
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", [])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path))
+
+        assert "dummy-maven-16.1.0.3465-javadoc.jar" in self._downloaded_filenames(artifactory)
+
+    def test_placeholder_files_fail_when_unsigned(self):
+        with patch('release.utils.maven_central.resources.files') as files:
+            package = files.return_value
+            package.joinpath.return_value.is_file.return_value = False
+            with pytest.raises(RuntimeError, match="not signed yet"):
+                _placeholder_javadoc_files()
+
+    def test_shipped_placeholder_jar_is_what_the_build_script_produces(self, tmp_path):
+        # A rebuilt jar that differs from the shipped one would no longer match the shipped signature.
+        root = os.path.join(os.path.dirname(__file__), "..", "..", "..")
+        spec = importlib.util.spec_from_file_location(
+            "build_placeholder_javadoc", os.path.join(root, "scripts", "build-placeholder-javadoc.py"))
+        script = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(script)
+        rebuilt = tmp_path / "placeholder-javadoc.jar"
+
+        script.build(str(rebuilt))
+
+        shipped = os.path.join(root, "main", "release", "resources", "placeholder-javadoc.jar")
+        assert rebuilt.read_bytes() == open(shipped, "rb").read()
+
+    def test_shipped_placeholder_jar_is_signed(self):
+        jar, signature = _placeholder_javadoc_files()
+
+        assert jar.startswith(b"PK")
+        assert signature.startswith(b"-----BEGIN PGP SIGNATURE-----")
+
+    def test_shipped_placeholder_jar_is_a_valid_jar(self):
+        jar_path = os.path.join(os.path.dirname(__file__), "..", "..", "release", "resources",
+                                "placeholder-javadoc.jar")
+        with zipfile.ZipFile(jar_path) as jar:
+            assert jar.testzip() is None
+            assert "META-INF/MANIFEST.MF" in jar.namelist()
 
     def test_skips_non_public_group_ids(self, tmp_path):
         # com.sonarsource.* is commercial/private and must never reach a Central bundle.
@@ -672,3 +783,26 @@ class TestParseExclusions:
     def test_rejects_invalid_or_catch_all_patterns(self, value):
         with pytest.raises(ValueError):
             parse_exclusions(value)
+
+
+class TestParsePlaceholderJavadoc:
+
+    @pytest.mark.parametrize("value", [None, "", "-"])
+    def test_no_patterns(self, value):
+        assert parse_placeholder_javadoc(value) == []
+
+    def test_selects_group_and_artifact(self):
+        assert parse_placeholder_javadoc("g:a, g2:*") == [
+            {"group": "g", "artifact": "a", "classifier": "*", "extension": "*"},
+            {"group": "g2", "artifact": "*", "classifier": "*", "extension": "*"}]
+
+    def test_accepts_the_catch_all_pattern(self):
+        assert parse_placeholder_javadoc(":*")[0]["artifact"] == "*"
+
+    @pytest.mark.parametrize("value", [
+        "g:a:linux", "g:a@zip", "classifier=x", "extension=zip", "unknown=x",
+        "sonar-java-*", "g:a;g:b", "g:a, sonar-java-*",
+    ])
+    def test_rejects_classifier_and_extension(self, value):
+        with pytest.raises(ValueError):
+            parse_placeholder_javadoc(value)

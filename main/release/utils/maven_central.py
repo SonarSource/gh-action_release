@@ -1,10 +1,14 @@
 import fnmatch
+import hashlib
 import os
 import shutil
 import subprocess
 import xml.etree.ElementTree as ET
+from importlib import resources
 
 import requests
+
+from release import resources as file_resources
 
 GH_ACTION_REPO_DIR = os.path.join(os.environ.get("GITHUB_WORKSPACE", ""), "gh-action_release")
 PUBLISH_SCRIPT = os.path.join(GH_ACTION_REPO_DIR, "maven-central-sync", "maven-central-publish.sh")
@@ -22,6 +26,10 @@ CENTRAL_OPTIONAL_CHECKSUMS = ["asc"]
 MULTI_REPO_PROMOTE_PUBLIC_SOURCE = "sonarsource-public-builds"
 
 PUBLIC_GROUP_ID_PREFIX = "org.sonarsource"
+
+# Shared by every artifact: a PGP signature covers the bytes of a file, not its name. Rebuilt with
+# scripts/build-placeholder-javadoc.py and signed with the release key; see the README.
+PLACEHOLDER_JAVADOC_JAR = "placeholder-javadoc.jar"
 
 
 def _split_patterns(value, separator):
@@ -67,7 +75,7 @@ def _covers_every_file(fields):
         _matches_everything(fields["group"]) or fnmatch.fnmatchcase(PUBLIC_GROUP_ID_PREFIX + ".x", fields["group"]))
 
 
-def _parse_exclusion(entry):
+def _parse_exclusion(entry, allow_catch_all=False):
     """Parse one exclusion pattern into a {group, artifact, classifier, extension} dict of globs.
 
     Two notations, a blank or missing field matches anything:
@@ -79,14 +87,27 @@ def _parse_exclusion(entry):
     fields = dict.fromkeys(EXCLUSION_FIELDS, "*")
     (_parse_conditions if "=" in entry else _parse_positional)(entry, fields)
     fields["extension"] = fields["extension"].lstrip(".") or "*"
-    if _covers_every_file(fields):
+    if not allow_catch_all and _covers_every_file(fields):
         raise ValueError(f"exclusion '{entry}' would exclude every file")
     return fields
 
 
-def parse_exclusions(value):
+def parse_exclusions(value, allow_catch_all=False):
     """Parse a comma-separated list of exclusion patterns ("-" or empty means none); see _parse_exclusion."""
-    return [_parse_exclusion(entry) for entry in _split_patterns(value, ",")]
+    return [_parse_exclusion(entry, allow_catch_all) for entry in _split_patterns(value, ",")]
+
+
+def parse_placeholder_javadoc(value):
+    """Parse a comma-separated list of "[group]:artifact" patterns, same notation as the exclusions without
+    classifier and extension; "*" or ":" selects every artifact."""
+    for entry in _split_patterns(value, ","):
+        if ";" in entry or (":" not in entry and "=" not in entry):
+            raise ValueError(f"placeholder Javadoc pattern '{entry}' must be [groupId]:artifactId")
+    rules = parse_exclusions(value, allow_catch_all=True)
+    for rule in rules:
+        if rule["classifier"] != "*" or rule["extension"] != "*":
+            raise ValueError(f"placeholder Javadoc pattern {rule} must only select a group and an artifact")
+    return rules
 
 
 def _file_exclusion(value):
@@ -100,7 +121,42 @@ def _file_exclusion(value):
     return is_excluded
 
 
-def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions="-", exclude="-"):
+def _javadoc_placeholder_matcher(value):
+    rules = parse_placeholder_javadoc(value)
+    return lambda gid, aid: any(
+        fnmatch.fnmatchcase(gid, rule["group"]) and fnmatch.fnmatchcase(aid, rule["artifact"]) for rule in rules)
+
+
+def _placeholder_javadoc_files():
+    """Return (jar, signature) bytes of the shared placeholder Javadoc jar."""
+    package = resources.files(file_resources)
+    jar = package.joinpath(PLACEHOLDER_JAVADOC_JAR)
+    signature = package.joinpath(PLACEHOLDER_JAVADOC_JAR + ".asc")
+    if not signature.is_file():
+        raise RuntimeError(f"{PLACEHOLDER_JAVADOC_JAR}.asc is missing: the placeholder Javadoc jar is not signed yet")
+    return jar.read_bytes(), signature.read_bytes()
+
+
+def _write_placeholder_javadoc(dest_dir, gid, aid, version):
+    """Write the shared placeholder jar, with its signature and checksums, as aid's Javadoc jar."""
+    jar, signature = _placeholder_javadoc_files()
+    target_dir = os.path.join(dest_dir, gid.replace(".", "/"), aid, version)
+    os.makedirs(target_dir, exist_ok=True)
+    path = os.path.join(target_dir, f"{aid}-{version}-javadoc.jar")
+    sidecars = {
+        "": jar,
+        ".asc": signature,
+        ".md5": hashlib.md5(jar, usedforsecurity=False).hexdigest().encode(),
+        ".sha1": hashlib.sha1(jar, usedforsecurity=False).hexdigest().encode(),
+    }
+    for suffix, content in sidecars.items():
+        with open(path + suffix, "wb") as f:
+            f.write(content)
+    print(f"replaced the Javadoc jar of {gid}:{aid} by the placeholder")
+
+
+def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions="-", exclude="-",
+                                   placeholder_javadoc="-"):
     """Download this build's public artifacts (pre-promotion) into dest_dir, Maven-repo-shaped.
 
     Only org.sonarsource.* artifacts are considered — com.sonarsource.* are commercial/private and
@@ -110,6 +166,9 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
     "[group][:artifact[:classifier]][@extension]" or "artifactId=..:classifier=..:extension=.." patterns
     (see _parse_exclusion) matched against every single file of the bundle, companion sources and Javadoc
     jars and poms included, so that only the matching files leave it, with their signature and checksums.
+    placeholder_javadoc is a ","-separated list of "[group]:artifact" patterns (see parse_placeholder_javadoc)
+    selecting the artifacts whose Javadoc jar is replaced by a small placeholder jar, to avoid shipping the
+    same Javadoc assets per module.
     """
     allartifacts = _artifacts_for_central(buildinfo)
     if not allartifacts:
@@ -123,6 +182,7 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
     version = buildinfo.get_version()
     patterns = _split_patterns(exclusions, ";")
     is_excluded = _file_exclusion(exclude)
+    is_placeholder = _javadoc_placeholder_matcher(placeholder_javadoc)
     seen_parents = set()
     seen_pom = set()
     seen_companions = set()
@@ -135,22 +195,31 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
         if any(fnmatch.fnmatchcase(aid, p) or fnmatch.fnmatchcase(artifact_path, p) for p in patterns):
             continue
         qual = artifact_to_publish.split(":")[3] if artifact_to_publish.count(":") > 2 else ""
-        _fetch_file(artifactory, dest_dir, sourcerepo, gid, aid, qual, ext, version, is_excluded)
+        _fetch_file(artifactory, dest_dir, sourcerepo, gid, aid, qual, ext, version, is_excluded, is_placeholder)
         _download_pom_and_companions_once(
             artifactory, dest_dir, sourcerepo, gid, aid, ext, qual, version, seen_pom, seen_companions,
-            is_excluded)
+            is_excluded, is_placeholder)
         _download_parent_poms(
             artifactory, dest_dir, sourcerepo, gid, aid, version, patterns, seen_parents, is_excluded)
 
 
-def _fetch_file(artifactory, dest_dir, repo, gid, aid, qual, ext, version, is_excluded):
-    """Bundle one file with its checksums and signature, unless an exclusion pattern matches it."""
-    if not is_excluded(gid, aid, qual, ext):
+def _fetch_file(artifactory, dest_dir, repo, gid, aid, qual, ext, version, is_excluded,
+                is_placeholder=lambda gid, aid: False):
+    """Bundle one file with its checksums and signature, unless an exclusion pattern matches it.
+
+    The Javadoc jar of an artifact selected by is_placeholder is the shared placeholder jar instead of a download.
+    """
+    if is_excluded(gid, aid, qual, ext):
+        return
+    if qual == "javadoc" and ext == "jar" and is_placeholder(gid, aid):
+        _write_placeholder_javadoc(dest_dir, gid, aid, version)
+    else:
         _download_optional(artifactory, dest_dir, repo, gid, aid, qual, ext, version)
 
 
 def _download_pom_and_companions_once(artifactory, dest_dir, repo, gid, aid, ext, qual, version,
-                                       seen_pom, seen_companions, is_excluded=lambda gid, aid, qual, ext: False):
+                                       seen_pom, seen_companions, is_excluded=lambda gid, aid, qual, ext: False,
+                                       is_placeholder=lambda gid, aid: False):
     """Fetch a module's pom, and its sources/javadoc jars for a genuine jar-typed entry, at most
     once per (gid, aid) - a module can yield several entries (a main jar plus classified variants)
     that all share the same pom and sources/javadoc jars. A sources/javadoc entry itself is one of
@@ -162,7 +231,7 @@ def _download_pom_and_companions_once(artifactory, dest_dir, repo, gid, aid, ext
     if ext == "jar" and qual not in ("sources", "javadoc") and (gid, aid) not in seen_companions:
         seen_companions.add((gid, aid))
         for companion in ("sources", "javadoc"):
-            _fetch_file(artifactory, dest_dir, repo, gid, aid, companion, "jar", version, is_excluded)
+            _fetch_file(artifactory, dest_dir, repo, gid, aid, companion, "jar", version, is_excluded, is_placeholder)
 
 
 def _artifacts_for_central(buildinfo):

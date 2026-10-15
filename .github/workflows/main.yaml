@@ -73,6 +73,11 @@ on:
         description: "Comma-separated patterns of files left out of the Maven Central sync: [group][:artifact[:classifier]][@extension] or artifactId=..:classifier=..:extension=.."
         default: "-"
         required: false
+      mavenCentralSyncPlaceholderJavadoc:
+        type: string
+        description: Comma-separated [groupId]:artifactId patterns of the artifacts whose Javadoc jar is replaced by a placeholder jar in the Maven Central sync
+        default: "-"
+        required: false
       publishToPyPI:
         type: boolean
         description: Publish Python artifacts to https://pypi.org
@@ -320,6 +325,7 @@ jobs:
           maven_central_sync: ${{ inputs.mavenCentralSync }}
           maven_central_sync_exclusions: ${{ inputs.mavenCentralSyncExclusions }}
           maven_central_sync_exclude: ${{ inputs.mavenCentralSyncExclude }}
+          maven_central_sync_placeholder_javadoc: ${{ inputs.mavenCentralSyncPlaceholderJavadoc }}
           is_dummy_project: ${{ inputs.isDummyProject }}
         env:
           PYTHONUNBUFFERED: 1

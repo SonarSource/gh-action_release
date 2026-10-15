@@ -323,6 +323,7 @@ If needed, please contact the Engineering Experience squad.""")
             'INPUT_MAVEN_CENTRAL_SYNC': 'true',
             'INPUT_MAVEN_CENTRAL_SYNC_EXCLUSIONS': '*shaded*',
             'INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE': ':dummy@zip',
+            'INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC': 'g:dummy-*',
             'CENTRAL_TOKEN': 'mockCentralToken',
         }
         with patch.dict(os.environ, env, clear=True):
@@ -331,7 +332,7 @@ If needed, please contact the Engineering Experience squad.""")
                 with patch.object(GitHub, 'get_release_request', return_value=release_request):
                     main()
 
-        download_artifacts_mock.assert_called_once_with(ANY, ANY, ANY, '*shaded*', ':dummy@zip')
+        download_artifacts_mock.assert_called_once_with(ANY, ANY, ANY, '*shaded*', ':dummy@zip', 'g:dummy-*')
 
     def test_check_params_rejects_an_invalid_maven_central_exclude_pattern(self):
         env = {name: 'value' for name in MANDATORY_ENV_VARIABLES}
@@ -339,6 +340,15 @@ If needed, please contact the Engineering Experience squad.""")
                     'INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE': '::'})
         with patch.dict(os.environ, env, clear=True):
             with pytest.raises(InvalidInputParametersException, match='INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE is invalid'):
+                check_params()
+
+    def test_check_params_rejects_an_invalid_placeholder_javadoc_pattern(self):
+        env = {name: 'value' for name in MANDATORY_ENV_VARIABLES}
+        env.update({'INPUT_MAVEN_CENTRAL_SYNC': 'true', 'CENTRAL_TOKEN': 'token',
+                    'INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC': 'g:a@zip'})
+        with patch.dict(os.environ, env, clear=True):
+            with pytest.raises(InvalidInputParametersException,
+                               match='INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC is invalid'):
                 check_params()
 
     def test_check_params_should_not_raise_an_exception_given_valid_inputs(self):
