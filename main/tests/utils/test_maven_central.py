@@ -240,6 +240,29 @@ class TestDownloadArtifactsForCentral:
 
         assert self._downloaded_filenames(artifactory) == self.ALL_FILES - removed
 
+    @pytest.mark.parametrize("exclude, removed", [
+        ("-", set()),
+        (":dummy-maven:sources", {"dummy-maven-16.1.0.3465-sources.jar"}),
+        ("::@jar", {"dummy-maven-16.1.0.3465.jar", "dummy-maven-16.1.0.3465-sources.jar",
+                    "dummy-maven-16.1.0.3465-javadoc.jar"}),
+    ])
+    @patch('release.utils.maven_central.shutil.move')
+    def test_signatures_listed_in_the_build_info_follow_their_file(self, mock_move, tmp_path, exclude, removed):
+        names = ["dummy-maven-16.1.0.3465.jar", "dummy-maven-16.1.0.3465.jar.asc",
+                 "dummy-maven-16.1.0.3465.pom", "dummy-maven-16.1.0.3465.pom.asc",
+                 "dummy-maven-16.1.0.3465-sources.jar", "dummy-maven-16.1.0.3465-sources.jar.asc",
+                 "dummy-maven-16.1.0.3465-javadoc.jar", "dummy-maven-16.1.0.3465-javadoc.jar.asc"]
+        buildinfo = BuildInfo({'buildInfo': {'statuses': [{'repository': 'sonarsource-public-qa'}], 'modules': [{
+            'id': 'org.sonarsource.dummy:dummy-maven:16.1.0.3465', 'artifacts': [{'name': n} for n in names]}]}})
+        artifactory = MagicMock()
+        artifactory.download_named.return_value = ("/tmp/x", ["asc"])
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path), "-", exclude)
+
+        assert self._downloaded_filenames(artifactory) == {
+            "dummy-maven-16.1.0.3465.jar", "dummy-maven-16.1.0.3465.pom",
+            "dummy-maven-16.1.0.3465-sources.jar", "dummy-maven-16.1.0.3465-javadoc.jar"} - removed
+
     @patch('release.utils.maven_central.shutil.move')
     def test_file_patterns_combine_with_artifact_id_exclusions(self, mock_move, tmp_path):
         artifactory = MagicMock()

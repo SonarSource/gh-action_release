@@ -177,6 +177,23 @@ def test_get_public_module_artifacts_keeps_a_pom_only_module_such_as_a_bom():
     assert build_info.get_public_module_artifacts() == ['org.sonarsource.dummy:dummy-bom:pom']
 
 
+def test_get_public_module_artifacts_leaves_out_detached_signatures():
+    build_info = BuildInfo({
+        'buildInfo': {
+            'modules': [{
+                'id': 'org.sonarsource.dummy:dummy-bom:1.0',
+                'artifacts': [{'name': 'dummy-bom-1.0.pom'}, {'name': 'dummy-bom-1.0.pom.asc'}]
+            }, {
+                'id': 'org.sonarsource.dummy:dummy:1.0',
+                'artifacts': [{'name': n} for n in (
+                    'dummy-1.0.jar', 'dummy-1.0.jar.asc', 'dummy-1.0-sources.jar.asc', 'dummy-1.0-cyclonedx.json.asc')]
+            }]
+        }
+    })
+    assert build_info.get_public_module_artifacts() == [
+        'org.sonarsource.dummy:dummy-bom:pom', 'org.sonarsource.dummy:dummy:jar']
+
+
 def test_get_public_module_artifacts_ignores_build_infos_mangled_type_field():
     # Real JFrog extractors write a mangled type string for jar artifacts (e.g. 'test-jar',
     # 'javadoc-jar'), not a plain extension - extension and qualifier must come from the filename.
