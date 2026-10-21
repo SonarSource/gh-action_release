@@ -72,11 +72,13 @@ class BuildInfo:
 
         Extension and qualifier are parsed from each artifact's filename, not its buildInfo
         'type' - JFrog's extractors write a mangled string there for jar artifacts (e.g.
-        'test-jar', 'javadoc-jar'), not a plain extension.
+        'test-jar', 'javadoc-jar'), not a plain extension. Detached signatures are left out: each
+        file is downloaded with its own .asc.
         """
         prefix = f"{aid}-{version}"
         artifacts = artifacts or [{'name': f"{prefix}.jar"}]
-        parsed = [p for p in (BuildInfo._parse_artifact_name(prefix, a.get('name', '')) for a in artifacts) if p]
+        parsed = [p for p in (BuildInfo._parse_artifact_name(prefix, a.get('name', '')) for a in artifacts)
+                  if p and p[0] != 'asc' and not p[0].endswith('.asc')]
         has_plain_jar = any(ext == 'jar' and qualifier not in ('sources', 'javadoc') for ext, qualifier in parsed)
         gavs = []
         for ext, qualifier in parsed:

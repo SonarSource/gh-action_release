@@ -126,6 +126,9 @@ If your repo has workflows that attach assets (e.g. SBOMs, installers) to the Gi
   - Artifactory search style, colon-separated conditions combined with AND: `artifactId=my-artifact:extension=tar.gz`
     (keys `groupId`, `artifactId`, `classifier`, `extension`).
 
+  Central requires a pom, a sources jar and a Javadoc jar for every jar, and rejects a bundle without them: leave these files out only with
+  their artifact (`:my-artifact`), never alone.
+
   A pattern that would match every file is rejected, so is an unknown key. Prefer the most specific pattern: `mavenCentralSyncExclude: ':sonarlint-backend-cli@zip,:sonarlint-backend-cli@tar.gz'`.
   `mavenCentralSyncExclude` replaces `mavenCentralSyncExclusions` (deprecated, `;`-separated globs matched against the artifact id and the Maven path of an artifact, which
   drops the whole artifact, pom included, and logs a warning). Equivalent: `my-artifact` becomes `:my-artifact`. An extension pattern such as `::@nupkg` drops only
