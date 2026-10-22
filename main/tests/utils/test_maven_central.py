@@ -16,6 +16,7 @@ from release.utils.maven_central import (
     _read_parent_gav,
     download_artifacts_for_central,
     drop_validated,
+    filter_bundle,
     finalize,
     parse_exclusions,
     parse_placeholder_javadoc,
@@ -833,3 +834,64 @@ class TestParsePlaceholderJavadoc:
     def test_rejects_classifier_and_extension(self, value):
         with pytest.raises(ValueError):
             parse_placeholder_javadoc(value)
+
+
+def _write_bundle(root, files):
+    for relative in files:
+        path = os.path.join(root, relative)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        for suffix in ("", ".asc", ".md5", ".sha1"):
+            with open(path + suffix, "wb") as f:
+                f.write(b"original")
+
+
+def _bundle_content(root):
+    return sorted(os.path.relpath(os.path.join(r, n), root) for r, _, names in os.walk(root) for n in names)
+
+
+def test_filter_bundle_applies_the_customizations_of_the_release(tmp_path):
+    base = "org/sonarsource/x/my-lib/1.0"
+    _write_bundle(tmp_path, [
+        f"{base}/my-lib-1.0.pom", f"{base}/my-lib-1.0.jar", f"{base}/my-lib-1.0-javadoc.jar",
+        f"{base}/my-lib-1.0-linux-x64.zip", "org/sonarsource/x/shaded/1.0/shaded-1.0.jar",
+    ])
+
+    filter_bundle(str(tmp_path), exclusions="shaded", exclude=":my-lib:linux-x64@zip",
+                  placeholder_javadoc="org.sonarsource.x:my-lib")
+
+    assert _bundle_content(tmp_path) == sorted(
+        f"{base}/my-lib-1.0{name}{suffix}" for name in (".pom", ".jar", "-javadoc.jar")
+        for suffix in ("", ".asc", ".md5", ".sha1"))
+    jar, signature = _placeholder_javadoc_files()
+    assert (tmp_path / base / "my-lib-1.0-javadoc.jar").read_bytes() == jar
+    assert (tmp_path / base / "my-lib-1.0-javadoc.jar.asc").read_bytes() == signature
+    assert (tmp_path / base / "my-lib-1.0.jar").read_bytes() == b"original"
+
+
+def test_filter_bundle_without_customizations_keeps_every_file(tmp_path):
+    _write_bundle(tmp_path, ["org/sonarsource/x/my-lib/1.0/my-lib-1.0.jar"])
+    before = _bundle_content(tmp_path)
+
+    filter_bundle(str(tmp_path))
+
+    assert _bundle_content(tmp_path) == before
+
+
+def test_filter_bundle_drops_the_whole_module_matched_by_a_path_pattern(tmp_path):
+    base = "org/sonarsource/x/foo/1.0"
+    _write_bundle(tmp_path, [f"{base}/foo-1.0.pom", f"{base}/foo-1.0.jar", f"{base}/foo-1.0-sources.jar",
+                             "org/sonarsource/x/bar/1.0/bar-1.0.jar"])
+
+    filter_bundle(str(tmp_path), exclusions="org/sonarsource/x/foo/*/foo-*.jar")
+
+    assert _bundle_content(tmp_path) == sorted(
+        f"org/sonarsource/x/bar/1.0/bar-1.0.jar{suffix}" for suffix in ("", ".asc", ".md5", ".sha1"))
+
+
+def test_filter_bundle_adds_the_placeholder_to_a_jar_module_without_javadoc(tmp_path):
+    base = "org/sonarsource/x/my-lib/1.0"
+    _write_bundle(tmp_path, [f"{base}/my-lib-1.0.pom", f"{base}/my-lib-1.0.jar"])
+
+    filter_bundle(str(tmp_path), placeholder_javadoc="org.sonarsource.x:my-lib")
+
+    assert (tmp_path / base / "my-lib-1.0-javadoc.jar").read_bytes() == _placeholder_javadoc_files()[0]

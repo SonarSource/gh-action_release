@@ -1,4 +1,5 @@
 import os
+import shlex
 import tempfile
 
 from dryable import Dryable
@@ -18,18 +19,26 @@ from release.vars import binaries_bucket_name
 
 CENTRAL_URL = "https://central.sonatype.com"
 
+# Release inputs that the manual re-sync script must be given to rebuild the same Central bundle
+MANUAL_SYNC_SETTINGS = (
+    ('INPUT_MAVEN_CENTRAL_SYNC_EXCLUSIONS', 'CENTRAL_EXCLUSIONS'),
+    ('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', 'CENTRAL_EXCLUDE'),
+    ('INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC', 'CENTRAL_PLACEHOLDER_JAVADOC'),
+)
+
 MANDATORY_ENV_VARIABLES = [
     "ARTIFACTORY_ACCESS_TOKEN"
 ]
 
 
 @Dryable(logging_msg='{function}()')
-def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest):
+def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest,
+                  promoted: bool):
     print("::error::Release failed. JFrog/S3 artifacts are being revoked. "
           "The GitHub release and tag are preserved (immutability-safe mode since v6.8.1) — "
           "retry via workflow_dispatch with the same version and releaseId, no rebuild needed.")
     github.revoke_release()
-    revoke_release(artifactory, binaries, rr)
+    revoke_release(artifactory, binaries, rr, unpromote=promoted)
     set_output("release", f"{rr.project}:{rr.buildnumber} aborted")
 
 
@@ -37,6 +46,10 @@ def is_maven_central_sync_enabled():
     # Central Vault secrets aren't fetched in dry runs, so this must stay disabled too.
     return (os.environ.get('INPUT_MAVEN_CENTRAL_SYNC', 'false').lower() == "true"
             and not DryRunHelper.is_dry_run_enabled())
+
+
+def is_maven_central_sync_required():
+    return os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_REQUIRED', 'false').lower() == "true"
 
 
 def _maven_central_input_errors():
@@ -91,6 +104,67 @@ def check_params(buildinfo=BuildInfo({})):
                                               )
 
 
+def _validate_on_central(artifactory, buildinfo, release_request):
+    """Build the Central bundle and validate it. Returns (deployment_id, error).
+
+    A bundle that cannot be built always raises. A validation failure raises only when Central is required;
+    otherwise it is returned as the error so that the release can complete without Central.
+    """
+    with tempfile.TemporaryDirectory() as local_repo_dir:
+        exclusions = os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUSIONS', '-')
+        _warn_if_deprecated_exclusions(exclusions)
+        download_artifacts_for_central(
+            artifactory, buildinfo, local_repo_dir, exclusions,
+            os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', '-'),
+            os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC', '-'))
+        deployment_name = f"{release_request.project}-{release_request.buildnumber}"
+        try:
+            return validate_before_promote(
+                local_repo_dir, CENTRAL_URL, os.environ.get('CENTRAL_TOKEN'), deployment_name), None
+        except Exception as e:
+            if is_maven_central_sync_required():
+                raise
+            print(f"::error::Maven Central validation failed, the release continues on Repox only: {e}")
+            return None, e
+
+
+def _finalize_on_central(release_request, deployment_id):
+    dummy = os.environ.get('INPUT_IS_DUMMY_PROJECT', 'false').lower() == "true"
+    try:
+        central_token = os.environ.get('CENTRAL_TOKEN')
+        if dummy:
+            drop_validated(deployment_id, CENTRAL_URL, central_token)
+        else:
+            finalize(deployment_id, CENTRAL_URL, central_token)
+        set_output("maven_central_deployment_id", deployment_id)
+    except Exception as e:
+        # Never revoke here: Repox is already promoted and Central may already be publishing.
+        action = "drop" if dummy else "publish"
+        message = (f"Released {release_request.project}:{release_request.version} to Repox, "
+                   f"but Maven Central {action} of deployment {deployment_id} failed ({e}). "
+                   f"Check {CENTRAL_URL} and publish/drop it manually. Do NOT re-run the release.")
+        print(f"::error::{message}")
+        notify_slack(message)
+        raise SystemExit(1) from e
+
+
+def _report_pending_central_sync(release_request, binaries, central_error):
+    settings = [f"{variable}={shlex.quote(os.environ[name])}" for name, variable in MANUAL_SYNC_SETTINGS
+                if os.environ.get(name, '-') not in ('', '-')]
+    command = " ".join([*settings, "scripts/manual-maven-central-sync.sh",
+                        release_request.project, release_request.buildnumber])
+    message = (f"Released {release_request.project}:{release_request.version} to Repox"
+               f"{' and binaries' if binaries else ''}, but NOT to Maven Central ({central_error}). "
+               f"Once the cause is solved, publish it with: {command}. Do NOT re-run the release.")
+    print(f"::error::{message}")
+    try:
+        notify_slack(message)
+    except Exception as slack_error:
+        print(f"::warning::Could not notify Slack: {slack_error}")
+    set_output("maven_central_sync_pending", "true")
+    raise SystemExit(1) from central_error
+
+
 def main():
     DryRunHelper.init()
     github = GitHub()
@@ -99,55 +173,34 @@ def main():
     buildinfo = artifactory.receive_build_info(release_request)
     check_params(buildinfo)
     binaries = None
+    promoted = False
     # Set the project name output for use by dependent workflows
     set_output("project_name", release_request.project)
     try:
-        deployment_id = None
+        deployment_id, central_error = None, None
         if is_maven_central_sync_enabled():
-            with tempfile.TemporaryDirectory() as local_repo_dir:
-                exclusions = os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUSIONS', '-')
-                _warn_if_deprecated_exclusions(exclusions)
-                download_artifacts_for_central(
-                    artifactory, buildinfo, local_repo_dir, exclusions,
-                    os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE', '-'),
-                    os.environ.get('INPUT_MAVEN_CENTRAL_SYNC_PLACEHOLDER_JAVADOC', '-'))
-                deployment_name = f"{release_request.project}-{release_request.buildnumber}"
-                deployment_id = validate_before_promote(
-                    local_repo_dir, CENTRAL_URL, os.environ.get('CENTRAL_TOKEN'), deployment_name)
+            deployment_id, central_error = _validate_on_central(artifactory, buildinfo, release_request)
 
         artifactory.promote(release_request, buildinfo)
+        promoted = True
         set_output("promote", 'done')  # There is no value to do it except to not break existing workflows
 
         if deployment_id:
-            dummy = os.environ.get('INPUT_IS_DUMMY_PROJECT', 'false').lower() == "true"
-            try:
-                central_token = os.environ.get('CENTRAL_TOKEN')
-                if dummy:
-                    drop_validated(deployment_id, CENTRAL_URL, central_token)
-                else:
-                    finalize(deployment_id, CENTRAL_URL, central_token)
-                set_output("maven_central_deployment_id", deployment_id)
-            except Exception as e:
-                # Never revoke here: Repox is already promoted and Central may already be publishing.
-                action = "drop" if dummy else "publish"
-                message = (f"Released {release_request.project}:{release_request.version} to Repox, "
-                           f"but Maven Central {action} of deployment {deployment_id} failed ({e}). "
-                           f"Check {CENTRAL_URL} and publish/drop it manually. Do NOT re-run the release.")
-                print(f"::error::{message}")
-                notify_slack(message)
-                raise SystemExit(1) from e
+            _finalize_on_central(release_request, deployment_id)
 
         if github.is_publish_to_binaries():
             binaries = Binaries(binaries_bucket_name)
             publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo)
             set_output("publish_to_binaries", "done")  # There is no value to do it except to not break existing workflows
+        if central_error:
+            _report_pending_central_sync(release_request, binaries, central_error)
         notify_slack(f"Successfully released {release_request.project}:{release_request.version}")
     except Exception as e:
         notify_slack(
             f"Failed to release {release_request.project}:{release_request.version}. "
             f"GitHub release and tag are preserved — retry via workflow_dispatch, no rebuild needed."
         )
-        abort_release(github, artifactory, binaries, release_request)
+        abort_release(github, artifactory, binaries, release_request, promoted)
         raise e
 
 

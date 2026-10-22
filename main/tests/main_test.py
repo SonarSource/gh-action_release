@@ -38,11 +38,25 @@ def test_abort_release_logs_error_and_revokes_artifacts(mock_github_revoke, mock
     artifactory = Artifactory.__new__(Artifactory)
     binaries = Binaries.__new__(Binaries)
 
-    abort_release(github, artifactory, binaries, release_request)
+    abort_release(github, artifactory, binaries, release_request, promoted=True)
 
     mock_github_revoke.assert_called_once()
-    mock_revoke_release.assert_called_once_with(artifactory, binaries, release_request)
+    mock_revoke_release.assert_called_once_with(artifactory, binaries, release_request, unpromote=True)
     mock_set_output.assert_called_once_with("release", "project:42 aborted")
+
+
+@patch('release.main.revoke_release')
+@patch('release.main.set_output')
+@patch.object(GitHub, 'revoke_release')
+def test_abort_release_does_not_unpromote_what_this_run_did_not_promote(
+        mock_github_revoke, mock_set_output, mock_revoke_release):
+    release_request = ReleaseRequest('org', 'project', 'version', '42', 'branch', 'sha')
+    github = GitHub.__new__(GitHub)
+    artifactory = Artifactory.__new__(Artifactory)
+
+    abort_release(github, artifactory, None, release_request, promoted=False)
+
+    mock_revoke_release.assert_called_once_with(artifactory, None, release_request, unpromote=False)
 
 
 @pytest.mark.parametrize("exclusions", ["-", ""])
@@ -347,6 +361,176 @@ If needed, please contact the Engineering Experience squad.""")
                     main()
 
         download_artifacts_mock.assert_called_once_with(ANY, ANY, ANY, '*shaded*', ':dummy@zip', 'g:dummy-*')
+
+    @parameterized.expand([
+        ("false", True),
+        ("true", False),
+    ])
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Artifactory, 'receive_build_info')
+    @patch.object(Artifactory, 'promote')
+    @patch.object(GitHub, 'is_publish_to_binaries', return_value=False)
+    @patch('release.main.download_artifacts_for_central')
+    @patch('release.main.validate_before_promote', side_effect=RuntimeError('over the limits'))
+    @patch('release.main.finalize')
+    @patch('release.main.notify_slack')
+    @patch('release.main.abort_release')
+    @patch('release.main.set_output')
+    def test_maven_central_validation_failure(self,
+                                              required,
+                                              best_effort,
+                                              set_output,
+                                              abort_release_mock,
+                                              notify_slack,
+                                              finalize_mock,
+                                              validate_before_promote_mock,
+                                              download_artifacts_mock,
+                                              github_is_publish_to_binaries,
+                                              artifactory_promote,
+                                              artifactory_receive_build_info,
+                                              github_event,
+                                              check_params):
+        """Best-effort: the release completes on Repox, alerts and fails the job. Required: it is aborted."""
+        env = {
+            'GITHUB_EVENT_NAME': 'release',
+            'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken',
+            'INPUT_MAVEN_CENTRAL_SYNC': 'true',
+            'INPUT_MAVEN_CENTRAL_SYNC_REQUIRED': required,
+            'CENTRAL_TOKEN': 'mockCentralToken',
+        }
+        with patch.dict(os.environ, env, clear=True):
+            with patch('release.utils.github.open', mock_open()):
+                release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+                with patch.object(GitHub, 'get_release_request', return_value=release_request):
+                    with pytest.raises(SystemExit if best_effort else RuntimeError):
+                        main()
+
+        finalize_mock.assert_not_called()
+        if best_effort:
+            artifactory_promote.assert_called_once()
+            abort_release_mock.assert_not_called()
+            set_output.assert_any_call('maven_central_sync_pending', 'true')
+            notify_slack.assert_called_once_with(ANY)
+            message = notify_slack.call_args.args[0]
+            assert 'scripts/manual-maven-central-sync.sh project buildnumber' in message
+        else:
+            artifactory_promote.assert_not_called()
+            abort_release_mock.assert_called_once_with(ANY, ANY, None, release_request, False)
+
+    @parameterized.expand([
+        ("slack_down", {}, Exception('connection reset'), False),
+        ("custom_bundle", {'INPUT_MAVEN_CENTRAL_SYNC_EXCLUDE': ':dummy@zip'}, None, True),
+    ])
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Artifactory, 'receive_build_info')
+    @patch.object(Artifactory, 'promote')
+    @patch.object(GitHub, 'is_publish_to_binaries', return_value=False)
+    @patch('release.main.download_artifacts_for_central')
+    @patch('release.main.validate_before_promote', side_effect=RuntimeError('over the limits'))
+    @patch('release.main.notify_slack')
+    @patch('release.main.abort_release')
+    @patch('release.main.set_output')
+    def test_maven_central_pending_report(self,
+                                          _name,
+                                          extra_env,
+                                          slack_error,
+                                          has_settings,
+                                          set_output,
+                                          abort_release_mock,
+                                          notify_slack,
+                                          validate_before_promote_mock,
+                                          download_artifacts_mock,
+                                          github_is_publish_to_binaries,
+                                          artifactory_promote,
+                                          artifactory_receive_build_info,
+                                          github_event,
+                                          check_params):
+        """A Slack outage must not revoke the release; the manual command carries the bundle customizations."""
+        notify_slack.side_effect = slack_error
+        env = {
+            'GITHUB_EVENT_NAME': 'release',
+            'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken',
+            'INPUT_MAVEN_CENTRAL_SYNC': 'true',
+            'CENTRAL_TOKEN': 'mockCentralToken',
+            **extra_env,
+        }
+        with patch.dict(os.environ, env, clear=True):
+            with patch('release.utils.github.open', mock_open()):
+                release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+                with patch.object(GitHub, 'get_release_request', return_value=release_request):
+                    with pytest.raises(SystemExit):
+                        main()
+
+        abort_release_mock.assert_not_called()
+        set_output.assert_any_call('maven_central_sync_pending', 'true')
+        message = notify_slack.call_args.args[0]
+        assert ('CENTRAL_EXCLUDE=:dummy@zip scripts/manual-maven-central-sync.sh project buildnumber' in message) == has_settings
+
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Artifactory, 'receive_build_info')
+    @patch.object(Artifactory, 'promote')
+    @patch('release.main.download_artifacts_for_central', side_effect=RuntimeError('missing artifact'))
+    @patch('release.main.validate_before_promote')
+    @patch('release.main.notify_slack')
+    @patch('release.main.abort_release')
+    @patch('release.main.set_output')
+    def test_maven_central_bundle_preparation_failure_always_aborts(self,
+                                                                     set_output,
+                                                                     abort_release_mock,
+                                                                     notify_slack,
+                                                                     validate_before_promote_mock,
+                                                                     download_artifacts_mock,
+                                                                     artifactory_promote,
+                                                                     artifactory_receive_build_info,
+                                                                     github_event,
+                                                                     check_params):
+        env = {
+            'GITHUB_EVENT_NAME': 'release',
+            'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken',
+            'INPUT_MAVEN_CENTRAL_SYNC': 'true',
+            'CENTRAL_TOKEN': 'mockCentralToken',
+        }
+        with patch.dict(os.environ, env, clear=True):
+            with patch('release.utils.github.open', mock_open()):
+                release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+                with patch.object(GitHub, 'get_release_request', return_value=release_request):
+                    with pytest.raises(RuntimeError):
+                        main()
+
+        validate_before_promote_mock.assert_not_called()
+        artifactory_promote.assert_not_called()
+        abort_release_mock.assert_called_once_with(ANY, ANY, None, release_request, False)
+
+    @patch.dict(os.environ, {
+        'GITHUB_EVENT_NAME': 'release',
+        'ARTIFACTORY_ACCESS_TOKEN': 'mockArtifactoryAccessToken',
+    }, clear=True)
+    @patch('release.main.check_params')
+    @patch('release.utils.github.json.load')
+    @patch.object(Artifactory, 'receive_build_info')
+    @patch.object(Artifactory, 'promote', side_effect=Exception('already released'))
+    @patch.object(GitHub, 'revoke_release')
+    @patch('release.main.notify_slack')
+    @patch('release.main.set_output')
+    def test_failed_repeat_run_does_not_reverse_promote_an_earlier_release(self,
+                                                                            set_output,
+                                                                            notify_slack,
+                                                                            github_revoke_release,
+                                                                            artifactory_promote,
+                                                                            artifactory_receive_build_info,
+                                                                            github_event,
+                                                                            check_params):
+        with patch('release.utils.github.open', mock_open()):
+            release_request = ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
+            with patch.object(GitHub, 'get_release_request', return_value=release_request):
+                with pytest.raises(Exception, match='already released'):
+                    main()
+
+        artifactory_promote.assert_called_once_with(release_request, ANY)
+        assert call(release_request, ANY, True) not in artifactory_promote.call_args_list
 
     def test_check_params_rejects_an_invalid_maven_central_exclude_pattern(self):
         env = {name: 'value' for name in MANDATORY_ENV_VARIABLES}

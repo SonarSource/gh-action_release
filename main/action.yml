@@ -17,6 +17,10 @@ inputs:
     description: "If true, validate and publish the build to Maven Central as part of the release"
     default: 'false'
     required: false
+  maven_central_sync_required:
+    description: "If true with maven_central_sync, a Maven Central validation failure aborts and revokes the release; otherwise the release completes on Repox and binaries, and the action fails with the manual re-sync command"
+    default: 'false'
+    required: false
   maven_central_sync_exclusions:
     description: "Deprecated, use maven_central_sync_exclude. Glob pattern (matched against each artifact id) to exclude from the Maven Central sync"
     default: '-'
@@ -42,6 +46,8 @@ outputs:
     description: "Output to detect if release was revoked"
   maven_central_deployment_id:
     description: "Central deployment id after publish or drop (maven_central_sync only)"
+  maven_central_sync_pending:
+    description: "true if the release completed without Maven Central and still needs scripts/manual-maven-central-sync.sh"
 runs:
   using: "docker"
   image: "Dockerfile"
