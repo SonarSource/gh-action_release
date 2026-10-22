@@ -123,7 +123,7 @@ jobs:
       - name: List javadoc files
         run: ls "${{ steps.local_repo.outputs.dir }}/javadoc/${{ inputs.version || github.event.release.tag_name }}"
       - name: Publish javadoc files to S3
-        uses: SonarSource/gh-action_release/aws-s3@05db046385edc88eb40554c2677c1d726f4987f6 # master
+        uses: SonarSource/gh-action_release/aws-s3@c4b70270d30fe26d505b8576b9977c4222f08079 # master
         with:
           command: cp
           flags: --recursive
@@ -134,7 +134,7 @@ jobs:
           aws_session_token: ${{ fromJSON(steps.secrets.outputs.vault).javadoc_aws_security_token }}
           aws_region: eu-central-1
       - name: Delete dir named latest in S3
-        uses: SonarSource/gh-action_release/aws-s3@05db046385edc88eb40554c2677c1d726f4987f6 # master
+        uses: SonarSource/gh-action_release/aws-s3@c4b70270d30fe26d505b8576b9977c4222f08079 # master
         with:
           command: rm
           source: s3://javadocs-cdn-eu-central-1-prod/${{ inputs.javadocDestinationDirectory || github.event.repository.name }}/latest
@@ -145,7 +145,7 @@ jobs:
         continue-on-error: true # the first time a project publish javadoc, there is no latest dir available
       - name: Upload to dir named latest in S3
         id: upload-latest
-        uses: SonarSource/gh-action_release/aws-s3@05db046385edc88eb40554c2677c1d726f4987f6 # master
+        uses: SonarSource/gh-action_release/aws-s3@c4b70270d30fe26d505b8576b9977c4222f08079 # master
         with:
           command: cp
           flags: --recursive
