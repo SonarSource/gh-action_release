@@ -15,13 +15,14 @@ SBOM_REQUIRED_CHECKSUMS = ["md5", "sha1", "sha256"]
 SBOM_OPTIONAL_CHECKSUMS = ["asc"]
 
 
-def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseRequest):
+def revoke_release(artifactory: Artifactory, binaries, release_request: ReleaseRequest, unpromote=True):
     buildinfo = artifactory.receive_build_info(release_request)
-    try:
-        artifactory.promote(release_request, buildinfo, True)
-    except Exception as e:
-        print(f"Error could not unpromote {release_request.project} {release_request.buildnumber} {str(e)}")
-        raise e
+    if unpromote:
+        try:
+            artifactory.promote(release_request, buildinfo, True)
+        except Exception as e:
+            print(f"Error could not unpromote {release_request.project} {release_request.buildnumber} {str(e)}")
+            raise e
     try:
         if binaries is not None:
             publish_all_artifacts_to_binaries(artifactory, binaries, release_request, buildinfo, REVOKE)

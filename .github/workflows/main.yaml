@@ -63,6 +63,11 @@ on:
         description: Flag to enable synchronization to Maven Central
         default: false
         required: false
+      mavenCentralSyncRequired:
+        type: boolean
+        description: If true, a Maven Central validation failure aborts and revokes the release; otherwise the release completes on Repox and binaries, and the job fails with the manual re-sync command
+        default: false
+        required: false
       mavenCentralSyncExclusions:
         type: string
         description: Deprecated, use mavenCentralSyncExclude. Glob pattern (matched against each artifact id) to exclude from the Maven Central sync
@@ -153,6 +158,7 @@ jobs:
       release: ${{ steps.release.outputs.release }}
       project_name: ${{ steps.release.outputs.project_name }}
       maven_central_deployment_id: ${{ steps.release.outputs.maven_central_deployment_id }}
+      maven_central_sync_pending: ${{ steps.release.outputs.maven_central_sync_pending }}
       releasabilityCheckDependencies: ${{ steps.releasability.outputs.releasabilityCheckDependencies }}
       releasabilityQA: ${{ steps.releasability.outputs.releasabilityQA }}
       releasabilityJira: ${{ steps.releasability.outputs.releasabilityJira }}
@@ -323,6 +329,7 @@ jobs:
           slack_channel: ${{ inputs.slackChannel }}
           dry_run: ${{ inputs.dryRun }}
           maven_central_sync: ${{ inputs.mavenCentralSync }}
+          maven_central_sync_required: ${{ inputs.mavenCentralSyncRequired }}
           maven_central_sync_exclusions: ${{ inputs.mavenCentralSyncExclusions }}
           maven_central_sync_exclude: ${{ inputs.mavenCentralSyncExclude }}
           maven_central_sync_placeholder_javadoc: ${{ inputs.mavenCentralSyncPlaceholderJavadoc }}
@@ -351,7 +358,7 @@ jobs:
   javadocPublication:
     name: Javadoc publication
     needs: release
-    if: ${{ inputs.publishJavadoc && inputs.dryRun != true }}
+    if: ${{ !cancelled() && inputs.publishJavadoc && inputs.dryRun != true && (needs.release.result == 'success' || needs.release.outputs.maven_central_sync_pending == 'true') }}
     uses: ./.github/workflows/javadoc-publication.yaml
     with:
       version: ${{ inputs.version }}
@@ -366,7 +373,7 @@ jobs:
   testPypi:
     name: TestPyPI
     needs: release
-    if: ${{ inputs.publishToTestPyPI && inputs.dryRun != true }}
+    if: ${{ !cancelled() && inputs.publishToTestPyPI && inputs.dryRun != true && (needs.release.result == 'success' || needs.release.outputs.maven_central_sync_pending == 'true') }}
     uses: ./.github/workflows/pypi.yaml
     with:
       version: ${{ inputs.version }}
@@ -381,7 +388,7 @@ jobs:
   pypi:
     name: PyPi
     needs: release
-    if: ${{ inputs.publishToPyPI && inputs.dryRun != true }}
+    if: ${{ !cancelled() && inputs.publishToPyPI && inputs.dryRun != true && (needs.release.result == 'success' || needs.release.outputs.maven_central_sync_pending == 'true') }}
     uses: ./.github/workflows/pypi.yaml
     with:
       version: ${{ inputs.version }}
@@ -394,7 +401,7 @@ jobs:
   npmjs:
     name: NpmJS
     needs: release
-    if: ${{ inputs.publishToNpmJS && inputs.dryRun != true }}
+    if: ${{ !cancelled() && inputs.publishToNpmJS && inputs.dryRun != true && (needs.release.result == 'success' || needs.release.outputs.maven_central_sync_pending == 'true') }}
     uses: ./.github/workflows/npmjs.yaml
     with:
       version: ${{ inputs.version }}
@@ -408,7 +415,7 @@ jobs:
   cratesIo:
     name: crates.io
     needs: release
-    if: ${{ inputs.publishToCratesIo && inputs.dryRun != true }}
+    if: ${{ !cancelled() && inputs.publishToCratesIo && inputs.dryRun != true && (needs.release.result == 'success' || needs.release.outputs.maven_central_sync_pending == 'true') }}
     uses: ./.github/workflows/cratesio.yaml
     with:
       version: ${{ inputs.version }}
@@ -428,7 +435,11 @@ jobs:
       - pypi
       - npmjs
       - cratesIo
-    if: ${{ !failure() && !cancelled() && inputs.dryRun != true }}
+    if: >-
+      ${{ !cancelled() && inputs.dryRun != true && (needs.release.result == 'success' || needs.release.outputs.maven_central_sync_pending == 'true') &&
+      needs.javadocPublication.result != 'failure' && needs.testPypi.result != 'failure' &&
+      needs.pypi.result != 'failure' && needs.npmjs.result != 'failure' &&
+      needs.cratesIo.result != 'failure' }}
     permissions:
       contents: write
     steps:

@@ -14,6 +14,7 @@
 #   and build-info.
 #   - `vault` CLI logged in to https://vault.sonar.build:8200
 #   - `zip`, `curl`, `find`, `jq`.
+#   - `python3` with `requests`, only when one of CENTRAL_EXCLUSIONS, CENTRAL_EXCLUDE or CENTRAL_PLACEHOLDER_JAVADOC is set.
 #
 # Usage:
 #   scripts/manual-maven-central-sync.sh <build-name> <build-number> [project-name]
@@ -35,6 +36,11 @@
 #   CENTRAL_URL      Central Portal URL (default: https://central.sonatype.com)
 #   AUTO_PUBLISH     "true" to auto-publish, "false" to stop at VALIDATED (default: true)
 #   DEPLOYMENT_NAME  Name shown for the deployment on Central Portal (default: `<project-name>-<build-number>`).
+#   CENTRAL_EXCLUSIONS, CENTRAL_EXCLUDE, CENTRAL_PLACEHOLDER_JAVADOC
+#                    The values of the release inputs mavenCentralSyncExclusions, mavenCentralSyncExclude and
+#                    mavenCentralSyncPlaceholderJavadoc of the project (default: `-`, i.e. none). Set them to the values used by the
+#                    release, otherwise the bundle differs from the one the release workflow would have uploaded; the release's
+#                    Slack message gives the exact command.
 #   KEEP_WORK_DIR    Force-keep the temp work directory after the script exits (default: `true` on failure, `false` on success).
 #   JFROG_CLI        Force `jfrog` or `jf` CLI binary; auto-detected otherwise.
 #
@@ -154,6 +160,11 @@ echo "Downloading checksums (md5/sha1) for every artifact..."
     # Central only requires .asc, .md5 and .sha1: keep the optional .sha256 out of the bundle.
     find . -type f -name "*.sha256" -delete
 )
+
+if [[ "${CENTRAL_EXCLUSIONS:--}${CENTRAL_EXCLUDE:--}${CENTRAL_PLACEHOLDER_JAVADOC:--}" != "---" ]]; then
+    echo "Applying the bundle customizations of the release..."
+    python3 "$SCRIPT_DIR/filter-central-bundle.py" "$LOCAL_REPO_DIR"
+fi
 
 # Sanity check 1: there must be at least one Maven-shaped artifact.
 if ! find "$LOCAL_REPO_DIR" -type f \( -name "*.jar" -o -name "*.war" -o -name "*.ear" -o -name "*.pom" \) | grep -q .; then

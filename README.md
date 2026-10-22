@@ -30,6 +30,7 @@ jobs:
       publicRelease: false # for a mixed-privacy release, also publish com.sonarsource.* (private) javadoc alongside org.sonarsource.* (public); ignored for a single-privacy build
       javadocDestinationDirectory: <repository name> # define the subdir to use in https://javadocs.sonarsource.org/
       mavenCentralSync: false # for OSS projects only, enable synchronization to Maven Central
+      mavenCentralSyncRequired: false # true: a Maven Central failure aborts and revokes the release
       mavenCentralSyncExclusions: '' # deprecated, use mavenCentralSyncExclude
       mavenCentralSyncExclude: '' # comma-separated patterns of files left out of the Central bundle, e.g. ':my-artifact@zip'
       mavenCentralSyncPlaceholderJavadoc: '' # comma-separated groupId:artifactId patterns whose Javadoc jar is replaced by a placeholder in the Central bundle, e.g. 'org.sonarsource.java:*'
@@ -118,6 +119,11 @@ If your repo has workflows that attach assets (e.g. SBOMs, installers) to the Gi
 
 - `createDraftRelease`: To require a pre-created draft release set `createDraftRelease: false`. If the draft release for `version` does not already exist, the workflow fails.
 
+- `mavenCentralSyncRequired`: By default the Maven Central sync is best-effort. If Central rejects the bundle during validation (for
+  example when the organization is over its limits), the release still completes on Repox and binaries, `maven_central_sync_pending` is set
+  to `true`, a Slack message gives the `scripts/manual-maven-central-sync.sh` command to run later, and the job ends in failure
+  (Datadog `maven_central_published=failure`); the downstream publications (Javadoc, PyPI, npm, crates.io, draft release) still run. Do not re-run the release. The Slack message gives the re-sync command with the configured `mavenCentralSyncExclusions`, `mavenCentralSyncExclude` and `mavenCentralSyncPlaceholderJavadoc` as `CENTRAL_EXCLUSIONS`, `CENTRAL_EXCLUDE` and `CENTRAL_PLACEHOLDER_JAVADOC`. A failure to build the bundle from the Repox artifacts always
+  aborts the release. With `true`, any Central validation failure aborts and revokes the release.
 - `mavenCentralSyncExclude`: Leaves individual files out of the Maven Central bundle (with their `.asc`, `.md5` and `.sha1`); the files are
   still promoted to Repox. Comma-separated patterns, each matched against the group, artifact id, classifier and extension of every file
   (`pom`, `sources` and `javadoc` files included). `*` wildcards are accepted and a blank or missing field matches anything. Two notations:
@@ -255,7 +261,7 @@ gh release delete <tag> --cleanup-tag --yes --repo <org/repo>
 
 ### Manual Maven Central re-sync
 
-If `mavenCentralSync` was disabled at release time and the artifacts need to be pushed to Maven Central after the fact, run `scripts/manual-maven-central-sync.sh <build-name> <build-number>` locally — it mirrors the CI flow (JFrog download + Central Portal upload) without re-running the full release. See [Manual Sync — Maven Central](https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/2401697818) for the full procedure and prerequisites.
+If `mavenCentralSync` was disabled at release time, Central rejected the bundle (`maven_central_sync_pending`), or the artifacts need to be pushed to Maven Central after the fact, run `scripts/manual-maven-central-sync.sh <build-name> <build-number>` locally — it mirrors the CI flow (JFrog download + Central Portal upload) without re-running the full release. See [Manual Sync — Maven Central](https://xtranet-sonarsource.atlassian.net/wiki/spaces/Platform/pages/2401697818) for the full procedure and prerequisites.
 
 ## Releasability check
 

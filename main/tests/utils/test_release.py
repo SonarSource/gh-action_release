@@ -5,7 +5,7 @@ from pytest import fixture
 
 from release.utils.binaries import Binaries
 from release.utils.buildinfo import BuildInfo
-from release.utils.release import publish_artifact
+from release.utils.release import publish_artifact, revoke_release
 
 
 @fixture
@@ -316,3 +316,14 @@ def test_publish_artifact_skips_when_no_sbom(buildinfo_org, capsys):
         artifactory.download_named.assert_not_called()
         assert "no SBOM found for org.sonarsource.dummy:dummy:1.0.2.456 - skipping SBOM upload" \
                in capsys.readouterr().out
+
+
+def test_revoke_release_without_unpromote_leaves_the_promotion_untouched():
+    artifactory = MagicMock()
+    binaries = MagicMock()
+
+    with patch('release.utils.release.publish_all_artifacts_to_binaries') as publish_all:
+        revoke_release(artifactory, binaries, MagicMock(), unpromote=False)
+
+    artifactory.promote.assert_not_called()
+    publish_all.assert_called_once()

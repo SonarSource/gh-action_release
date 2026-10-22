@@ -208,6 +208,63 @@ def download_artifacts_for_central(artifactory, buildinfo, dest_dir, exclusions=
             artifactory, dest_dir, sourcerepo, gid, aid, version, patterns, seen_parents, is_excluded)
 
 
+CHECKSUM_SUFFIXES = (".asc", ".md5", ".sha1", ".sha256")
+
+
+def _bundle_files(dest_dir):
+    """Every artifact file of a Maven-repo-shaped dir as (path, gid, aid, version, qual, ext), checksums and
+    signatures left out. A classifier cannot contain a dot."""
+    for root, _, names in os.walk(dest_dir):
+        parts = os.path.relpath(root, dest_dir).split(os.sep)
+        if len(parts) < 3:
+            continue
+        gid, aid, version = ".".join(parts[:-2]), parts[-2], parts[-1]
+        prefix = f"{aid}-{version}"
+        for name in names:
+            rest = name[len(prefix):]
+            if name.endswith(CHECKSUM_SUFFIXES) or not name.startswith(prefix) or rest[:1] not in ("-", "."):
+                continue
+            qual, _, ext = rest[1:].partition(".") if rest.startswith("-") else ("", "", rest[1:])
+            yield os.path.join(root, name), gid, aid, version, qual, ext
+
+
+def _matches_legacy_exclusion(patterns, gid, aid, version, ext):
+    artifact_path = f"{gid.replace('.', '/')}/{aid}/{version}/{aid}-{version}.{ext}"
+    return any(fnmatch.fnmatchcase(aid, p) or fnmatch.fnmatchcase(artifact_path, p) for p in patterns)
+
+
+def _remove_with_sidecars(path):
+    for suffix in ("", *CHECKSUM_SUFFIXES):
+        if os.path.exists(path + suffix):
+            os.remove(path + suffix)
+
+
+def filter_bundle(dest_dir, exclusions="-", exclude="-", placeholder_javadoc="-"):
+    """Apply to an already downloaded bundle the same customizations as download_artifacts_for_central.
+
+    Like there, a deprecated exclusion matching a module's main artifact drops the whole module, and a module with a
+    jar gets the placeholder Javadoc jar whether or not it had a Javadoc jar.
+    """
+    patterns = _split_patterns(exclusions, ";")
+    is_excluded = _file_exclusion(exclude)
+    is_placeholder = _javadoc_placeholder_matcher(placeholder_javadoc)
+    modules = {}
+    for path, gid, aid, version, qual, ext in _bundle_files(dest_dir):
+        modules.setdefault((gid, aid, version), []).append((path, qual, ext))
+    for (gid, aid, version), files in modules.items():
+        module_dropped = any(not qual and ext != "pom" and _matches_legacy_exclusion(patterns, gid, aid, version, ext)
+                             for _, qual, ext in files)
+        kept = []
+        for path, qual, ext in files:
+            if (module_dropped or _matches_legacy_exclusion(patterns, gid, aid, version, ext)
+                    or is_excluded(gid, aid, qual, ext)):
+                _remove_with_sidecars(path)
+            else:
+                kept.append((qual, ext))
+        if (("", "jar") in kept and is_placeholder(gid, aid) and not is_excluded(gid, aid, "javadoc", "jar")):
+            _write_placeholder_javadoc(dest_dir, gid, aid, version)
+
+
 def _fetch_file(artifactory, dest_dir, repo, gid, aid, qual, ext, version, is_excluded,
                 is_placeholder=lambda gid, aid: False):
     """Bundle one file with its checksums and signature, unless an exclusion pattern matches it.
