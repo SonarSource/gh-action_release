@@ -158,6 +158,7 @@ jobs:
       release: ${{ steps.release.outputs.release }}
       project_name: ${{ steps.release.outputs.project_name }}
       maven_central_deployment_id: ${{ steps.release.outputs.maven_central_deployment_id }}
+      maven_central_sync_allowed: ${{ steps.central-policy.outputs.allowed }}
       maven_central_sync_pending: ${{ steps.release.outputs.maven_central_sync_pending }}
       releasabilityCheckDependencies: ${{ steps.releasability.outputs.releasabilityCheckDependencies }}
       releasabilityQA: ${{ steps.releasability.outputs.releasabilityQA }}
@@ -237,9 +238,15 @@ jobs:
             development/aws/sts/downloads access_key | binaries_aws_access_key_id;
             development/aws/sts/downloads secret_key | binaries_aws_secret_access_key;
             development/aws/sts/downloads security_token | binaries_aws_security_token;
+      - name: Maven Central policy
+        id: central-policy
+        if: ${{ inputs.dryRun != true && inputs.mavenCentralSync }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh-action_release/scripts/maven-central-policy.sh "${{ github.repository }}"
       - name: Vault Maven Central Secrets
         id: secrets-maven-central
-        if: ${{ inputs.dryRun != true && inputs.mavenCentralSync }}
+        if: ${{ inputs.dryRun != true && steps.central-policy.outputs.allowed == 'true' }}
         uses: SonarSource/vault-action-wrapper@0a3114fe1230b784c35b53b099f9ab1f1e538cc7 # 3.5.0
         with:
           url: ${{ inputs.vaultAddr }}
@@ -328,7 +335,7 @@ jobs:
           publish_to_binaries: ${{ inputs.publishToBinaries }}  # Used only if the binaries are delivered to customers
           slack_channel: ${{ inputs.slackChannel }}
           dry_run: ${{ inputs.dryRun }}
-          maven_central_sync: ${{ inputs.mavenCentralSync }}
+          maven_central_sync: ${{ inputs.mavenCentralSync && steps.central-policy.outputs.allowed != 'false' }}
           maven_central_sync_required: ${{ inputs.mavenCentralSyncRequired }}
           maven_central_sync_exclusions: ${{ inputs.mavenCentralSyncExclusions }}
           maven_central_sync_exclude: ${{ inputs.mavenCentralSyncExclude }}
@@ -494,7 +501,7 @@ jobs:
           release_passed: ${{ needs.release.result }}
           maven_central_published: >-
             ${{ needs.release.outputs.maven_central_deployment_id != '' && 'success'
-            || (inputs.mavenCentralSync && 'failure' || 'skipped') }}
+            || (needs.release.outputs.maven_central_sync_allowed == 'true' && 'failure' || 'skipped') }}
           javadoc_published: ${{ needs.javadocPublication.result }}
           testpypi_published: ${{ needs.testPypi.result }}
           pypi_published: ${{ needs.pypi.result }}

@@ -119,6 +119,14 @@ If your repo has workflows that attach assets (e.g. SBOMs, installers) to the Gi
 
 - `createDraftRelease`: To require a pre-created draft release set `createDraftRelease: false`. If the draft release for `version` does not already exist, the workflow fails.
 
+- `mavenCentralSync`: Only effective for repositories that [`maven-central-policy.yml`](maven-central-policy.yml) allows. The file
+  is read from the default branch of this repository at release time, so a pull request changing it applies as soon as it is
+  merged, without a release or a v-branch update (the copy shipped with the action ref is the fallback if the fetch fails).
+  `mode: allow-all` lets every repository publish, `allowlist` only the listed ones, `denylist` all but the listed ones;
+  repositories are written `<owner>/<name>`. For a repository that is not allowed, the release logs a warning, does not
+  fetch the Central token nor call Maven Central, and completes on Repox. The standalone `maven-central-sync` action applies
+  the same policy and skips its work with a warning.
+
 - `mavenCentralSyncRequired`: By default the Maven Central sync is best-effort. If Central rejects the bundle during validation (for
   example when the organization is over its limits), the release still completes on Repox and binaries, `maven_central_sync_pending` is set
   to `true`, a Slack message gives the `scripts/manual-maven-central-sync.sh` command to run later, and the job ends in failure
