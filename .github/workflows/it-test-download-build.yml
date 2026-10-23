@@ -13,7 +13,7 @@ jobs:
       contents: write
     steps:
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
+        uses: SonarSource/jfrog-setup-wrapper@2d7d5c167430b4b92ade7f270a62ab860b863eb1 # 3.7.1
         with:
           artifactoryRoleSuffix: "private-reader"
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 (Necessary to access local action)
@@ -42,7 +42,7 @@ jobs:
       contents: write
     steps:
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
+        uses: SonarSource/jfrog-setup-wrapper@2d7d5c167430b4b92ade7f270a62ab860b863eb1 # 3.7.1
         with:
           artifactoryRoleSuffix: "private-reader"
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 (Necessary to access local action)
@@ -71,6 +71,6 @@ jobs:
         - it-tests-default-values
         - it-tests-use-flat-download-true
       steps:
-        - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
+        - uses: step-security/alls-green@42a30a1f2469c81cb95ae89a722da4c1c4fcc240 # v1.3.0
           with:
             jobs: ${{ toJSON(needs) }}
