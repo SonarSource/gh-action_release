@@ -1,0 +1,11 @@
+# Which repositories may publish to Maven Central. Read from the default branch at release time: merging a change
+# here takes effect immediately, without a release or a v-branch update.
+#
+# mode: allow-all  every repository may publish (no list applies)
+# mode: allowlist  only the repositories listed below may publish
+# mode: denylist   every repository except the ones listed below may publish
+#
+# Repositories are written as <owner>/<name>, one per line, e.g.:
+#   - SonarSource/sonar-java
+mode: allow-all
+repositories: []
