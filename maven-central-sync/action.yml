@@ -24,8 +24,16 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Maven Central policy
+      id: policy
+      if: ${{ inputs.mode != 'drop' }}
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: ${{ github.action_path }}/../scripts/maven-central-policy.sh "${{ github.repository }}"
     - name: Maven Central Sync
       id: run
+      if: ${{ steps.policy.outputs.allowed == 'true' || inputs.mode == 'drop' }}
       shell: bash
       run: >-
         ${{ github.action_path }}/maven-central-publish.sh
