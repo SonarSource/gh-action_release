@@ -87,7 +87,7 @@ jobs:
             development/aws/sts/javadocs secret_key | javadoc_aws_secret_access_key;
             development/aws/sts/javadocs security_token | javadoc_aws_security_token;
       - name: Setup JFrog
-        uses: SonarSource/jfrog-setup-wrapper@b243f5b25440cdcb062db329eec5fd9c9cd2dab2 # 3.7.0
+        uses: SonarSource/jfrog-setup-wrapper@2d7d5c167430b4b92ade7f270a62ab860b863eb1 # 3.7.1
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download public javadoc (org.sonarsource.*)
