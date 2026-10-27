@@ -1,14 +1,14 @@
 import tempfile
 from unittest.mock import MagicMock, patch
 
-from pytest import fixture
+import pytest
 
 from release.utils.binaries import Binaries
 from release.utils.buildinfo import BuildInfo
 from release.utils.release import publish_artifact, revoke_release
 
 
-@fixture
+@pytest.fixture
 def buildinfo_com():
     return BuildInfo({
         "buildInfo": {
@@ -22,7 +22,7 @@ def buildinfo_com():
     })
 
 
-@fixture
+@pytest.fixture
 def buildinfo_org():
     return BuildInfo({
         "buildInfo": {
@@ -36,7 +36,7 @@ def buildinfo_org():
     })
 
 
-@fixture
+@pytest.fixture
 def buildinfo_sonarlint():
     return BuildInfo({
         "buildInfo": {
@@ -49,7 +49,7 @@ def buildinfo_sonarlint():
         }
     })
 
-@fixture
+@pytest.fixture
 def buildinfo_reddeer():
     return BuildInfo({
         "buildInfo": {
@@ -63,7 +63,7 @@ def buildinfo_reddeer():
     })
 
 
-@fixture
+@pytest.fixture
 def buildinfo_sonarqube():
     return BuildInfo({
         "buildInfo": {
@@ -77,7 +77,7 @@ def buildinfo_sonarqube():
     })
 
 
-@fixture
+@pytest.fixture
 def buildinfo_sonarqube_cli():
     return BuildInfo({
         "buildInfo": {
