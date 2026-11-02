@@ -25,6 +25,11 @@ name: Crates.io
         type: string
         description: GitHub Environment to set on the OIDC-using job
         required: false
+      commitSha:
+        type: string
+        description: Commit cargo publish re-packages. Empty checks out the dispatched ref.
+        default: ''
+        required: false
       runnerLabel:
         type: string
         description: Runner label override for this job
@@ -76,6 +81,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ github.event.repository.full_name }}
+          ref: ${{ inputs.commitSha || github.sha }}
           path: developer_repo
           token: ${{ github.token }}
 

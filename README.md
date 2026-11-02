@@ -113,6 +113,15 @@ Three changes: the `on:` block (drop `release: types: [published]`, make `versio
 - **CLI**: `gh workflow run release.yml -f version=1.2.3.456`
 - **Retry**: Re-run the failed workflow from the GitHub Actions UI ("Re-run jobs").
 
+The draft is tagged on the commit that produced `version`, read from that build's Repox build info
+(`vcsRevision`, then `buildInfo.env.GITHUB_SHA`). A merge that lands after the build does not move the tag
+or the releasability checks onto the new head. The build name is the repository name, plus the optional
+`ProjectName-` version prefix, which is the same name promotion uses. Pass `commitSha` to override the
+lookup (for example when the build info has no commit). `cargo publish` and the npm checkout use that
+same commit. Callers that only pass `version` pick this up with no workflow change. A draft that already
+exists is reused only when it already targets that commit; otherwise the run stops and the draft has to
+be deleted before a retry.
+
 3. Attaching assets to the draft release:
 
 If your repo has workflows that attach assets (e.g. SBOMs, installers) to the GitHub release, those must run **before** v7 publishes the draft. Create the draft first, attach assets using the draft's `release-id`, then call v7 (which reuses the draft and publishes it atomically). See [`gh-action_sbom`](https://github.com/SonarSource/gh-action_sbom) for an example with SBOMs.
