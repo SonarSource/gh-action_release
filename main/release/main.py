@@ -34,7 +34,9 @@ MANDATORY_ENV_VARIABLES = [
 @Dryable(logging_msg='{function}()')
 def abort_release(github: GitHub, artifactory: Artifactory, binaries: Binaries, rr: ReleaseRequest,
                   promoted: bool):
-    print("::error::Release failed. JFrog/S3 artifacts are being revoked. "
+    revocation_message = ("Repox artifacts are being reverse-promoted." if promoted else
+                          "No artifacts were revoked because this run did not promote them.")
+    print(f"::error::Release failed. {revocation_message} "
           "The GitHub release and tag are preserved (immutability-safe mode since v6.8.1) — "
           "retry via workflow_dispatch with the same version and releaseId, no rebuild needed.")
     github.revoke_release()

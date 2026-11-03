@@ -2,7 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
-from unittest.mock import patch, mock_open, ANY, call
+from unittest.mock import patch, mock_open, ANY, call, MagicMock
 
 import pytest
 from parameterized import parameterized
@@ -16,6 +16,67 @@ from release.utils.artifactory import Artifactory
 from release.utils.binaries import Binaries
 from release.utils.buildinfo import BuildInfo
 from release.utils.github import GitHub
+
+
+@pytest.fixture
+def promoted_release_flow(monkeypatch):
+    release_request = ReleaseRequest('org', 'project', '1.0.42', '42', 'branch', 'sha')
+    buildinfo = BuildInfo({'buildInfo': {
+        'properties': {'buildInfo.env.ARTIFACTORY_DEPLOY_REPO': 'repo-qa'},
+        'modules': [{'id': 'org.example:project:1.0.42',
+                     'properties': {'artifactsToPublish': 'org.example:project:jar'}}],
+    }})
+    artifactory = MagicMock(spec=Artifactory)
+    artifactory.receive_build_info.return_value = buildinfo
+    github = MagicMock(spec=GitHub)
+    github.get_release_request.return_value = release_request
+    github.is_publish_to_binaries.return_value = False
+    binaries = MagicMock(spec=Binaries)
+    monkeypatch.setattr('release.main.GitHub', lambda: github)
+    monkeypatch.setattr('release.main.Artifactory', lambda token: artifactory)
+    monkeypatch.setattr('release.main.Binaries', lambda bucket: binaries)
+    monkeypatch.setattr('release.main.check_params', MagicMock())
+    monkeypatch.setattr('release.main.set_output', MagicMock())
+    monkeypatch.setattr('release.main.notify_slack', MagicMock())
+    with patch.dict(os.environ, {'ARTIFACTORY_ACCESS_TOKEN': 'test-token'}, clear=True):
+        yield release_request, buildinfo, artifactory, github, binaries
+
+
+def test_central_drop_failure_after_promotion_does_not_reverse_promote(promoted_release_flow, monkeypatch):
+    release_request, buildinfo, artifactory, github, binaries = promoted_release_flow
+    monkeypatch.setenv('INPUT_MAVEN_CENTRAL_SYNC', 'true')
+    monkeypatch.setenv('INPUT_IS_DUMMY_PROJECT', 'true')
+    monkeypatch.setenv('CENTRAL_TOKEN', 'central-test-token')
+    monkeypatch.setattr('release.main.download_artifacts_for_central', MagicMock())
+    monkeypatch.setattr('release.main.validate_before_promote', MagicMock(return_value='deployment-123'))
+    drop = MagicMock(side_effect=RuntimeError('drop failed'))
+    monkeypatch.setattr('release.main.drop_validated', drop)
+
+    with pytest.raises(SystemExit) as error:
+        main()
+
+    assert error.value.code == 1
+    drop.assert_called_once_with('deployment-123', ANY, 'central-test-token')
+    artifactory.promote.assert_called_once_with(release_request, buildinfo)
+    github.revoke_release.assert_not_called()
+    binaries.s3_delete.assert_not_called()
+
+
+def test_binaries_failure_after_promotion_reverse_promotes_and_cleans_binaries(promoted_release_flow, monkeypatch):
+    release_request, buildinfo, artifactory, github, binaries = promoted_release_flow
+    github.is_publish_to_binaries.return_value = True
+    publish = MagicMock(side_effect=RuntimeError('binaries publication failed'))
+    monkeypatch.setattr('release.main.publish_all_artifacts_to_binaries', publish)
+
+    with pytest.raises(RuntimeError, match='binaries publication failed'):
+        main()
+
+    publish.assert_called_once_with(artifactory, binaries, release_request, buildinfo)
+    assert artifactory.promote.call_args_list == [
+        call(release_request, buildinfo), call(release_request, buildinfo, True)]
+    github.revoke_release.assert_called_once_with()
+    binaries.s3_delete.assert_called_once_with('project-1.0.42.jar', 'org.example', 'project', '1.0.42', '')
+    binaries.s3_delete_sbom.assert_called_once_with('project-1.0.42.sbom.json', 'org.example', 'project', '1.0.42', '')
 
 
 def test_set_output():
