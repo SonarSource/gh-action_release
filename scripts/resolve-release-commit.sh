@@ -41,7 +41,7 @@ expand_sha() {
     return
   fi
   if [[ ! "$sha" =~ ^[0-9a-f]{7,40}$ ]]; then
-    echo "::error::Commit '$1' is not a git SHA (7-40 hexadecimal characters)"
+    echo "::error::Commit '$1' is not a git SHA (7-40 hexadecimal characters)" >&2
     exit 1
   fi
   if [[ -z "${GH_TOKEN:-}" ]]; then
@@ -58,10 +58,10 @@ choose_branch() {
     return
   fi
   if [[ -n "$candidate" ]]; then
-    echo "::warning::Build info branch '$candidate' is not a usable branch name; using ${FALLBACK_BRANCH}"
+    echo "::warning::Build info branch '$candidate' is not a usable branch name; using ${FALLBACK_BRANCH}" >&2
   fi
   if ! branch_ok "$FALLBACK_BRANCH"; then
-    echo "::error::Branch '${FALLBACK_BRANCH}' is not a usable releasability branch name"
+    echo "::error::Branch '${FALLBACK_BRANCH}' is not a usable releasability branch name" >&2
     exit 1
   fi
   printf '%s' "$FALLBACK_BRANCH"
@@ -123,7 +123,10 @@ if [[ "$http_code" != "200" ]]; then
   exit 1
 fi
 
-read -r commit_sha build_branch < <(jq -r '
+{
+  IFS= read -r commit_sha || true
+  IFS= read -r build_branch || true
+} < <(jq -r '
   def nonempty:
     if . == null or . == "" then empty else . end;
   def prop($name):
@@ -149,7 +152,7 @@ read -r commit_sha build_branch < <(jq -r '
         // ""
       )
     ]
-  | @tsv
+  | .[0], .[1]
 ' "$response")
 
 if [[ -z "${commit_sha:-}" ]]; then

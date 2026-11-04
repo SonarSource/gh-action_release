@@ -108,6 +108,47 @@ EOF
     The contents of file "$GITHUB_OUTPUT" should include "branch=master"
   End
 
+  It 'rejects an explicit commitSha that is not a git SHA'
+    export CURL_FORBIDDEN=1
+    export COMMIT_SHA="master"
+
+    When call resolve
+
+    The status should be failure
+    The stderr should include "not a git SHA"
+    The contents of file "$GITHUB_OUTPUT" should not include "commit_sha="
+  End
+
+  It 'falls back when the build info branch is not a usable name'
+    cat > "$test_dir/build.json" <<'EOF'
+{"buildInfo":{"vcsRevision":"0123456789abcdef0123456789abcdef01234567","properties":{"buildInfo.env.GITHUB_REF_NAME":"not a branch"}}}
+EOF
+    export FIXTURE="$test_dir/build.json"
+    export VERSION="1.2.3.456"
+
+    When call resolve
+
+    The status should be success
+    The stdout should include "Release commit 0123456789abcdef0123456789abcdef01234567 on branch master"
+    The stderr should include "not a usable branch name"
+    The contents of file "$GITHUB_OUTPUT" should include "commit_sha=0123456789abcdef0123456789abcdef01234567"
+    The contents of file "$GITHUB_OUTPUT" should include "branch=master"
+  End
+
+  It 'fails when the build info has a branch but no commit'
+    cat > "$test_dir/build.json" <<'EOF'
+{"buildInfo":{"properties":{"buildInfo.env.GITHUB_REF_NAME":"master"}}}
+EOF
+    export FIXTURE="$test_dir/build.json"
+    export VERSION="1.2.3.456"
+
+    When call resolve
+
+    The status should be failure
+    The stdout should include "has no commit"
+    The contents of file "$GITHUB_OUTPUT" should not include "commit_sha=master"
+  End
+
   It 'fails when the build info has no commit'
     echo '{"buildInfo":{"properties":{}}}' > "$test_dir/build.json"
     export FIXTURE="$test_dir/build.json"

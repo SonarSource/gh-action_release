@@ -296,13 +296,20 @@ jobs:
               echo "::error::Release $VERSION already exists and is NOT a draft. Aborting to avoid duplicate publish."
               exit 1
             fi
-            actual=$(resolve_target "$(jq -r '.targetCommitish' <<< "$release_details")")
+            raw_target=$(jq -r '.targetCommitish' <<< "$release_details")
+            actual=$(resolve_target "$raw_target")
             expected=$(printf '%s' "$RESOLVED_SHA" | tr '[:upper:]' '[:lower:]')
             if [[ "$actual" != "$expected" ]]; then
               echo "::error::Draft release $VERSION targets ${actual}, but this version was built from ${expected}. Delete the draft and re-run so the tag is created on the build commit: gh release delete $VERSION --repo $repo --cleanup-tag --yes"
               exit 1
             fi
-            echo "Reusing existing draft release $VERSION at $expected"
+            # A branch name would still move if a merge lands before publish.
+            if [[ "$raw_target" != "$expected" ]]; then
+              gh release edit "$VERSION" --repo "$repo" --target "$expected"
+              echo "Pinned draft release $VERSION to $expected (was ${raw_target})"
+            else
+              echo "Reusing existing draft release $VERSION at $expected"
+            fi
           elif [[ "$CREATE_DRAFT_RELEASE" == "false" ]]; then
             echo "::error::Draft release $VERSION does not exist and createDraftRelease=false. Create the draft release before running this workflow."
             exit 1
