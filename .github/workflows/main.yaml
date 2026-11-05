@@ -7,7 +7,7 @@ on:
     inputs:
       version:
         type: string
-        description: Full version including build number (e.g. 1.2.3.456). Required for v7 draft-first flow.
+        description: Full version including build number (e.g. 1.2.3.456). An optional letter prefix (e.g. sq-8.3.0.2843) is part of the GitHub tag and selects the Repox project. Required for v7 draft-first flow.
         required: true
       dryRun:
         type: boolean

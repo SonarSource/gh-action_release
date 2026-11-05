@@ -95,7 +95,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Full version including build number, e.g. 1.2.3.456'
+        description: 'Full version including build number, e.g. 1.2.3.456. Optional letter prefix, e.g. sq-8.3.0.2843'
         required: true
 
 jobs:
@@ -112,6 +112,17 @@ Three changes: the `on:` block (drop `release: types: [published]`, make `versio
 - **UI**: Go to **Actions → Release → Run workflow**, enter the `version` (e.g. `1.2.3.456`).
 - **CLI**: `gh workflow run release.yml -f version=1.2.3.456`
 - **Retry**: Re-run the failed workflow from the GitHub Actions UI ("Re-run jobs").
+
+The accepted shape is `[ProjectName-]Major.Minor.Patch[-Mx][.+]BuildNumber`. `ProjectName-` is an optional prefix of letters and a dash (for example `sq-8.3.0.2843`).
+
+The prefix is part of the GitHub release tag. Releasability uses it to select the Repox project: `sq-8.3.0.2843` in `sonar-scanner-azdo` checks `sonar-scanner-azdo-sq`, and the Jira version is the prefixed one (`sq-8.3`). An unprefixed version checks the repository name and the unprefixed Jira version, and it does not reuse a draft whose tag carries a prefix.
+
+A repository that publishes more than one product from the same build runs the workflow once per prefixed tag:
+
+```bash
+gh workflow run release.yml -f version=sq-8.3.0.2843
+gh workflow run release.yml -f version=sc-4.3.0.2843
+```
 
 3. Attaching assets to the draft release:
 
