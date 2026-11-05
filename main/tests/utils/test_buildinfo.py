@@ -1,9 +1,9 @@
-from pytest import fixture
+import pytest
 
 from release.utils.buildinfo import BuildInfo
 
 
-@fixture
+@pytest.fixture
 def build_info_with_artefacts():
     return BuildInfo({
         'buildInfo': {
@@ -19,7 +19,7 @@ def build_info_with_artefacts():
     })
 
 
-@fixture
+@pytest.fixture
 def build_info_with_artefacts_by_env():
     return BuildInfo({
         'buildInfo': {
@@ -30,7 +30,7 @@ def build_info_with_artefacts_by_env():
     })
 
 
-@fixture
+@pytest.fixture
 def build_info_with_no_artefacts():
     return BuildInfo({
         "buildInfo": {
@@ -57,7 +57,7 @@ def test_get_artifacts_to_publish_prints_message_when_no_artifacts(build_info_wi
     assert "No artifacts to publish" == captured[0]
 
 
-@fixture
+@pytest.fixture
 def build_info_with_artefacts_across_modules():
     return BuildInfo({
         'buildInfo': {

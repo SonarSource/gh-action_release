@@ -1,18 +1,18 @@
 import tempfile
 from unittest.mock import patch
-from pytest import fixture
+import pytest
 
 from release.steps.ReleaseRequest import ReleaseRequest
 from release.utils.artifactory import Artifactory
 from release.utils.buildinfo import BuildInfo
 
 
-@fixture
+@pytest.fixture
 def release_request():
     return ReleaseRequest('org', 'project', 'version', 'buildnumber', 'branch', 'sha')
 
 
-@fixture
+@pytest.fixture
 def buildinfo_multi():
     return  BuildInfo({
         "buildInfo": {
@@ -26,7 +26,7 @@ def buildinfo_multi():
     })
 
 
-@fixture
+@pytest.fixture
 def buildinfo():
     return  BuildInfo({
         "buildInfo": {
