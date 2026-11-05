@@ -113,7 +113,7 @@ Three changes: the `on:` block (drop `release: types: [published]`, make `versio
 - **CLI**: `gh workflow run release.yml -f version=1.2.3.456`
 - **Retry**: Re-run the failed workflow from the GitHub Actions UI ("Re-run jobs").
 
-The accepted shape is `[ProjectName-]Major.Minor.Patch[-Mx][.+]BuildNumber`. `ProjectName-` is an optional prefix of letters and a dash (for example `sq-8.3.0.2843`).
+The accepted shape is `[ProjectName-]Major.Minor.Patch[-Mx][-.+]BuildNumber`. `ProjectName-` is an optional prefix of letters and a dash (for example `sq-8.3.0.2843`).
 
 The prefix is part of the GitHub release tag. Releasability uses it to select the Repox project: `sq-8.3.0.2843` in `sonar-scanner-azdo` checks `sonar-scanner-azdo-sq`, and the Jira version is the prefixed one (`sq-8.3`). An unprefixed version checks the repository name and the unprefixed Jira version, and it does not reuse a draft whose tag carries a prefix.
 
@@ -123,6 +123,14 @@ A repository that publishes more than one product from the same build runs the w
 gh workflow run release.yml -f version=sq-8.3.0.2843
 gh workflow run release.yml -f version=sc-4.3.0.2843
 ```
+
+The draft is tagged on the commit that produced `version`, read from that build's Repox build info
+(`vcsRevision`, then `buildInfo.env.GITHUB_SHA`). The build name is the repository name, plus the optional
+`ProjectName-` version prefix, which is the same name promotion uses. Pass `commitSha` to override the
+lookup (for example when the build info has no commit). `cargo publish` and the npm checkout use that
+same commit. Callers that only pass `version` pick this up with no workflow change. A draft that already
+exists is reused only when it already targets that commit; otherwise the run stops and the draft has to
+be deleted before a retry.
 
 3. Attaching assets to the draft release:
 
