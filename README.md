@@ -255,7 +255,9 @@ Since v6.8.1, when a release workflow fails (releasability checks, Artifactory p
 
 - The GitHub release stays as a draft (visible in the Releases tab).
 - The Git tag stays in place.
-- JFrog/S3 artifacts **are** revoked (no broken artifacts are available to downstream consumers).
+- Repox artifacts are reverse-promoted only if this invocation completed its forward promotion and a later step failed, such as binaries publication. A failure before promotion or a failed forward promotion leaves an earlier release in place.
+- A Maven Central finalize or drop failure after successful promotion does not reverse-promote Repox. Check the Central deployment and publish or drop it manually. Do not re-run the release in this case.
+- Binaries cleanup still runs when binaries publication fails.
 - You will see a `::warning::` annotation in the Actions log and a Slack message with retry instructions.
 
 ### Retrying without rebuilding
