@@ -24,9 +24,6 @@ set -euo pipefail
 : "${GITHUB_OUTPUT:?GITHUB_OUTPUT is required}"
 
 artifactory_url=${ARTIFACTORY_URL:-https://repox.jfrog.io/repox}
-if [[ -z "$artifactory_url" ]]; then
-  artifactory_url=https://repox.jfrog.io/repox
-fi
 artifactory_url=${artifactory_url%/}
 
 branch_ok() {
