@@ -3,9 +3,10 @@
 #
 # An explicit COMMIT_SHA is used as-is (expanded to 40 hex when GH_TOKEN is set).
 # Otherwise the commit is read from the Repox build info of VERSION: vcsRevision,
-# then vcs[0].revision, then buildInfo.env.GITHUB_SHA. The build name is the
-# repository name, plus the optional ProjectName- version prefix — the same name
-# the promotion uses. There is no fallback to the dispatched branch head.
+# then vcs[0].revision, then buildInfo.env.GITHUB_SHA, then the legacy
+# buildInfo.env.TRAVIS_COMMIT. The build name is the repository name, plus the
+# optional ProjectName- version prefix — the same name the promotion uses.
+# There is no fallback to the dispatched branch head.
 #
 # Environment:
 #   REPOSITORY                 owner/name (required)
@@ -138,7 +139,8 @@ fi
       (first(
         ($b.vcsRevision | nonempty),
         ($b.vcs[0].revision | nonempty),
-        ($b | prop("buildInfo.env.GITHUB_SHA"))
+        ($b | prop("buildInfo.env.GITHUB_SHA")),
+        ($b | prop("buildInfo.env.TRAVIS_COMMIT"))
       ) // ""),
       (
         ($b | prop("buildInfo.env.GITHUB_REF_NAME"))
@@ -153,7 +155,7 @@ fi
 ' "$response")
 
 if [[ -z "${commit_sha:-}" ]]; then
-  echo "::error::Repox build ${project}/${build} has no commit (checked vcsRevision, vcs revision, and buildInfo.env.GITHUB_SHA). Pass commitSha to release this version."
+  echo "::error::Repox build ${project}/${build} has no commit (checked vcsRevision, vcs revision, buildInfo.env.GITHUB_SHA, and buildInfo.env.TRAVIS_COMMIT). Pass commitSha to release this version."
   exit 1
 fi
 commit_sha=$(expand_sha "$commit_sha")

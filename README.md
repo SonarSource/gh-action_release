@@ -125,7 +125,7 @@ gh workflow run release.yml -f version=sc-4.3.0.2843
 ```
 
 The draft is tagged on the commit that produced `version`, read from that build's Repox build info
-(`vcsRevision`, then `buildInfo.env.GITHUB_SHA`). The build name is the repository name, plus the optional
+(`vcsRevision`, then `buildInfo.env.GITHUB_SHA`, then `buildInfo.env.TRAVIS_COMMIT`). The build name is the repository name, plus the optional
 `ProjectName-` version prefix, which is the same name promotion uses. Pass `commitSha` to override the
 lookup (for example when the build info has no commit). `cargo publish` and the npm checkout use that
 same commit. Callers that only pass `version` pick this up with no workflow change. A draft that already

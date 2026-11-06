@@ -95,6 +95,23 @@ EOF
     The contents of file "$GITHUB_OUTPUT" should include "branch=master"
   End
 
+  It 'falls back to buildInfo.env.TRAVIS_COMMIT when the build has no vcs revision'
+    cat > "$test_dir/build.json" <<'EOF'
+{"buildInfo":{"properties":{"buildInfo.env.TRAVIS_COMMIT":"CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"}}}
+EOF
+    export FIXTURE="$test_dir/build.json"
+    export VERSION="sc-4.3.1.2853"
+    export REPOSITORY="SonarSource/sonar-scanner-azdo"
+
+    When call resolve
+
+    The status should be success
+    The stdout should include "Looking up Repox build sonar-scanner-azdo-sc/2853"
+    The stdout should include "Release commit cccccccccccccccccccccccccccccccccccccccc on branch master"
+    The contents of file "$GITHUB_OUTPUT" should include "commit_sha=cccccccccccccccccccccccccccccccccccccccc"
+    The contents of file "$GITHUB_OUTPUT" should include "branch=master"
+  End
+
   It 'uses an explicit commitSha and does not call Repox'
     export CURL_FORBIDDEN=1
     export COMMIT_SHA="abcdef1234567890abcdef1234567890abcdef12"
