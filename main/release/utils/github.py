@@ -54,7 +54,7 @@ class GitHub:
             version_match = version_pattern.match(version)
             if version_match is None:
                 raise GitHubException(
-                    'The tag must follow this pattern: [ProjectName-]Major.Minor.Patch[-Mx][.+]BuildNumber\n'
+                    'The tag must follow this pattern: [ProjectName-]Major.Minor.Patch[-Mx][-.+]BuildNumber\n'
                     'Where:\n'
                     '- "ProjectName-" is an optional prefix (any sequence of letters followed by a dash).\n'
                     '- "Major.Minor.Patch" is the version number (three numbers separated by dots).\n'
