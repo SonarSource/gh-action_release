@@ -60,6 +60,33 @@ def _http_error(status, url=""):
 class TestDownloadArtifactsForCentral:
 
     @patch('release.utils.maven_central.shutil.move')
+    def test_downloads_gradle_publication_names_and_still_skips_private_groups(self, mock_move, tmp_path):
+        modules = []
+        for gid in ('org.sonarsource.dummy', 'com.sonarsource.dummy'):
+            modules.append({
+                'id': f'{gid}:project:1.0',
+                'artifacts': [{
+                    'name': 'dummy-api-1.0.jar',
+                    'path': f'{gid.replace(".", "/")}/dummy-api/1.0/dummy-api-1.0.jar',
+                }],
+            })
+        buildinfo = BuildInfo({'buildInfo': {
+            'statuses': [{'repository': 'sonarsource-public-qa'}], 'modules': modules,
+        }})
+        artifactory = MagicMock()
+        artifactory.download_named.side_effect = (
+            lambda repo, gid, aid, version, filename, checksums=None, optional_checksums=None:
+            (f'/tmp/{filename}', ['asc']))
+
+        download_artifacts_for_central(artifactory, buildinfo, str(tmp_path))
+
+        assert [c.args for c in artifactory.download_named.call_args_list] == [
+            ('sonarsource-public-builds', 'org.sonarsource.dummy', 'dummy-api', '1.0', f'dummy-api-1.0{suffix}')
+            for suffix in ('.jar', '.pom', '-sources.jar', '-javadoc.jar')
+        ]
+        assert mock_move.call_count == 16
+
+    @patch('release.utils.maven_central.shutil.move')
     def test_downloads_main_pom_sources_and_javadoc(self, mock_move, buildinfo, tmp_path):
         artifactory = MagicMock()
         artifactory.download_named.side_effect = (
