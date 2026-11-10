@@ -1,4 +1,4 @@
-from pytest import fixture
+from pytest import fixture, mark
 
 from release.utils.buildinfo import BuildInfo
 
@@ -238,3 +238,71 @@ def test_get_public_module_artifacts_keeps_sources_and_javadoc_when_module_has_n
         'org.sonarsource.dummy:dummy-tool:jar:sources',
         'org.sonarsource.dummy:dummy-tool:jar:javadoc',
     ]
+
+
+def test_get_public_module_artifacts_uses_published_gradle_coordinates():
+    # PREQ-10217: sonar-plugin-api/5639 records project names in module IDs, but the Maven
+    # publications use different artifactIds. No ARTIFACTS_TO_PUBLISH is set for this build.
+    gid, version = 'org.sonarsource.api.plugin', '14.3.0.5639'
+    publications = [('shared', 'sonar-plugin-api-shared'),
+                    ('test-fixtures', 'sonar-plugin-api-test-fixtures'),
+                    ('manifest', 'sonar-plugin-manifest'), ('plugin-api', 'sonar-plugin-api')]
+    modules = []
+    for project, aid in publications:
+        artifacts = []
+        for suffix in ('-javadoc.jar', '-javadoc.jar.asc', '-sources.jar', '.pom', '.jar.asc', '.jar'):
+            name = f'{aid}-{version}{suffix}'
+            artifacts.append({'name': name, 'path': f'{gid.replace(".", "/")}/{aid}/{version}/{name}'})
+        if project != 'plugin-api':
+            for suffix in ('.module', '.module.asc'):
+                name = f'{aid}-{version}{suffix}'
+                artifacts.append({'name': name, 'path': f'{gid.replace(".", "/")}/{aid}/{version}/{name}'})
+        modules.append({'id': f'{gid}:{project}:{version}', 'artifacts': artifacts})
+    build_info = BuildInfo({'buildInfo': {'modules': modules}})
+
+    assert build_info.get_public_module_artifacts() == [
+        f'{gid}:{aid}:{ext}' for project, aid in publications
+        for ext in (('jar', 'module') if project != 'plugin-api' else ('jar',))
+    ]
+    assert build_info.get_artifacts_to_publish() is None  # Do not change binaries publishing.
+
+
+def test_get_public_module_artifacts_handles_multiple_publications_in_one_gradle_project():
+    artifacts = []
+    for aid, suffix in (('dummy-api', '.jar'), ('dummy-bom', '.pom'), ('dummy-api', '-tests.jar')):
+        name = f'{aid}-1.0{suffix}'
+        artifacts.append({'name': name, 'path': f'org/sonarsource/dummy/{aid}/1.0/{name}'})
+    build_info = BuildInfo({'buildInfo': {'modules': [{
+        'id': 'org.sonarsource.dummy:project:1.0', 'artifacts': artifacts,
+    }]}})
+
+    assert build_info.get_public_module_artifacts() == [
+        'org.sonarsource.dummy:dummy-api:jar', 'org.sonarsource.dummy:dummy-api:jar:tests',
+        'org.sonarsource.dummy:dummy-bom:pom',
+    ]
+
+
+@mark.parametrize('path', [
+    None, '', 'dummy-api-1.0.jar',
+    'com/sonarsource/dummy/dummy-api/1.0/dummy-api-1.0.jar',
+    'org/sonarsource/dummy/dummy-api/2.0/dummy-api-1.0.jar',
+    'org/sonarsource/dummy/dummy-api/1.0/different-1.0.jar',
+    'org/sonarsource/dummy/other-api/1.0/dummy-api-1.0.jar',
+    'org/sonarsource/dummy/dummy-api-1/1.0/dummy-api-1.0.jar',
+])
+def test_get_public_module_artifacts_does_not_infer_coordinates_from_inconsistent_paths(path):
+    build_info = BuildInfo({'buildInfo': {'modules': [{
+        'id': 'org.sonarsource.dummy:project:1.0',
+        'artifacts': [{'name': 'dummy-api-1.0.jar', 'path': path}],
+    }]}})
+
+    assert build_info.get_public_module_artifacts() == []
+
+
+def test_get_public_module_artifacts_keeps_module_id_fallback_for_non_maven_paths():
+    build_info = BuildInfo({'buildInfo': {'modules': [{
+        'id': 'org.sonarsource.dummy:dummy-api:1.0',
+        'artifacts': [{'name': 'dummy-api-1.0.jar', 'path': 'build/libs/dummy-api-1.0.jar'}],
+    }]}})
+
+    assert build_info.get_public_module_artifacts() == ['org.sonarsource.dummy:dummy-api:jar']

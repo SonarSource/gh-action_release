@@ -67,6 +67,27 @@ class BuildInfo:
 
     @staticmethod
     def _module_gavs(gid, aid, version, artifacts):
+        """Group artifacts by published artifactId, which can differ from the Gradle project name.
+
+        Use the Maven repository path only when its group, version and filename agree with the
+        module and artifact. Keep the module-id fallback for extractors that omit paths.
+        """
+        if not artifacts:
+            return BuildInfo._artifact_gavs(gid, aid, version, artifacts)
+        publications = {}
+        for artifact in artifacts:
+            published_aid = aid
+            parts = (artifact.get('path') or '').rsplit('/', 3)
+            if (len(parts) == 4 and parts[0] == gid.replace('.', '/') and parts[2] == version
+                    and parts[1] not in ('', '.', '..') and parts[3] == artifact.get('name')
+                    and BuildInfo._parse_artifact_name(f"{parts[1]}-{version}", parts[3])):
+                published_aid = parts[1]
+            publications.setdefault(published_aid, []).append(artifact)
+        return [gav for published_aid, files in publications.items()
+                for gav in BuildInfo._artifact_gavs(gid, published_aid, version, files)]
+
+    @staticmethod
+    def _artifact_gavs(gid, aid, version, artifacts):
         """One module's own artifacts as 'groupId:artifactId:ext[:qualifier]' strings; falls back
         to a plain jar guess when the module declares none of its own.
 
@@ -98,7 +119,7 @@ class BuildInfo:
         doesn't start with prefix or has no extension.
         """
         rest = name[len(prefix):] if name.startswith(prefix) else ''
-        if '.' not in rest:
+        if rest[:1] not in ('-', '.') or '.' not in rest:
             return None
         if rest.startswith('-'):
             qualifier, _, ext = rest[1:].rpartition('.')
