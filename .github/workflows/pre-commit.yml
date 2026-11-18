@@ -22,5 +22,5 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - uses: SonarSource/mise-action-wrapper@v1
+      - uses: SonarSource/mise-action-wrapper@v2
       - uses: SonarSource/gh-action_pre-commit@v2
