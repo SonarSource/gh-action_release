@@ -70,7 +70,7 @@ jobs:
         run: echo "dir=$(mktemp -d repo.XXXXXXXX)" >> $GITHUB_OUTPUT
       - name: Vault
         id: secrets
-        uses: SonarSource/vault-action-wrapper@996f98a833543737de7835d6d23f4be988389b4e # 3.8.0
+        uses: SonarSource/vault-action-wrapper@20728776e291b4027acb3618091a31fa15c61a30 # 3.9.0
         with:
           url: ${{ inputs.vaultAddr }}
           secrets:
