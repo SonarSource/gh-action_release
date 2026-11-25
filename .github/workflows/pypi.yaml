@@ -101,7 +101,7 @@ jobs:
           print-hash: true
       - name: Notify on failure
         if: ${{ failure() }}
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        uses: slackapi/slack-github-action@0bc3581177d9a0f8d555e07689384b376528e8fa # v4.1.0
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
