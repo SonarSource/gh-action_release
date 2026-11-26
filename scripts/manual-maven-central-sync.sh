@@ -167,7 +167,8 @@ if [[ "${CENTRAL_EXCLUSIONS:--}${CENTRAL_EXCLUDE:--}${CENTRAL_PLACEHOLDER_JAVADO
 fi
 
 # Sanity check 1: there must be at least one Maven-shaped artifact.
-if ! find "$LOCAL_REPO_DIR" -type f \( -name "*.jar" -o -name "*.war" -o -name "*.ear" -o -name "*.pom" \) | grep -q .; then
+MAVEN_ARTIFACT="$(find "$LOCAL_REPO_DIR" -type f \( -name "*.jar" -o -name "*.war" -o -name "*.ear" -o -name "*.pom" \) -print -quit)"
+if [[ -z "$MAVEN_ARTIFACT" ]]; then
     echo "ERROR: no Maven artifacts (jar/war/ear/pom) found under $LOCAL_REPO_DIR" >&2
     echo "       Either the build has no Java payload (nothing to push to Maven Central)" >&2
     echo "       or the JFrog download did not return what was expected." >&2
@@ -177,7 +178,7 @@ fi
 # Sanity check 2: nothing must be present directly at the bundle root.
 # Central Portal rejects bundles containing files at "./" — every artifact
 # must live under a groupId/artifactId/version/ path.
-if find "$LOCAL_REPO_DIR" -mindepth 1 -maxdepth 1 -type f | grep -q .; then
+if [[ -n "$(find "$LOCAL_REPO_DIR" -mindepth 1 -maxdepth 1 -type f -print -quit)" ]]; then
     echo "ERROR: files found at the bundle root — Central Portal will reject this:" >&2
     find "$LOCAL_REPO_DIR" -mindepth 1 -maxdepth 1 -type f | while IFS= read -r f; do
         echo "       $f" >&2
