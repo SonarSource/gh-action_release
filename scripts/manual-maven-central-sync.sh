@@ -142,7 +142,7 @@ echo "Downloading build artifacts from JFrog..."
 (
     cd "$LOCAL_REPO_DIR"
     "$JFROG_CLI" rt download --fail-no-op --exclusions "${EXCLUSIONS}" \
-        --build "${PROJECT_NAME}/${BUILD_NUMBER}" \
+        --props "build.name=${PROJECT_NAME};build.number=${BUILD_NUMBER}" \
         "${DOWNLOAD_TARGET}"
 )
 
