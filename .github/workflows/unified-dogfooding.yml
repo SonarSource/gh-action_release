@@ -17,7 +17,7 @@
           - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
           - uses: step-security/mise-action@c7396e2a2a4ad1ea43abee3317d964292da354ae # v4.0.1
             with:
-              version: 2026.2.3
+              version: 2026.11.12
           - name: Run IRIS Analysis
             uses: SonarSource/unified-dogfooding-actions/run-iris@v1
             with:
