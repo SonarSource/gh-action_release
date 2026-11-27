@@ -82,7 +82,7 @@ jobs:
         with:
           jfrogAccessToken: ${{ fromJSON(steps.secrets.outputs.vault).artifactory_access_token }}
       - name: Download Artifacts
-        uses: SonarSource/gh-action_release/download-build@05db046385edc88eb40554c2677c1d726f4987f6 # master
+        uses: SonarSource/gh-action_release/download-build@9a15c462e83d3051be7321ebf134abb706164ca3 # master
         with:
           build-number: ${{ steps.get_version.outputs.build }}
           local-repo-dir: ${{ steps.local_repo.outputs.dir }}
@@ -101,7 +101,7 @@ jobs:
           print-hash: true
       - name: Notify on failure
         if: ${{ failure() }}
-        uses: slackapi/slack-github-action@45a88b9581bfab2566dc881e2cd66d334e621e2c # v3.0.3
+        uses: slackapi/slack-github-action@0d95c9a7becc1e6e297d76df9bc735c44f4cbcbc # v3.0.5
         with:
           webhook: ${{ fromJSON(steps.secrets.outputs.vault).slack_webhook }}
           webhook-type: incoming-webhook
